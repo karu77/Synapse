@@ -4,7 +4,8 @@ Welcome to Synapse! This is a modern web application that transforms text and mu
 
 ## Live Demo
 
-**(Coming Soon)** A link to the live, deployed version of this application will be available here.
+https://synapse-lac.vercel.app
+
 
 ## Features
 
