@@ -5,7 +5,7 @@ import axios from 'axios'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
-// Helper to extract graph data from Gemini response
+// Helper to sanitize and extract graph data from Gemini response
 const extractGraphData = (response: string) => {
   let jsonString = ''
   try {
@@ -13,7 +13,12 @@ const extractGraphData = (response: string) => {
     const jsonMatch = response.match(/```json\s*([\s\S]*?)```/i) || response.match(/```\s*([\s\S]*?)```/i)
     jsonString = jsonMatch ? jsonMatch[1].trim() : response.trim()
     console.log('Attempting to parse JSON string:\n', jsonString)
-    const data = JSON.parse(jsonString)
+
+    // Sanitize the JSON string to remove trailing commas before closing brackets/braces
+    const sanitizedJsonString = jsonString.replace(/,(?=\s*[}\]])/g, '')
+    console.log('Sanitized JSON string for parsing:\n', sanitizedJsonString)
+
+    const data = JSON.parse(sanitizedJsonString)
     return {
       nodes: data.entities || [],
       edges: data.relationships || [],
