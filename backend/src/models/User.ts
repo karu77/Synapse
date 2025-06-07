@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 
 // Interface for the User document
 export interface IUser extends Document {
+  _id: any
   name: string
   email: string
   password: string
