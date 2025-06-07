@@ -32,11 +32,27 @@ const GraphVisualization = forwardRef(
     useImperativeHandle(ref, () => ({
       downloadGraph: () => {
         if (networkInstance.current) {
-          const canvas = networkInstance.current.canvas.getContext('2d').canvas
-          const dataURL = canvas.toDataURL('image/png')
+          const originalCanvas = networkInstance.current.canvas.getContext('2d').canvas
+          const scaleFactor = 2 // For higher resolution
+          const newCanvas = document.createElement('canvas')
+          const ctx = newCanvas.getContext('2d')
+
+          newCanvas.width = originalCanvas.width * scaleFactor
+          newCanvas.height = originalCanvas.height * scaleFactor
+
+          const bgColor = theme === 'light' ? '#ffffff' : '#212121'
+          ctx.fillStyle = bgColor
+          ctx.fillRect(0, 0, newCanvas.width, newCanvas.height)
+
+          ctx.save()
+          ctx.scale(scaleFactor, scaleFactor)
+          ctx.drawImage(originalCanvas, 0, 0)
+          ctx.restore()
+
+          const dataURL = newCanvas.toDataURL('image/png')
           const link = document.createElement('a')
           link.href = dataURL
-          link.download = 'synapse-graph.png'
+          link.download = 'synapse-graph-high-resolution.png'
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
