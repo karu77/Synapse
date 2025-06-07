@@ -14,11 +14,7 @@ const extractGraphData = (response: string) => {
     jsonString = jsonMatch ? jsonMatch[1].trim() : response.trim()
     console.log('Attempting to parse JSON string:\n', jsonString)
 
-    // Sanitize the JSON string to remove trailing commas before closing brackets/braces
-    const sanitizedJsonString = jsonString.replace(/,(?=\s*[}\]])/g, '')
-    console.log('Sanitized JSON string for parsing:\n', sanitizedJsonString)
-
-    const data = JSON.parse(sanitizedJsonString)
+    const data = JSON.parse(jsonString)
     return {
       nodes: data.entities || [],
       edges: data.relationships || [],
@@ -75,10 +71,14 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
 
       For each entity and relationship, you must determine its sentiment from the context provided. The sentiment must be one of three string values: "positive", "negative", or "neutral".
 
-      Return the output *only* as a single JSON object with the following structure:
+      Return the output *only* as a single JSON object. Do not include any other text or formatting. Here is the required structure with an example:
       {
-        "entities": [{"id", "label", "type", "sentiment"}],
-        "relationships": [{"source", "target", "label", "sentiment"}]
+        "entities": [
+          {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral"}
+        ],
+        "relationships": [
+          {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral"}
+        ]
       }
       
       Use only the following specific entity types: PERSON, ORG, LOCATION, DATE, EVENT, PRODUCT, CONCEPT, JOB_TITLE, FIELD_OF_STUDY, THEORY, ART_WORK.
