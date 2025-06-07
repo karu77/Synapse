@@ -28,6 +28,11 @@ const upload = multer({ storage })
 app.use(cors())
 app.use(express.json())
 
+// Add a simple root route for health checks and to avoid "Cannot GET /"
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Synapse Backend API is running.' })
+})
+
 // API Routes
 app.use('/api/users', userRoutes)
 app.use('/api/history', historyRoutes)
