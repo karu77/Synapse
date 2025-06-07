@@ -25,7 +25,16 @@ const port = process.env.PORT || 3000
 const storage = multer.memoryStorage()
 const upload = multer({ storage })
 
-app.use(cors())
+// Explicitly configure CORS to be more permissive for production
+app.use(
+  cors({
+    origin: '*', // Allow all origins
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  })
+)
+
 app.use(express.json())
 
 // Add a simple root route for health checks and to avoid "Cannot GET /"
