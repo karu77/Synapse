@@ -8,15 +8,17 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 // Helper to extract graph data from Gemini response
 const extractGraphData = (response: string) => {
   try {
+    console.log('Raw Gemini response received:\n', response)
     const jsonMatch = response.match(/```json\s*([\s\S]*?)```/i) || response.match(/```\s*([\s\S]*?)```/i)
-    const jsonString = jsonMatch ? jsonMatch[1] : response
+    const jsonString = jsonMatch ? jsonMatch[1].trim() : response.trim()
+    console.log('Attempting to parse JSON string:\n', jsonString)
     const data = JSON.parse(jsonString)
     return {
       nodes: data.entities || [],
       edges: data.relationships || [],
     }
   } catch (error) {
-    console.error('Error parsing Gemini response:', error)
+    console.error('Error parsing Gemini response. Raw string was:', jsonString, 'Error:', error)
     return { nodes: [], edges: [] }
   }
 }
@@ -86,6 +88,10 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     const text = response.text()
 
     const graphData = extractGraphData(text)
+
+    if (graphData.nodes.length === 0 && graphData.edges.length === 0) {
+      return res.status(500).json({ error: 'Failed to parse a valid graph from the AI response.'})
+    }
 
     // Save to history
     const historyItem = new History({
