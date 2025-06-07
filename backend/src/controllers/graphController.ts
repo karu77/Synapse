@@ -7,10 +7,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 // Helper to extract graph data from Gemini response
 const extractGraphData = (response: string) => {
+  let jsonString = ''
   try {
     console.log('Raw Gemini response received:\n', response)
     const jsonMatch = response.match(/```json\s*([\s\S]*?)```/i) || response.match(/```\s*([\s\S]*?)```/i)
-    const jsonString = jsonMatch ? jsonMatch[1].trim() : response.trim()
+    jsonString = jsonMatch ? jsonMatch[1].trim() : response.trim()
     console.log('Attempting to parse JSON string:\n', jsonString)
     const data = JSON.parse(jsonString)
     return {
