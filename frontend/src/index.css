@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light Theme */
+  --color-text: #111827;
+  --color-text-muted: #6b7280;
+  --color-bg: #f9fafb;
+  --color-bg-accent: #ffffff;
+  --color-border: #d1d5db;
+  --color-btn-primary: #1f2937;
+  --color-btn-primary-text: #ffffff;
+}
+
+.dark {
+  /* Dark Theme */
+  --color-text: #ffffff;
+  --color-text-muted: #9ca3af;
+  --color-bg: #181818;
+  --color-bg-accent: #212121;
+  --color-border: #4b5563;
+  --color-btn-primary: #f9fafb;
+  --color-btn-primary-text: #1f2937;
+}
+
+html,
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @apply bg-skin-bg text-skin-text;
+}
+

@@ -1,0 +1,108 @@
+import { Request, Response } from 'express'
+import History from '../models/History'
+import { GoogleGenerativeAI, Part } from '@google/generative-ai'
+import axios from 'axios'
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+
+// Helper to extract graph data from Gemini response
+const extractGraphData = (response: string) => {
+  try {
+    const jsonMatch = response.match(/```json\s*([\s\S]*?)```/i) || response.match(/```\s*([\s\S]*?)```/i)
+    const jsonString = jsonMatch ? jsonMatch[1] : response
+    const data = JSON.parse(jsonString)
+    return {
+      nodes: data.entities || [],
+      edges: data.relationships || [],
+    }
+  } catch (error) {
+    console.error('Error parsing Gemini response:', error)
+    return { nodes: [], edges: [] }
+  }
+}
+
+// Helper to convert buffer to a Gemini-compatible part
+const fileToGenerativePart = (file: Express.Multer.File): Part => {
+  return {
+    inlineData: {
+      data: file.buffer.toString('base64'),
+      mimeType: file.mimetype,
+    },
+  }
+}
+
+export const generateGraphAndSave = async (req: Request, res: Response) => {
+  try {
+    const { textInput, audioVideoURL } = req.body
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] }
+
+    let audioPart: Part | null = null
+    const hasImage = files.imageFile && files.imageFile.length > 0
+
+    if (files.audioFile && files.audioFile.length > 0) {
+      audioPart = fileToGenerativePart(files.audioFile[0])
+    } else if (audioVideoURL) {
+      try {
+        const response = await axios.get(audioVideoURL, { responseType: 'arraybuffer' })
+        const mimeType = response.headers['content-type'] || 'application/octet-stream'
+        const data = Buffer.from(response.data).toString('base64')
+        audioPart = { inlineData: { data, mimeType } }
+      } catch (urlError) {
+        console.error(`Failed to download from URL: ${audioVideoURL}`, urlError)
+      }
+    }
+
+    if (!textInput && !hasImage && !audioPart) {
+      return res.status(400).json({ error: 'At least one input is required.' })
+    }
+
+    const promptMessages = [/*...same prompt logic as before...*/]
+    // ... logic to build promptMessages array ...
+    
+    const textPrompt = `Analyze the provided inputs to extract entities and relationships.
+      The user provided:
+      ${textInput ? `Text: "${textInput}"` : ''}
+      ${hasImage ? 'An image file.' : ''}
+      ${audioPart ? 'An audio/video file.' : ''}
+
+      For each entity and relationship, you must determine its sentiment from the context provided. The sentiment must be one of three string values: "positive", "negative", or "neutral".
+
+      Return the output *only* as a single JSON object with the following structure:
+      {
+        "entities": [{"id", "label", "type", "sentiment"}],
+        "relationships": [{"source", "target", "label", "sentiment"}]
+      }
+      
+      Use only the following specific entity types: PERSON, ORG, LOCATION, DATE, EVENT, PRODUCT, CONCEPT, JOB_TITLE, FIELD_OF_STUDY, THEORY, ART_WORK.
+    `
+
+    const promptParts: Part[] = [{ text: textPrompt }]
+    if (hasImage) promptParts.push(fileToGenerativePart(files.imageFile[0]))
+    if (audioPart) promptParts.push(audioPart)
+    
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    const result = await model.generateContent(promptParts)
+    const response = await result.response
+    const text = response.text()
+
+    const graphData = extractGraphData(text)
+
+    // Save to history
+    const historyItem = new History({
+      user: req.user._id,
+      graphData,
+      inputs: {
+        textInput: textInput || '',
+        audioVideoURL: audioVideoURL || '',
+        imageFileName: files.imageFile ? files.imageFile[0].originalname : '',
+        audioFileName: files.audioFile ? files.audioFile[0].originalname : '',
+      },
+    })
+    await historyItem.save()
+
+    res.status(201).json(graphData)
+  } catch (error) {
+    console.error('Error generating graph:', error)
+    res.status(500).json({ error: 'Failed to generate graph' })
+  }
+} 
