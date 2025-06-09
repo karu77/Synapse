@@ -301,7 +301,7 @@ const GraphVisualization = forwardRef(
         }
 
         const network = networkInstance.current
-        const nodes = network.body.data.nodes.get()
+        const renderedNodes = network.body.nodes // CORRECT: Use the internal, rendered nodes
         const edges = network.body.data.edges.get()
         const nodePositions = network.getPositions()
         const boundingBox = network.getBoundingBox()
@@ -317,7 +317,7 @@ const GraphVisualization = forwardRef(
         const height = boundingBox.bottom - boundingBox.top + 2 * padding
         const viewBox = `${boundingBox.left - padding} ${boundingBox.top - padding} ${width} ${height}`
 
-        const svgDefs = `<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>`
+        const svgDefs = `<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>`
 
         let edgePaths = '<g>'
         edges.forEach((edge) => {
@@ -325,10 +325,10 @@ const GraphVisualization = forwardRef(
           const toPos = nodePositions[edge.to]
           if (!fromPos || !toPos) return
 
-          const toNode = nodes.find((n) => n.id === edge.to)
+          const toNode = renderedNodes[edge.to]
           if (!toNode) return
 
-          const toNodeSize = (toNode.size || 25) + (toNode.borderWidth || 3)
+          const toNodeSize = toNode.shape.size + toNode.shape.borderWidth
 
           const edgeColor = edge.color?.color || getEdgeColor(edge.sentiment)
           const dx = toPos.x - fromPos.x
@@ -336,8 +336,9 @@ const GraphVisualization = forwardRef(
           const dist = Math.sqrt(dx * dx + dy * dy)
           if (dist === 0) return
 
-          const newToX = toPos.x - (dx / dist) * (toNodeSize + 5)
-          const newToY = toPos.y - (dy / dist) * (toNodeSize + 5)
+          const arrowOffset = 5 // Add a small gap between arrow and node shape
+          const newToX = toPos.x - (dx / dist) * (toNodeSize + arrowOffset)
+          const newToY = toPos.y - (dy / dist) * (toNodeSize + arrowOffset)
 
           edgePaths += `<line x1="${fromPos.x}" y1="${fromPos.y}" x2="${newToX}" y2="${newToY}" stroke="${edgeColor}" stroke-width="2" marker-end="url(#arrowhead)" color="${edgeColor}" />`
 
@@ -352,39 +353,38 @@ const GraphVisualization = forwardRef(
         edgePaths += '</g>'
 
         let nodeElements = '<g>'
-        nodes.forEach((node) => {
+        Object.values(renderedNodes).forEach((node) => {
           const pos = nodePositions[node.id]
           if (!pos) return
 
-          const color = node.color.background
-          const shape = node.shape || 'dot'
-          const nodeSize = node.size || 25
-          const label = escapeXml(node.label)
+          const color = node.options.color.background
+          const shape = node.shape.name
+          const nodeSize = node.shape.size
+          const label = escapeXml(node.options.label)
+          const labelColor = node.options.font.color || defaultTextColor
 
           if (shape === 'dot' || shape === 'circle') {
             nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
-            nodeElements += `<text x="${pos.x}" y="${pos.y}" font-family="Inter, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central">${label}</text>`
+            // Use the font color vis.js determined for better contrast
+            nodeElements += `<text x="${pos.x}" y="${pos.y}" font-family="Inter, sans-serif" font-size="14" fill="${labelColor}" text-anchor="middle" dominant-baseline="central">${label}</text>`
           } else {
             // All other shapes will have label below
             const width = nodeSize * 2
             const height = nodeSize * 2
+            const x = pos.x - nodeSize
+            const y = pos.y - nodeSize
+
             if (shape === 'box' || shape === 'square') {
-              nodeElements += `<rect x="${
-                pos.x - nodeSize
-              }" y="${pos.y - nodeSize}" width="${width}" height="${height}" fill="${color}" rx="3" />`
+              nodeElements += `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${color}" rx="3" />`
             } else if (shape === 'diamond') {
-              nodeElements += `<rect x="${
-                pos.x - nodeSize
-              }" y="${pos.y - nodeSize}" width="${width}" height="${height}" fill="${color}" transform="rotate(45, ${
-                pos.x
-              }, ${pos.y})" />`
+              nodeElements += `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${color}" transform="rotate(45, ${pos.x}, ${pos.y})" />`
             } else {
               // Fallback for star, triangle, etc.
               nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
             }
             nodeElements += `<text x="${pos.x}" y="${
               pos.y + nodeSize + 8
-            }" font-family="Inter, sans-serif" font-size="14" fill="${defaultTextColor}" text-anchor="middle" dominant-baseline="hanging">${label}</text>`
+            }" font-family="Inter, sans-serif" font-size="14" fill="${labelColor}" text-anchor="middle" dominant-baseline="hanging">${label}</text>`
           }
         })
         nodeElements += '</g>'
