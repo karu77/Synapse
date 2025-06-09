@@ -3,25 +3,25 @@
 @tailwind utilities;
 
 :root {
-  /* Light Theme */
-  --color-text: #111827;
-  --color-text-muted: #6b7280;
-  --color-bg: #f9fafb;
-  --color-bg-accent: #ffffff;
-  --color-border: #d1d5db;
-  --color-btn-primary: #1f2937;
-  --color-btn-primary-text: #ffffff;
+  /* Modern Light Theme */
+  --color-text: #1e293b; /* slate-800 */
+  --color-text-muted: #64748b; /* slate-500 */
+  --color-bg: #f8fafc; /* slate-50 */
+  --color-bg-accent: #ffffff; /* white */
+  --color-border: #e2e8f0; /* slate-200 */
+  --color-btn-primary: #8b5cf6; /* violet-500 */
+  --color-btn-primary-text: #ffffff; /* white */
 }
 
 .dark {
-  /* Dark Theme */
-  --color-text: #ffffff;
-  --color-text-muted: #9ca3af;
-  --color-bg: #181818;
-  --color-bg-accent: #212121;
-  --color-border: #4b5563;
-  --color-btn-primary: #f9fafb;
-  --color-btn-primary-text: #1f2937;
+  /* Modern Dark Theme */
+  --color-text: #f1f5f9; /* slate-100 */
+  --color-text-muted: #94a3b8; /* slate-400 */
+  --color-bg: #0f172a; /* slate-900 */
+  --color-bg-accent: #1e293b; /* slate-800 */
+  --color-border: #334155; /* slate-700 */
+  --color-btn-primary: #8b5cf6; /* violet-500 */
+  --color-btn-primary-text: #ffffff; /* white */
 }
 
 html,

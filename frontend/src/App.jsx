@@ -14,10 +14,10 @@ import {
 import { useAuth } from './contexts/AuthContext'
 
 const defaultPhysicsOptions = {
-  gravitationalConstant: -8000,
-  springLength: 250,
+  gravitationalConstant: -25000,
+  springLength: 200,
   springConstant: 0.04,
-  damping: 0.09,
+  damping: 0.3,
 }
 
 const defaultStyleOptions = {

@@ -1,8 +1,6 @@
 import { useState } from 'react'
 
 const CustomizationPanel = ({ options, onUpdate, onReset }) => {
-  const [isOpen, setIsOpen] = useState(false)
-
   const handleChange = (e) => {
     const { name, value, type } = e.target
     const parsedValue = type === 'range' || type === 'number' ? parseFloat(value) : value
@@ -12,78 +10,60 @@ const CustomizationPanel = ({ options, onUpdate, onReset }) => {
     })
   }
 
-  if (!isOpen) {
-    return (
-      <div className="mt-6 pt-6 border-t border-skin-border">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="text-lg font-bold text-skin-text w-full text-left"
-        >
-          Graph Customization &raquo;
-        </button>
-      </div>
-    )
-  }
-
   return (
-    <div className="mt-6 pt-6 border-t border-skin-border">
-      <div className="flex justify-between items-center mb-4">
-        <h3
-          className="text-xl font-bold text-skin-text cursor-pointer"
-          onClick={() => setIsOpen(false)}
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <button
+          onClick={onReset}
+          className="text-sm font-semibold text-skin-text-muted hover:text-skin-text transition-colors"
         >
-          Graph Customization
-        </h3>
-        <button onClick={onReset} className="text-sm text-skin-text-muted hover:text-skin-text">
-          Reset to Default
+          Reset
         </button>
       </div>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-skin-text">
-            Gravity: {options.gravitationalConstant}
-          </label>
-          <input
-            type="range"
-            name="gravitationalConstant"
-            min={-20000}
-            max={0}
-            step={100}
-            value={options.gravitationalConstant}
-            onChange={handleChange}
-            className="w-full h-2 bg-skin-border rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-skin-text">
-            Spring Length: {options.springLength}
-          </label>
-          <input
-            type="range"
-            name="springLength"
-            min={50}
-            max={500}
-            step={10}
-            value={options.springLength}
-            onChange={handleChange}
-            className="w-full h-2 bg-skin-border rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-skin-text">
-            Damping: {options.damping}
-          </label>
-          <input
-            type="range"
-            name="damping"
-            min={0}
-            max={1}
-            step={0.01}
-            value={options.damping}
-            onChange={handleChange}
-            className="w-full h-2 bg-skin-border rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-skin-text-muted">
+          Gravity: <span className="font-semibold text-skin-text">{options.gravitationalConstant}</span>
+        </label>
+        <input
+          type="range"
+          name="gravitationalConstant"
+          min={-40000}
+          max={-1000}
+          step={500}
+          value={options.gravitationalConstant}
+          onChange={handleChange}
+          className="w-full h-2 bg-skin-border rounded-lg appearance-none cursor-pointer"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-skin-text-muted">
+          Spring Length: <span className="font-semibold text-skin-text">{options.springLength}</span>
+        </label>
+        <input
+          type="range"
+          name="springLength"
+          min={50}
+          max={500}
+          step={10}
+          value={options.springLength}
+          onChange={handleChange}
+          className="w-full h-2 bg-skin-border rounded-lg appearance-none cursor-pointer"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-skin-text-muted">
+          Damping: <span className="font-semibold text-skin-text">{options.damping}</span>
+        </label>
+        <input
+          type="range"
+          name="damping"
+          min={0.05}
+          max={0.5}
+          step={0.01}
+          value={options.damping}
+          onChange={handleChange}
+          className="w-full h-2 bg-skin-border rounded-lg appearance-none cursor-pointer"
+        />
       </div>
     </div>
   )

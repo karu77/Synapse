@@ -38,7 +38,7 @@ const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
         {history.map((item) => (
           <div
             key={item._id}
-            className="p-3 rounded-lg bg-skin-bg flex justify-between items-center cursor-pointer hover:bg-skin-border"
+            className="p-3 rounded-lg bg-skin-bg flex justify-between items-center cursor-pointer hover:bg-skin-border transition-colors duration-200"
             onClick={() => onSelect(item)}
           >
             <span className="text-sm font-medium text-skin-text truncate">
@@ -49,7 +49,7 @@ const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
                 e.stopPropagation() // Prevent onSelect from firing
                 onDelete(item._id)
               }}
-              className="text-skin-text-muted hover:text-skin-text ml-4"
+              className="text-skin-text-muted hover:text-skin-text ml-4 transition-colors"
               aria-label="Delete history item"
             >
               &times;

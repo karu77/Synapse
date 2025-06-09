@@ -3,52 +3,75 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getNodeColor } from '../utils/colors'
 import { useTheme } from '../contexts/ThemeContext'
 
+const panelVariants = {
+  hidden: { opacity: 0, y: '100%' },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', damping: 25, stiffness: 180 },
+  },
+  exit: {
+    opacity: 0,
+    y: '100%',
+    transition: { duration: 0.2, ease: 'easeIn' },
+  },
+}
+
 const NodeInfoPanel = ({ node, onClose }) => {
   const { theme } = useTheme()
-  if (!node) return null
-
-  const nodeColor = getNodeColor(node.type, theme)
 
   return (
     <AnimatePresence>
       {node && (
         <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 50, scale: 0.9 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="fixed bottom-4 right-4 z-50 w-full max-w-sm p-6 bg-skin-bg-accent rounded-2xl shadow-2xl border border-skin-border"
+          key={node.id}
+          variants={panelVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:left-auto sm:bottom-4 sm:right-4 sm:w-full sm:max-w-sm"
         >
-          <div className="flex justify-between items-center mb-4">
-            <h3
-              className="text-lg font-bold text-skin-text truncate pr-4"
-              style={{ borderLeft: `4px solid ${nodeColor}`, paddingLeft: '10px' }}
-            >
-              {node.label || 'Node Information'}
-            </h3>
-            <button
-              onClick={onClose}
-              className="p-1 rounded-full text-skin-text-muted hover:bg-skin-border hover:text-skin-text transition-colors"
-            >
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="space-y-3 text-sm text-skin-text-muted">
-            {Object.entries(node).map(([key, value]) => {
-              // Filter out properties we don't want to display directly
-              if (['id', 'label', 'x', 'y', 'vx', 'vy', 'fx', 'fy'].includes(key)) {
-                return null
-              }
-              // Nicely format the key
-              const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())
+          <div className="p-6 bg-skin-bg-accent/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-skin-border">
+            <div className="flex justify-between items-start mb-4 gap-4">
+              <div className="flex-grow">
+                <p
+                  className="text-sm font-semibold uppercase tracking-wider"
+                  style={{ color: getNodeColor(node.type, theme) }}
+                >
+                  {node.type || 'Entity'}
+                </p>
+                <h3 className="text-xl font-bold text-skin-text break-words">
+                  {node.label || 'Node Information'}
+                </h3>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-1 rounded-full text-skin-text-muted hover:bg-skin-border hover:text-skin-text transition-colors flex-shrink-0"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="space-y-2 text-sm text-skin-text-muted max-h-48 overflow-y-auto pr-2">
+              {Object.entries(node)
+                .filter(
+                  ([key]) => !['id', 'label', 'x', 'y', 'vx', 'vy', 'fx', 'fy', 'type'].includes(key)
+                )
+                .map(([key, value]) => {
+                  const formattedKey = key
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/^./, (str) => str.toUpperCase())
 
-              return (
-                <div key={key} className="flex justify-between">
-                  <span className="font-semibold text-skin-text">{formattedKey}:</span>
-                  <span className="truncate pl-4">{String(value)}</span>
-                </div>
-              )
-            })}
+                  return (
+                    <div
+                      key={key}
+                      className="flex justify-between items-center bg-skin-bg p-2 rounded-md"
+                    >
+                      <span className="font-semibold text-skin-text">{formattedKey}:</span>
+                      <span className="truncate pl-4 text-right">{String(value)}</span>
+                    </div>
+                  )
+                })}
+            </div>
           </div>
         </motion.div>
       )}

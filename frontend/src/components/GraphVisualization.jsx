@@ -296,20 +296,29 @@ const GraphVisualization = forwardRef(
           const toPos = nodePositions[edge.target]
           if (!fromPos || !toPos) return
 
+          const toNode = nodes.find((n) => n.id === edge.target)
+          if (!toNode) return
+
+          const toNodeShape = styleOptions.nodeShapes[toNode.type] || 'sphere'
+          const toNodeSize = toNodeShape === 'sphere' ? 40 : 30
+
           const edgeColor = getEdgeColor(edge.sentiment)
-          const nodeSize = 30
           const dx = toPos.x - fromPos.x
           const dy = toPos.y - fromPos.y
           const dist = Math.sqrt(dx * dx + dy * dy)
-          const newToX = toPos.x - (dx / dist) * (nodeSize + 5) // +5 for padding
-          const newToY = toPos.y - (dy / dist) * (nodeSize + 5)
+          if (dist === 0) return // Avoid division by zero for overlapping nodes
+
+          const newToX = toPos.x - (dx / dist) * (toNodeSize + 5) // +5 for padding
+          const newToY = toPos.y - (dy / dist) * (toNodeSize + 5)
 
           edgePaths += `<line x1="${fromPos.x}" y1="${fromPos.y}" x2="${newToX}" y2="${newToY}" stroke="${edgeColor}" stroke-width="2" marker-end="url(#arrowhead)" color="${edgeColor}" />`
 
           const midX = (fromPos.x + toPos.x) / 2
           const midY = (fromPos.y + toPos.y) / 2
           const edgeLabelColor = theme === 'light' ? '#111827' : '#E0E0E0'
-          edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter" font-size="12" fill="${edgeLabelColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${escapeXml(edge.label)}</text>`
+          edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter" font-size="12" fill="${edgeLabelColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${escapeXml(
+            edge.label
+          )}</text>`
         })
         edgePaths += '</g>'
 
@@ -320,7 +329,7 @@ const GraphVisualization = forwardRef(
 
           const color = getNodeColor(node.type, theme)
           const shape = styleOptions.nodeShapes[node.type] || 'sphere'
-          const nodeSize = 30
+          const nodeSize = shape === 'sphere' ? 40 : 30
 
           if (shape === 'sphere') {
             const gradId = gradients[color]
@@ -367,8 +376,8 @@ const GraphVisualization = forwardRef(
         link.click()
         document.body.removeChild(link)
         URL.revokeObjectURL(url)
-      },
-    }))
+      }
+    }));
 
     return (
       <div className="h-full w-full relative">
