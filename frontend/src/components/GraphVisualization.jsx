@@ -3,6 +3,26 @@ import { Network } from 'vis-network'
 import { getNodeColor, getEdgeColor } from '../utils/colors'
 import { useTheme } from '../contexts/ThemeContext'
 
+const escapeXml = (unsafe) => {
+  if (typeof unsafe !== 'string') {
+    return unsafe
+  }
+  return unsafe.replace(/[<>&'"]/g, function (c) {
+    switch (c) {
+      case '<':
+        return '&lt;'
+      case '>':
+        return '&gt;'
+      case '&':
+        return '&amp;'
+      case "'":
+        return '&apos;'
+      case '"':
+        return '&quot;'
+    }
+  })
+}
+
 // Helper function to create a 3D-like sphere image using a radial gradient in SVG
 const createSphereImage = (color) => {
   const lighterColor = '#FFFFFF' // Highlight color for the gradient
@@ -81,7 +101,7 @@ const GraphVisualization = forwardRef(
 
         // Create gradients for sphere nodes and a single arrow marker
         svgDefs += `
-<marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
   <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
 </marker>`
 
@@ -122,7 +142,7 @@ const GraphVisualization = forwardRef(
           const midX = (fromPos.x + toPos.x) / 2
           const midY = (fromPos.y + toPos.y) / 2
           const edgeLabelColor = theme === 'light' ? '#111827' : '#E0E0E0'
-          edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter" font-size="12" fill="${edgeLabelColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${edge.label}</text>`
+          edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter" font-size="12" fill="${edgeLabelColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${escapeXml(edge.label)}</text>`
         })
         edgePaths += '</g>'
 
@@ -153,9 +173,9 @@ const GraphVisualization = forwardRef(
           }
           nodeElements += `<text x="${pos.x}" y="${
             pos.y + nodeSize + 14
-          }" font-family="Inter" font-size="14" fill="${textColor}" text-anchor="middle">${
+          }" font-family="Inter" font-size="14" fill="${textColor}" text-anchor="middle">${escapeXml(
             node.label
-          }</text>`
+          )}</text>`
         })
         nodeElements += '</g>'
 
