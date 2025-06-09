@@ -3,25 +3,27 @@
 @tailwind utilities;
 
 :root {
-  /* Modern Light Theme */
-  --color-text: #1e293b; /* slate-800 */
-  --color-text-muted: #64748b; /* slate-500 */
-  --color-bg: #f1f5f9; /* slate-100 */
-  --color-bg-accent: #ffffff; /* white */
-  --color-border: #cbd5e1; /* slate-300 */
+  /* Inspired by user-provided "Gray tones for light mode" */
+  --color-text: #464c56; /* All Text / Active Icons */
+  --color-text-muted: #b9bcc0; /* Subtle Text / Component Borders */
+  --color-bg: #ffffff; /* Page background */
+  --color-bg-accent: #f7f7f8; /* Soft Background (for components) */
+  --color-border: #b9bcc0; /* Component Borders */
   --color-btn-primary: #8b5cf6; /* violet-500 */
   --color-btn-primary-text: #ffffff; /* white */
+  --gradient-color: hsla(0, 0%, 0%, 0.03);
 }
 
 .dark {
-  /* Modern Dark Theme */
-  --color-text: #f1f5f9; /* slate-100 */
-  --color-text-muted: #94a3b8; /* slate-400 */
-  --color-bg: #0f172a; /* slate-900 */
-  --color-bg-accent: #1e293b; /* slate-800 */
-  --color-border: #334155; /* slate-700 */
+  /* Inspired by user-provided "Gray tones for dark mode" */
+  --color-text: #d4d7db; /* All Text / Active Icons */
+  --color-text-muted: #6e757d; /* Subtle Text / Component Borders */
+  --color-bg: #2c3138; /* Soft Background */
+  --color-bg-accent: #4a5058; /* Soft Borders / Disabled (for components) */
+  --color-border: #6e757d; /* Component Borders */
   --color-btn-primary: #8b5cf6; /* violet-500 */
   --color-btn-primary-text: #ffffff; /* white */
+  --gradient-color: hsla(0, 0%, 100%, 0.05);
 }
 
 html,
@@ -43,7 +45,7 @@ body::before {
   width: 100vw;
   z-index: -1;
   background: var(--color-bg);
-  background-image: radial-gradient(circle at 10% 10%, hsla(0, 0%, 100%, 0.05) 0px, transparent 50%),
-    radial-gradient(circle at 90% 80%, hsla(0, 0%, 100%, 0.05) 0px, transparent 50%);
+  background-image: radial-gradient(circle at 10% 10%, var(--gradient-color) 0px, transparent 50%),
+    radial-gradient(circle at 90% 80%, var(--gradient-color) 0px, transparent 50%);
 }
 
