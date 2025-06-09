@@ -199,7 +199,14 @@ const GraphVisualization = forwardRef(
           }
         })
 
-        networkInstance.current.setData({ nodes: nodesWithImages, edges: data.edges })
+        const visEdges = data.edges.map((edge) => ({
+          from: edge.source,
+          to: edge.target,
+          label: edge.label,
+          color: getEdgeColor(edge.sentiment),
+        }))
+
+        networkInstance.current.setData({ nodes: nodesWithImages, edges: visEdges })
       }
     }, [data, theme, styleOptions.nodeShapes, styleOptions.nodeColors])
 
