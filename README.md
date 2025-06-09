@@ -46,10 +46,9 @@ Follow these instructions to get the project running on your local machine for d
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/synapse.git
+    git clone https://github.com/karu77/Synapse.git
     cd synapse
     ```
-    (Note: You'll need to replace `your-username/synapse.git` with the actual URL of your repository if you've hosted it on GitHub.)
 
 2.  **Install all dependencies for both frontend and backend:**
     From the root directory, run:

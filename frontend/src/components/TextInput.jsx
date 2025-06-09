@@ -139,7 +139,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
               : 'bg-skin-btn-primary text-skin-btn-primary-text hover:opacity-90 focus:ring-skin-btn-primary'
           }`}
         >
-          {isProcessing ? 'Processing...' : 'Generate Graph'}
+          {isProcessing ? 'Generating...' : 'Generate Graph'}
         </button>
       </div>
     </div>

@@ -172,7 +172,7 @@ function App() {
 
       <main className="flex-1 flex flex-col relative">
         <header className="absolute top-0 left-0 right-0 z-20 p-4">
-          <div className="max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full p-2 pl-4 border border-skin-border shadow-lg">
+          <div className="max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full p-2 pl-4 border border-skin-border shadow-xl">
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleSidebar}
@@ -189,7 +189,7 @@ function App() {
                 <button
                   onClick={handleDownloadPNG}
                   disabled={isProcessing || graphData.nodes.length === 0 || !isGraphReady}
-                  className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-110"
                   aria-label="Download graph as PNG"
                 >
                   <ArrowDownTrayIcon className="h-5 w-5" />
@@ -197,7 +197,7 @@ function App() {
                 <button
                   onClick={handleDownloadSVG}
                   disabled={isProcessing || graphData.nodes.length === 0 || !isGraphReady}
-                  className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-110"
                   aria-label="Download graph as SVG"
                 >
                   <DocumentArrowDownIcon className="h-5 w-5" />

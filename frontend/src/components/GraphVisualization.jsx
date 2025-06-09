@@ -383,7 +383,7 @@ const GraphVisualization = forwardRef(
       <div className="h-full w-full relative">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
-            <div className="text-white text-lg font-semibold">Processing...</div>
+            <div className="text-white text-lg font-semibold">Generating...</div>
           </div>
         )}
         <div ref={containerRef} className="h-full w-full" />

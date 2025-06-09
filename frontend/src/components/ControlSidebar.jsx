@@ -16,19 +16,19 @@ const sidebarVariants = {
   open: {
     x: 0,
     transition: {
-      type: 'spring',
-      stiffness: 300,
-      damping: 30,
-      staggerChildren: 0.07,
-      delayChildren: 0.2,
+      type: 'tween',
+      ease: 'circOut',
+      duration: 0.5,
+      staggerChildren: 0.05,
+      delayChildren: 0.1,
     },
   },
   closed: {
     x: '-100%',
     transition: {
-      type: 'spring',
-      stiffness: 400,
-      damping: 40,
+      type: 'tween',
+      ease: 'circIn',
+      duration: 0.3,
     },
   },
 }
@@ -42,7 +42,7 @@ const itemVariants = {
     },
   },
   closed: {
-    y: 50,
+    y: 20,
     opacity: 0,
     transition: {
       y: { stiffness: 1000 },

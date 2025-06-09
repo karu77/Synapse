@@ -6,9 +6,9 @@
   /* Modern Light Theme */
   --color-text: #1e293b; /* slate-800 */
   --color-text-muted: #64748b; /* slate-500 */
-  --color-bg: #f8fafc; /* slate-50 */
+  --color-bg: #f1f5f9; /* slate-100 */
   --color-bg-accent: #ffffff; /* white */
-  --color-border: #e2e8f0; /* slate-200 */
+  --color-border: #cbd5e1; /* slate-300 */
   --color-btn-primary: #8b5cf6; /* violet-500 */
   --color-btn-primary-text: #ffffff; /* white */
 }
@@ -32,5 +32,18 @@ body {
 
 body {
   @apply bg-skin-bg text-skin-text;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  z-index: -1;
+  background: var(--color-bg);
+  background-image: radial-gradient(circle at 10% 10%, hsla(0, 0%, 100%, 0.05) 0px, transparent 50%),
+    radial-gradient(circle at 90% 80%, hsla(0, 0%, 100%, 0.05) 0px, transparent 50%);
 }
 

@@ -29,7 +29,7 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-skin-bg">
-      <div className="max-w-md w-full bg-skin-bg-accent p-8 rounded-lg shadow-lg">
+      <div className="max-w-md w-full bg-skin-bg-accent p-8 rounded-lg shadow-xl">
         <h1 className="text-4xl font-extrabold text-skin-text text-center mb-6">Synapse</h1>
         <h2 className="text-2xl font-bold text-skin-text text-center mb-8">Create an Account</h2>
         {error && <p className="bg-red-500 text-white p-3 rounded mb-4">{error}</p>}

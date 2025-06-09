@@ -51,12 +51,32 @@ const NodeInfoPanel = ({ node, onClose }) => {
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
-            <div className="space-y-2 text-sm text-skin-text-muted max-h-48 overflow-y-auto pr-2">
+            <div className="space-y-3 text-sm text-skin-text-muted max-h-48 overflow-y-auto pr-2">
+              <h4 className="text-sm font-semibold text-skin-text border-b border-skin-border pb-2 mb-2">
+                Details
+              </h4>
               {Object.entries(node)
                 .filter(
-                  ([key]) => !['id', 'label', 'x', 'y', 'vx', 'vy', 'fx', 'fy', 'type'].includes(key)
+                  ([key]) =>
+                    ![
+                      'label',
+                      'type',
+                      'x',
+                      'y',
+                      'vx',
+                      'vy',
+                      'fx',
+                      'fy',
+                      'color',
+                      'shape',
+                      'image',
+                      'size',
+                      'font',
+                    ].includes(key)
                 )
                 .map(([key, value]) => {
+                  if (value === null || value === undefined) return null
+
                   const formattedKey = key
                     .replace(/([A-Z])/g, ' $1')
                     .replace(/^./, (str) => str.toUpperCase())
@@ -64,10 +84,10 @@ const NodeInfoPanel = ({ node, onClose }) => {
                   return (
                     <div
                       key={key}
-                      className="flex justify-between items-center bg-skin-bg p-2 rounded-md"
+                      className="flex justify-between items-start gap-4 bg-skin-bg p-2 rounded-md"
                     >
                       <span className="font-semibold text-skin-text">{formattedKey}:</span>
-                      <span className="truncate pl-4 text-right">{String(value)}</span>
+                      <span className="break-all text-right">{String(value)}</span>
                     </div>
                   )
                 })}

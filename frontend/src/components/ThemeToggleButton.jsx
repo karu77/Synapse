@@ -7,7 +7,7 @@ const ThemeToggleButton = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-full text-skin-text hover:bg-skin-bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-skin-border transition-colors"
+      className="p-2 rounded-full text-skin-text hover:bg-skin-border focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-skin-border transition-all hover:scale-110"
       aria-label="Toggle theme"
     >
       {theme === 'light' ? (
