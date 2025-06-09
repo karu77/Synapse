@@ -1,6 +1,5 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { Network } from 'vis-network'
-import jsPDF from 'jspdf'
 import { getNodeColor, getEdgeColor } from '../utils/colors'
 import { useTheme } from '../contexts/ThemeContext'
 
