@@ -32,9 +32,14 @@ const extractGraphData = (response: string) => {
     console.log('Attempting to parse extracted JSON string.')
     const data = JSON.parse(jsonString)
 
+    const relationshipsWithIds = (data.relationships || []).map((edge: any, index: number) => ({
+      ...edge,
+      id: `edge_${Date.now()}_${index}`,
+    }))
+
     return {
       nodes: data.entities || [],
-      edges: data.relationships || [],
+      edges: relationshipsWithIds,
     }
   } catch (error) {
     console.error('Failed to parse JSON from AI response.', { 

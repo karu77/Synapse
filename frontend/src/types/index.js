@@ -16,6 +16,7 @@
 
 /**
  * @typedef {Object} Edge
+ * @property {string} id
  * @property {string} source
  * @property {string} target
  * @property {string} label

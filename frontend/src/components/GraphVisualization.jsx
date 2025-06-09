@@ -25,7 +25,7 @@ const escapeXml = (unsafe) => {
 
 const GraphVisualization = forwardRef(
   (
-    { data, isLoading, setTooltip, setSelectedNode, physicsOptions, styleOptions, onGraphReady },
+    { data, isLoading, setTooltip, setSelectedNode, setSelectedEdge, physicsOptions, styleOptions, onGraphReady },
     ref
   ) => {
     const containerRef = useRef(null)
@@ -55,8 +55,17 @@ const GraphVisualization = forwardRef(
             const nodeId = event.nodes[0]
             const node = dataRef.current.nodes.find((n) => n.id === nodeId)
             setSelectedNode(node)
+            setSelectedEdge(null)
+          } else if (event.edges.length > 0) {
+            const edgeId = event.edges[0]
+            const edge = dataRef.current.edges.find((e) => e.id === edgeId)
+            if (edge) {
+              setSelectedEdge(edge)
+              setSelectedNode(null)
+            }
           } else {
             setSelectedNode(null)
+            setSelectedEdge(null)
           }
         })
 
@@ -75,7 +84,26 @@ const GraphVisualization = forwardRef(
           }
         })
 
+        network.on('hoverEdge', ({ edge, event }) => {
+          const edgeData = dataRef.current.edges.find((e) => e.id === edge)
+          if (edgeData) {
+            const content = `<b>${edgeData.label}</b><br>${
+              edgeData.sentiment ? `Sentiment: ${edgeData.sentiment}` : ''
+            }`
+            setTooltip({
+              visible: true,
+              content,
+              x: event.pointer.DOM.x,
+              y: event.pointer.DOM.y,
+            })
+          }
+        })
+
         network.on('blurNode', () => {
+          setTooltip({ visible: false, content: '', x: 0, y: 0 })
+        })
+
+        network.on('blurEdge', () => {
           setTooltip({ visible: false, content: '', x: 0, y: 0 })
         })
 
@@ -184,6 +212,7 @@ const GraphVisualization = forwardRef(
         })
 
         const visEdges = data.edges.map((edge) => ({
+          id: edge.id,
           from: edge.source,
           to: edge.target,
           label: edge.label,

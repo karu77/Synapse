@@ -5,6 +5,7 @@ import { generateGraph, getHistory, deleteHistoryItem } from './services/api'
 import ThemeToggleButton from './components/ThemeToggleButton'
 import ControlSidebar from './components/ControlSidebar'
 import NodeInfoPanel from './components/NodeInfoPanel'
+import EdgeInfoPanel from './components/EdgeInfoPanel'
 import {
   ArrowDownTrayIcon,
   ArrowRightOnRectangleIcon,
@@ -47,6 +48,7 @@ function App() {
     y: 0,
   })
   const [selectedNode, setSelectedNode] = useState(null)
+  const [selectedEdge, setSelectedEdge] = useState(null)
   const [history, setHistory] = useState([])
   const [physicsOptions, setPhysicsOptions] = useState(defaultPhysicsOptions)
   const [styleOptions, setStyleOptions] = useState(defaultStyleOptions)
@@ -77,6 +79,7 @@ function App() {
   const handleTextSubmit = async (text, imageFile, audioFile, audioVideoURL) => {
     setIsProcessing(true)
     setSelectedNode(null) // Clear selection on new graph
+    setSelectedEdge(null) // Clear selection on new graph
     setIsSidebarOpen(false) // Close sidebar on submission
     try {
       const data = await generateGraph(text, imageFile, audioFile, audioVideoURL)
@@ -175,6 +178,7 @@ function App() {
             onSubmit={handleTextSubmit}
             isProcessing={isProcessing}
             selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
             history={history}
             loadFromHistory={loadFromHistory}
             onDelete={handleDeleteFromHistory}
@@ -192,6 +196,7 @@ function App() {
       </AnimatePresence>
 
       <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
+      <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} />
 
       <main className="flex-1 flex flex-col relative">
         <header className="absolute top-0 left-0 right-0 z-20 p-4">
@@ -306,6 +311,7 @@ function App() {
             isLoading={isProcessing}
             setTooltip={setTooltip}
             setSelectedNode={setSelectedNode}
+            setSelectedEdge={setSelectedEdge}
             physicsOptions={physicsOptions}
             styleOptions={styleOptions}
             onGraphReady={setIsGraphReady}
