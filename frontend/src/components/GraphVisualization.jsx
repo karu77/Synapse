@@ -1,5 +1,6 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { Network } from 'vis-network'
+import jsPDF from 'jspdf'
 import { getNodeColor, getEdgeColor } from '../utils/colors'
 import { useTheme } from '../contexts/ThemeContext'
 
@@ -264,6 +265,40 @@ const GraphVisualization = forwardRef(
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
+        }
+      },
+      downloadPDF: () => {
+        if (networkInstance.current) {
+          const rootStyle = getComputedStyle(document.documentElement)
+          const bgColor = rootStyle.getPropertyValue('--color-bg').trim() || '#ffffff'
+
+          const originalCanvas = networkInstance.current.canvas.getContext('2d').canvas
+          // Use a slightly lower scale factor than PNG for faster generation, PDF will handle scaling well.
+          const scaleFactor = 4
+          const newCanvas = document.createElement('canvas')
+          const ctx = newCanvas.getContext('2d')
+
+          newCanvas.width = originalCanvas.width * scaleFactor
+          newCanvas.height = originalCanvas.height * scaleFactor
+
+          ctx.fillStyle = bgColor
+          ctx.fillRect(0, 0, newCanvas.width, newCanvas.height)
+
+          ctx.save()
+          ctx.scale(scaleFactor, scaleFactor)
+          ctx.drawImage(originalCanvas, 0, 0)
+          ctx.restore()
+
+          const dataURL = newCanvas.toDataURL('image/png')
+
+          const pdf = new jsPDF({
+            orientation: newCanvas.width > newCanvas.height ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [newCanvas.width, newCanvas.height],
+          })
+
+          pdf.addImage(dataURL, 'PNG', 0, 0, newCanvas.width, newCanvas.height)
+          pdf.save('synapse-graph.pdf')
         }
       },
       downloadJSON: () => {
