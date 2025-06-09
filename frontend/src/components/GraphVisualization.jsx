@@ -238,6 +238,9 @@ const GraphVisualization = forwardRef(
     useImperativeHandle(ref, () => ({
       downloadGraph: () => {
         if (networkInstance.current) {
+          const rootStyle = getComputedStyle(document.documentElement)
+          const bgColor = rootStyle.getPropertyValue('--color-bg').trim() || '#ffffff'
+
           const originalCanvas = networkInstance.current.canvas.getContext('2d').canvas
           const scaleFactor = 8 // Increased scale factor for higher resolution
           const newCanvas = document.createElement('canvas')
@@ -246,7 +249,6 @@ const GraphVisualization = forwardRef(
           newCanvas.width = originalCanvas.width * scaleFactor
           newCanvas.height = originalCanvas.height * scaleFactor
 
-          const bgColor = theme === 'light' ? '#f1f5f9' : '#0f172a'
           ctx.fillStyle = bgColor
           ctx.fillRect(0, 0, newCanvas.width, newCanvas.height)
 
@@ -299,19 +301,23 @@ const GraphVisualization = forwardRef(
         }
 
         const network = networkInstance.current
-        const nodes = network.body.data.nodes.get() // Get processed nodes from network
+        const nodes = network.body.data.nodes.get()
         const edges = network.body.data.edges.get()
         const nodePositions = network.getPositions()
         const boundingBox = network.getBoundingBox()
+
+        // Get theme colors from CSS variables for perfect theme matching
+        const rootStyle = getComputedStyle(document.documentElement)
+        const bgColor = rootStyle.getPropertyValue('--color-bg').trim()
+        const defaultTextColor = rootStyle.getPropertyValue('--color-text').trim()
+        const textMutedColor = rootStyle.getPropertyValue('--color-text-muted').trim()
 
         const padding = 50
         const width = boundingBox.right - boundingBox.left + 2 * padding
         const height = boundingBox.bottom - boundingBox.top + 2 * padding
         const viewBox = `${boundingBox.left - padding} ${boundingBox.top - padding} ${width} ${height}`
-        const bgColor = theme === 'light' ? '#f1f5f9' : '#0f172a'
-        const defaultTextColor = theme === 'light' ? '#1e293b' : '#f1f5f9'
 
-        let svgDefs = `<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>`
+        const svgDefs = `<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>`
 
         let edgePaths = '<g>'
         edges.forEach((edge) => {
@@ -338,8 +344,7 @@ const GraphVisualization = forwardRef(
           if (edge.label) {
             const midX = (fromPos.x + newToX) / 2
             const midY = (fromPos.y + newToY) / 2
-            const edgeLabelColor = theme === 'light' ? '#475569' : '#94a3b8'
-            edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter" font-size="12" fill="${edgeLabelColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${escapeXml(
+            edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter, sans-serif" font-size="12" fill="${textMutedColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${escapeXml(
               edge.label
             )}</text>`
           }
@@ -353,36 +358,44 @@ const GraphVisualization = forwardRef(
 
           const color = node.color.background
           const shape = node.shape || 'dot'
-          const nodeSize = node.size
-          const borderWidth = node.borderWidth
-          const labelColor = node.font.color || defaultTextColor
+          const nodeSize = node.size || 25
+          const label = escapeXml(node.label)
 
           if (shape === 'dot' || shape === 'circle') {
             nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
-          } else if (shape === 'box' || shape === 'square') {
-            nodeElements += `<rect x="${pos.x - nodeSize}" y="${pos.y - nodeSize}" width="${nodeSize * 2}" height="${
-              nodeSize * 2
-            }" fill="${color}" />`
-          } else if (shape === 'diamond') {
-            nodeElements += `<rect x="${pos.x - nodeSize}" y="${pos.y - nodeSize}" width="${nodeSize * 2}" height="${
-              nodeSize * 2
-            }" fill="${color}" transform="rotate(45, ${pos.x}, ${pos.y})" />`
+            nodeElements += `<text x="${pos.x}" y="${pos.y}" font-family="Inter, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central">${label}</text>`
           } else {
-            // Fallback for star, triangle, etc.
-            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
+            // All other shapes will have label below
+            const width = nodeSize * 2
+            const height = nodeSize * 2
+            if (shape === 'box' || shape === 'square') {
+              nodeElements += `<rect x="${
+                pos.x - nodeSize
+              }" y="${pos.y - nodeSize}" width="${width}" height="${height}" fill="${color}" rx="3" />`
+            } else if (shape === 'diamond') {
+              nodeElements += `<rect x="${
+                pos.x - nodeSize
+              }" y="${pos.y - nodeSize}" width="${width}" height="${height}" fill="${color}" transform="rotate(45, ${
+                pos.x
+              }, ${pos.y})" />`
+            } else {
+              // Fallback for star, triangle, etc.
+              nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
+            }
+            nodeElements += `<text x="${pos.x}" y="${
+              pos.y + nodeSize + 8
+            }" font-family="Inter, sans-serif" font-size="14" fill="${defaultTextColor}" text-anchor="middle" dominant-baseline="hanging">${label}</text>`
           }
-
-          // Render label
-          const labelYOffset = shape === 'dot' || shape === 'circle' ? 5 : nodeSize + 14
-          nodeElements += `<text x="${pos.x}" y="${pos.y + labelYOffset}" font-family="Inter" font-size="14" fill="${labelColor}" text-anchor="middle">${escapeXml(node.label)}</text>`
         })
         nodeElements += '</g>'
 
         const svgString = `
 <svg width="${Math.round(width)}" height="${Math.round(
           height
-        )}" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg">
-  <rect x="${viewBox.split(' ')[0]}" y="${viewBox.split(' ')[1]}" width="${width}" height="${height}" fill="${bgColor}" />
+        )}" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" style="font-family: Inter, sans-serif;">
+  <rect x="${viewBox.split(' ')[0]}" y="${
+          viewBox.split(' ')[1]
+        }" width="${width}" height="${height}" fill="${bgColor}" />
   ${svgDefs}
   ${edgePaths}
   ${nodeElements}
