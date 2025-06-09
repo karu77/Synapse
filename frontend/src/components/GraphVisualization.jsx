@@ -277,7 +277,7 @@ const GraphVisualization = forwardRef(
 
         const network = networkInstance.current
         const renderedNodes = network.body.nodes // Use the internal, rendered nodes for accuracy
-        const edges = network.body.data.edges.get()
+        const renderedEdges = network.body.edges // Use rendered edges for accuracy
         const nodePositions = network.getPositions()
         const boundingBox = network.getBoundingBox()
 
@@ -295,17 +295,17 @@ const GraphVisualization = forwardRef(
         const svgDefs = `<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>`
 
         let edgePaths = '<g>'
-        edges.forEach((edge) => {
-          const fromPos = nodePositions[edge.from]
-          const toPos = nodePositions[edge.to]
+        Object.values(renderedEdges).forEach((edge) => {
+          const fromPos = nodePositions[edge.fromId]
+          const toPos = nodePositions[edge.toId]
           if (!fromPos || !toPos) return
 
-          const toNode = renderedNodes[edge.to]
+          const toNode = renderedNodes[edge.toId]
           if (!toNode) return
 
           const toNodeSize = toNode.shape.size + toNode.shape.borderWidth
 
-          const edgeColor = edge.color?.color || getEdgeColor(edge.sentiment)
+          const edgeColor = edge.options.color.color || textMutedColor
           const dx = toPos.x - fromPos.x
           const dy = toPos.y - fromPos.y
           const dist = Math.sqrt(dx * dx + dy * dy)
@@ -317,11 +317,12 @@ const GraphVisualization = forwardRef(
 
           edgePaths += `<line x1="${fromPos.x}" y1="${fromPos.y}" x2="${newToX}" y2="${newToY}" stroke="${edgeColor}" stroke-width="2" marker-end="url(#arrowhead)" color="${edgeColor}" />`
 
-          if (edge.label) {
+          const label = edge.options.label
+          if (label) {
             const midX = (fromPos.x + newToX) / 2
             const midY = (fromPos.y + newToY) / 2
             edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter, sans-serif" font-size="12" fill="${textMutedColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${escapeXml(
-              edge.label
+              label
             )}</text>`
           }
         })
