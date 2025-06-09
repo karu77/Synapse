@@ -267,65 +267,6 @@ const GraphVisualization = forwardRef(
           document.body.removeChild(link)
         }
       },
-      downloadPDF: () => {
-        if (networkInstance.current) {
-          const rootStyle = getComputedStyle(document.documentElement)
-          const bgColor = rootStyle.getPropertyValue('--color-bg').trim() || '#ffffff'
-
-          const originalCanvas = networkInstance.current.canvas.getContext('2d').canvas
-          // Use a slightly lower scale factor than PNG for faster generation, PDF will handle scaling well.
-          const scaleFactor = 4
-          const newCanvas = document.createElement('canvas')
-          const ctx = newCanvas.getContext('2d')
-
-          newCanvas.width = originalCanvas.width * scaleFactor
-          newCanvas.height = originalCanvas.height * scaleFactor
-
-          ctx.fillStyle = bgColor
-          ctx.fillRect(0, 0, newCanvas.width, newCanvas.height)
-
-          ctx.save()
-          ctx.scale(scaleFactor, scaleFactor)
-          ctx.drawImage(originalCanvas, 0, 0)
-          ctx.restore()
-
-          const dataURL = newCanvas.toDataURL('image/png')
-
-          const pdf = new jsPDF({
-            orientation: newCanvas.width > newCanvas.height ? 'landscape' : 'portrait',
-            unit: 'px',
-            format: [newCanvas.width, newCanvas.height],
-          })
-
-          pdf.addImage(dataURL, 'PNG', 0, 0, newCanvas.width, newCanvas.height)
-          pdf.save('synapse-graph.pdf')
-        }
-      },
-      downloadJSON: () => {
-        const jsonString = JSON.stringify(data, null, 2)
-        const blob = new Blob([jsonString], { type: 'application/json' })
-        triggerDownload(blob, 'synapse-graph.json')
-      },
-      downloadNodesCSV: () => {
-        const headers = ['id', 'label', 'type', 'sentiment']
-        let csvContent = headers.join(',') + '\r\n'
-        data.nodes.forEach((node) => {
-          const row = headers.map((header) => `"${node[header] || ''}"`)
-          csvContent += row.join(',') + '\r\n'
-        })
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        triggerDownload(blob, 'synapse-nodes.csv')
-      },
-      downloadEdgesCSV: () => {
-        const headers = ['source', 'target', 'label', 'sentiment']
-        let csvContent = headers.join(',') + '\r\n'
-        data.edges.forEach((edge) => {
-          const row = headers.map((header) => `"${edge[header] || ''}"`)
-          csvContent += row.join(',') + '\r\n'
-        })
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        triggerDownload(blob, 'synapse-edges.csv')
-      },
       downloadSVG: () => {
         if (
           !networkInstance.current ||
@@ -336,7 +277,7 @@ const GraphVisualization = forwardRef(
         }
 
         const network = networkInstance.current
-        const renderedNodes = network.body.nodes // CORRECT: Use the internal, rendered nodes
+        const renderedNodes = network.body.nodes // Use the internal, rendered nodes for accuracy
         const edges = network.body.data.edges.get()
         const nodePositions = network.getPositions()
         const boundingBox = network.getBoundingBox()
@@ -400,10 +341,8 @@ const GraphVisualization = forwardRef(
 
           if (shape === 'dot' || shape === 'circle') {
             nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
-            // Use the font color vis.js determined for better contrast
             nodeElements += `<text x="${pos.x}" y="${pos.y}" font-family="Inter, sans-serif" font-size="14" fill="${labelColor}" text-anchor="middle" dominant-baseline="central">${label}</text>`
           } else {
-            // All other shapes will have label below
             const width = nodeSize * 2
             const height = nodeSize * 2
             const x = pos.x - nodeSize
@@ -437,6 +376,31 @@ const GraphVisualization = forwardRef(
 </svg>`
         const blob = new Blob([svgString], { type: 'image/svg+xml' })
         triggerDownload(blob, 'synapse-graph.svg')
+      },
+      downloadJSON: () => {
+        const jsonString = JSON.stringify(data, null, 2)
+        const blob = new Blob([jsonString], { type: 'application/json' })
+        triggerDownload(blob, 'synapse-graph.json')
+      },
+      downloadNodesCSV: () => {
+        const headers = ['id', 'label', 'type', 'sentiment']
+        let csvContent = headers.join(',') + '\r\n'
+        data.nodes.forEach((node) => {
+          const row = headers.map((header) => `"${node[header] || ''}"`)
+          csvContent += row.join(',') + '\r\n'
+        })
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        triggerDownload(blob, 'synapse-nodes.csv')
+      },
+      downloadEdgesCSV: () => {
+        const headers = ['source', 'target', 'label', 'sentiment']
+        let csvContent = headers.join(',') + '\r\n'
+        data.edges.forEach((edge) => {
+          const row = headers.map((header) => `"${edge[header] || ''}"`)
+          csvContent += row.join(',') + '\r\n'
+        })
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        triggerDownload(blob, 'synapse-edges.csv')
       },
     }))
 

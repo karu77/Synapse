@@ -99,9 +99,9 @@ function App() {
     }
   }
 
-  const handleDownloadPDF = () => {
+  const handleDownloadSVG = () => {
     if (graphRef.current) {
-      graphRef.current.downloadPDF()
+      graphRef.current.downloadSVG()
     }
   }
 
@@ -241,13 +241,13 @@ function App() {
                     <Menu.Item>
                       {({ active }) => (
                         <button
-                          onClick={handleDownloadPDF}
+                          onClick={handleDownloadSVG}
                           className={`${
                             active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <DocumentArrowDownIcon className="mr-2 h-5 w-5" />
-                          PDF (Scalable)
+                          SVG (Vector)
                         </button>
                       )}
                     </Menu.Item>
