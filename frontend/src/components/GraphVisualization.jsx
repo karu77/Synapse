@@ -33,7 +33,7 @@ const GraphVisualization = forwardRef(
       downloadGraph: () => {
         if (networkInstance.current) {
           const originalCanvas = networkInstance.current.canvas.getContext('2d').canvas
-          const scaleFactor = 2 // For higher resolution
+          const scaleFactor = 4 // For higher resolution
           const newCanvas = document.createElement('canvas')
           const ctx = newCanvas.getContext('2d')
 

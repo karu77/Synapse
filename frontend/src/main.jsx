@@ -14,7 +14,7 @@ const router = createBrowserRouter([
     path: '/',
     element: (
       <PrivateRoute>
-        <App />
+    <App />
       </PrivateRoute>
     ),
   },
