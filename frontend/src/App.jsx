@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import GraphVisualization from './components/GraphVisualization'
 import { generateGraph, getHistory, deleteHistoryItem } from './services/api'
 import ThemeToggleButton from './components/ThemeToggleButton'
@@ -143,25 +144,29 @@ function App() {
         />
       )}
 
-      <ControlSidebar
-        isOpen={isSidebarOpen}
-        onClose={toggleSidebar}
-        onSubmit={handleTextSubmit}
-        isProcessing={isProcessing}
-        selectedNode={selectedNode}
-        history={history}
-        loadFromHistory={loadFromHistory}
-        onDelete={handleDeleteFromHistory}
-        onClear={clearHistory}
-        styleOptions={styleOptions}
-        setStyleOptions={setStyleOptions}
-        resetStyles={resetStyles}
-        physicsOptions={physicsOptions}
-        setPhysicsOptions={setPhysicsOptions}
-        resetPhysics={resetPhysics}
-        user={user}
-        logout={logout}
-      />
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <ControlSidebar
+            isOpen={isSidebarOpen}
+            onClose={toggleSidebar}
+            onSubmit={handleTextSubmit}
+            isProcessing={isProcessing}
+            selectedNode={selectedNode}
+            history={history}
+            loadFromHistory={loadFromHistory}
+            onDelete={handleDeleteFromHistory}
+            onClear={clearHistory}
+            styleOptions={styleOptions}
+            setStyleOptions={setStyleOptions}
+            resetStyles={resetStyles}
+            physicsOptions={physicsOptions}
+            setPhysicsOptions={setPhysicsOptions}
+            resetPhysics={resetPhysics}
+            user={user}
+            logout={logout}
+          />
+        )}
+      </AnimatePresence>
 
       <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
 

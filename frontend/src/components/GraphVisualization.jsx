@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle, useState } from 'react'
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { Network } from 'vis-network'
 import { getNodeColor, getEdgeColor } from '../utils/colors'
 import { useTheme } from '../contexts/ThemeContext'
@@ -50,8 +50,158 @@ const GraphVisualization = forwardRef(
   ) => {
     const containerRef = useRef(null)
     const networkInstance = useRef(null)
-    const [isRendered, setIsRendered] = useState(false)
     const { theme } = useTheme()
+
+    // Use refs for callbacks to prevent re-triggering useEffect
+    const onGraphReadyRef = useRef(onGraphReady)
+    useEffect(() => {
+      onGraphReadyRef.current = onGraphReady
+    }, [onGraphReady])
+
+    const dataRef = useRef(data)
+    useEffect(() => {
+      dataRef.current = data
+    }, [data])
+
+    // Initialize network
+    useEffect(() => {
+      if (containerRef.current) {
+        const options = getOptions()
+        const network = new Network(containerRef.current, {}, options)
+        networkInstance.current = network
+
+        network.on('click', (event) => {
+          if (event.nodes.length > 0) {
+            const nodeId = event.nodes[0]
+            const node = dataRef.current.nodes.find((n) => n.id === nodeId)
+            setSelectedNode(node)
+          } else {
+            setSelectedNode(null)
+          }
+        })
+
+        network.on('hoverNode', ({ node, event }) => {
+          const nodeData = dataRef.current.nodes.find((n) => n.id === node)
+          if (nodeData) {
+            const content = `<b>${nodeData.type}</b><br>${
+              nodeData.sentiment ? `Sentiment: ${nodeData.sentiment}` : ''
+            }`
+            setTooltip({
+              visible: true,
+              content,
+              x: event.pointer.DOM.x,
+              y: event.pointer.DOM.y,
+            })
+          }
+        })
+
+        network.on('blurNode', () => {
+          setTooltip({ visible: false, content: '', x: 0, y: 0 })
+        })
+
+        network.on('afterDrawing', () => {
+          onGraphReadyRef.current(true)
+        })
+
+        return () => {
+          if (networkInstance.current) {
+            networkInstance.current.destroy()
+            networkInstance.current = null
+          }
+        }
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []) // Run only once
+
+    const getOptions = () => ({
+      autoResize: true,
+      height: '100%',
+      width: '100%',
+      nodes: {
+        shape: 'dot',
+        size: 30,
+        font: {
+          size: 14,
+          color: theme === 'light' ? '#111827' : '#ffffff',
+          face: 'Inter',
+        },
+        borderWidth: 2,
+        shadow: true,
+      },
+      edges: {
+        width: 2,
+        font: {
+          size: 12,
+          color: theme === 'light' ? '#111827' : '#E0E0E0',
+          strokeWidth: 4,
+          strokeColor: theme === 'light' ? '#ffffff' : '#212121',
+        },
+        arrows: {
+          to: {
+            enabled: true,
+            scaleFactor: 0.8,
+          },
+        },
+        smooth: {
+          enabled: true,
+          type: 'dynamic',
+        },
+      },
+      physics: {
+        ...physicsOptions,
+        solver: 'barnesHut',
+        barnesHut: {
+          gravitationalConstant: -3000,
+          centralGravity: 0.1,
+          springLength: 150,
+          springConstant: 0.05,
+          damping: 0.1,
+          avoidOverlap: 0.5,
+        },
+      },
+      interaction: {
+        hover: true,
+        tooltipDelay: 200,
+      },
+      layout: {
+        improvedLayout: true,
+      },
+    })
+
+    // Update options when theme or physics change
+    useEffect(() => {
+      if (networkInstance.current) {
+        networkInstance.current.setOptions(getOptions())
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [theme, physicsOptions, styleOptions])
+
+    // Update data
+    useEffect(() => {
+      if (networkInstance.current) {
+        onGraphReadyRef.current(false)
+        const nodesWithImages = data.nodes.map((node) => {
+          const shape = styleOptions.nodeShapes[node.type] || 'sphere'
+          const color = getNodeColor(node.type, theme)
+          if (shape === 'sphere') {
+            return {
+              ...node,
+              shape: 'image',
+              image: createSphereImage(color),
+              size: 40,
+            }
+          }
+          return {
+            ...node,
+            color,
+            shape,
+            size: 30,
+          }
+        })
+
+        networkInstance.current.setData({ nodes: nodesWithImages, edges: data.edges })
+      }
+    }, [data, theme, styleOptions.nodeShapes, styleOptions.nodeColors])
 
     useImperativeHandle(ref, () => ({
       downloadGraph: () => {
@@ -213,162 +363,11 @@ const GraphVisualization = forwardRef(
       },
     }))
 
-    useEffect(() => {
-      if (!containerRef.current) {
-        return
-      }
-      setIsRendered(false)
-      if (onGraphReady) onGraphReady(false)
-
-      const nodesWithImages = data.nodes.map((node) => {
-        const shape = styleOptions.nodeShapes[node.type] || 'sphere'
-        const color = getNodeColor(node.type, theme)
-
-        const nodeConfig = {
-          id: node.id,
-          label: node.label,
-          size: 30,
-        }
-
-        if (shape === 'sphere') {
-          nodeConfig.shape = 'circularImage'
-          nodeConfig.image = createSphereImage(color)
-        } else {
-          nodeConfig.shape = shape
-          nodeConfig.color = {
-            border: color,
-            background: color,
-            highlight: {
-              border: color,
-              background: color,
-            },
-          }
-        }
-        return nodeConfig
-      })
-
-      const visData = {
-        nodes: nodesWithImages,
-        edges: data.edges,
-      }
-
-      const options = {
-        autoResize: true,
-        height: '100%',
-        width: '100%',
-        nodes: {
-          shape: 'dot',
-          size: 30,
-          font: {
-            size: 14,
-            color: theme === 'light' ? '#111827' : '#ffffff',
-            face: 'Inter',
-          },
-          borderWidth: 2,
-          shadow: true,
-        },
-        edges: {
-          width: 2,
-          font: {
-            size: 12,
-            color: theme === 'light' ? '#111827' : '#E0E0E0',
-            strokeWidth: 4,
-            strokeColor: theme === 'light' ? '#ffffff' : '#212121',
-          },
-          arrows: {
-            to: {
-              enabled: true,
-              scaleFactor: 0.8,
-            },
-          },
-          smooth: {
-            enabled: true,
-            type: 'dynamic',
-          },
-        },
-        physics: {
-          ...physicsOptions,
-          solver: 'barnesHut',
-          barnesHut: {
-            gravitationalConstant: -3000,
-            centralGravity: 0.1,
-            springLength: 150,
-            springConstant: 0.05,
-            damping: 0.1,
-            avoidOverlap: 0.5,
-          },
-        },
-        interaction: {
-          hover: true,
-          tooltipDelay: 200,
-        },
-        layout: {
-          improvedLayout: true,
-        },
-      }
-
-      const network = new Network(containerRef.current, visData, options)
-      networkInstance.current = network
-
-      network.on('click', (event) => {
-        if (event.nodes.length > 0) {
-          const nodeId = event.nodes[0]
-          const node = data.nodes.find((n) => n.id === nodeId)
-          setSelectedNode(node)
-        } else {
-          // If a user clicks on the background, deselect node
-          setSelectedNode(null)
-        }
-      })
-
-      network.on('hoverNode', ({ node, event }) => {
-        const nodeData = data.nodes.find((n) => n.id === node)
-        if (nodeData) {
-          const content = `<b>${nodeData.type}</b><br>${
-            nodeData.sentiment ? `Sentiment: ${nodeData.sentiment}` : ''
-          }`
-          setTooltip({
-            visible: true,
-            content,
-            x: event.clientX,
-            y: event.clientY,
-          })
-        }
-      })
-
-      network.on('blurNode', () => {
-        setTooltip({ visible: false, content: '', x: 0, y: 0 })
-      })
-
-      network.on('afterDrawing', () => {
-        if (!isRendered) {
-          setIsRendered(true)
-          if (onGraphReady) onGraphReady(true)
-        }
-      })
-
-      return () => {
-        if (network) {
-          network.destroy()
-        }
-      }
-    }, [
-      data,
-      theme,
-      physicsOptions,
-      styleOptions.nodeShapes,
-      styleOptions.nodeColors,
-      setSelectedNode,
-      setTooltip,
-      isRendered,
-      onGraphReady,
-    ])
-
     return (
-      <div className="relative h-full w-full">
+      <div className="h-full w-full relative">
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-skin-bg-accent bg-opacity-50 z-10 rounded-2xl">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-skin-btn-primary"></div>
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
+            <div className="text-white text-lg font-semibold">Processing...</div>
           </div>
         )}
         <div ref={containerRef} className="h-full w-full" />

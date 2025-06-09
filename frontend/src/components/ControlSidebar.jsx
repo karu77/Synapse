@@ -6,19 +6,61 @@ import {
   AdjustmentsHorizontalIcon,
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline'
+import { motion } from 'framer-motion'
 import CustomizationPanel from './CustomizationPanel'
 import HistoryPanel from './HistoryPanel'
 import StyleCustomizationPanel from './StyleCustomizationPanel'
 import TextInput from './TextInput'
 
+const sidebarVariants = {
+  open: {
+    x: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 30,
+      staggerChildren: 0.07,
+      delayChildren: 0.2,
+    },
+  },
+  closed: {
+    x: '-100%',
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 40,
+    },
+  },
+}
+
+const itemVariants = {
+  open: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      y: { stiffness: 1000, velocity: -100 },
+    },
+  },
+  closed: {
+    y: 50,
+    opacity: 0,
+    transition: {
+      y: { stiffness: 1000 },
+    },
+  },
+}
+
 const Section = ({ icon, title, children }) => (
-  <section className="mt-6 pt-6 border-t border-skin-border first:mt-0 first:pt-0 first:border-t-0">
+  <motion.section
+    variants={itemVariants}
+    className="mt-6 pt-6 border-t border-skin-border first:mt-0 first:pt-0 first:border-t-0"
+  >
     <h3 className="flex items-center gap-2 text-lg font-semibold text-skin-text mb-4">
       {icon}
       {title}
     </h3>
     {children}
-  </section>
+  </motion.section>
 )
 
 const ControlSidebar = ({
@@ -42,17 +84,21 @@ const ControlSidebar = ({
   return (
     <>
       {/* Overlay for mobile/tablet */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-          onClick={onClose}
-        ></div>
-      )}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+        onClick={onClose}
+      />
       {/* Sidebar Panel */}
-      <div
-        className={`fixed top-0 left-0 h-full bg-skin-bg shadow-2xl z-40 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } w-full max-w-md border-r border-skin-border flex flex-col`}
+      <motion.div
+        variants={sidebarVariants}
+        initial="closed"
+        animate="open"
+        exit="closed"
+        className="fixed top-0 left-0 h-full bg-skin-bg shadow-2xl z-40 w-full max-w-md border-r border-skin-border flex flex-col"
       >
         {/* Header */}
         <div className="p-6 md:p-8 flex justify-between items-center border-b border-skin-border flex-shrink-0">
@@ -116,7 +162,7 @@ const ControlSidebar = ({
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
   )
 }
