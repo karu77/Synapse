@@ -176,6 +176,9 @@ const GraphVisualization = forwardRef(
                 background: color,
               },
             },
+            font: {
+              color: shape === 'dot' || shape === 'circle' ? '#ffffff' : theme === 'light' ? '#1e293b' : '#f1f5f9',
+            },
             size: node.type === 'PERSON' ? 30 : 25,
           }
         })
@@ -191,18 +194,30 @@ const GraphVisualization = forwardRef(
       }
     }, [data, theme, styleOptions])
 
+    // Helper to trigger file download
+    const triggerDownload = (blob, fileName) => {
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    }
+
     useImperativeHandle(ref, () => ({
       downloadGraph: () => {
         if (networkInstance.current) {
           const originalCanvas = networkInstance.current.canvas.getContext('2d').canvas
-          const scaleFactor = 4 // For higher resolution
+          const scaleFactor = 8 // Increased scale factor for higher resolution
           const newCanvas = document.createElement('canvas')
           const ctx = newCanvas.getContext('2d')
 
           newCanvas.width = originalCanvas.width * scaleFactor
           newCanvas.height = originalCanvas.height * scaleFactor
 
-          const bgColor = theme === 'light' ? '#ffffff' : '#212121'
+          const bgColor = theme === 'light' ? '#f1f5f9' : '#0f172a'
           ctx.fillStyle = bgColor
           ctx.fillRect(0, 0, newCanvas.width, newCanvas.height)
 
@@ -220,6 +235,31 @@ const GraphVisualization = forwardRef(
           document.body.removeChild(link)
         }
       },
+      downloadJSON: () => {
+        const jsonString = JSON.stringify(data, null, 2)
+        const blob = new Blob([jsonString], { type: 'application/json' })
+        triggerDownload(blob, 'synapse-graph.json')
+      },
+      downloadNodesCSV: () => {
+        const headers = ['id', 'label', 'type', 'sentiment']
+        let csvContent = headers.join(',') + '\r\n'
+        data.nodes.forEach((node) => {
+          const row = headers.map((header) => `"${node[header] || ''}"`)
+          csvContent += row.join(',') + '\r\n'
+        })
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        triggerDownload(blob, 'synapse-nodes.csv')
+      },
+      downloadEdgesCSV: () => {
+        const headers = ['source', 'target', 'label', 'sentiment']
+        let csvContent = headers.join(',') + '\r\n'
+        data.edges.forEach((edge) => {
+          const row = headers.map((header) => `"${edge[header] || ''}"`)
+          csvContent += row.join(',') + '\r\n'
+        })
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        triggerDownload(blob, 'synapse-edges.csv')
+      },
       downloadSVG: () => {
         if (
           !networkInstance.current ||
@@ -230,53 +270,50 @@ const GraphVisualization = forwardRef(
         }
 
         const network = networkInstance.current
-        const nodes = data.nodes
-        const edges = data.edges
+        const nodes = network.body.data.nodes.get() // Get processed nodes from network
+        const edges = network.body.data.edges.get()
         const nodePositions = network.getPositions()
         const boundingBox = network.getBoundingBox()
+
         const padding = 50
         const width = boundingBox.right - boundingBox.left + 2 * padding
         const height = boundingBox.bottom - boundingBox.top + 2 * padding
-        const viewBox = `${boundingBox.left - padding} ${
-          boundingBox.top - padding
-        } ${width} ${height}`
-        const bgColor = theme === 'light' ? '#ffffff' : '#212121'
-        const textColor = theme === 'light' ? '#111827' : '#ffffff'
+        const viewBox = `${boundingBox.left - padding} ${boundingBox.top - padding} ${width} ${height}`
+        const bgColor = theme === 'light' ? '#f1f5f9' : '#0f172a'
+        const defaultTextColor = theme === 'light' ? '#1e293b' : '#f1f5f9'
 
-        let svgDefs = `<defs>
-<marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-  <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
-</marker></defs>`
+        let svgDefs = `<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>`
 
         let edgePaths = '<g>'
         edges.forEach((edge) => {
-          const fromPos = nodePositions[edge.source]
-          const toPos = nodePositions[edge.target]
+          const fromPos = nodePositions[edge.from]
+          const toPos = nodePositions[edge.to]
           if (!fromPos || !toPos) return
 
-          const toNode = nodes.find((n) => n.id === edge.target)
+          const toNode = nodes.find((n) => n.id === edge.to)
           if (!toNode) return
 
-          const toNodeShape = styleOptions.nodeShapes[toNode.type] || 'dot'
-          const toNodeSize = (toNode.type === 'PERSON' ? 30 : 25) + 3 // size + border
+          const toNodeSize = (toNode.size || 25) + (toNode.borderWidth || 3)
 
-          const edgeColor = getEdgeColor(edge.sentiment)
+          const edgeColor = edge.color?.color || getEdgeColor(edge.sentiment)
           const dx = toPos.x - fromPos.x
           const dy = toPos.y - fromPos.y
           const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist === 0) return // Avoid division by zero for overlapping nodes
+          if (dist === 0) return
 
-          const newToX = toPos.x - (dx / dist) * (toNodeSize + 5) // +5 for padding
+          const newToX = toPos.x - (dx / dist) * (toNodeSize + 5)
           const newToY = toPos.y - (dy / dist) * (toNodeSize + 5)
 
           edgePaths += `<line x1="${fromPos.x}" y1="${fromPos.y}" x2="${newToX}" y2="${newToY}" stroke="${edgeColor}" stroke-width="2" marker-end="url(#arrowhead)" color="${edgeColor}" />`
 
-          const midX = (fromPos.x + toPos.x) / 2
-          const midY = (fromPos.y + toPos.y) / 2
-          const edgeLabelColor = theme === 'light' ? '#111827' : '#E0E0E0'
-          edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter" font-size="12" fill="${edgeLabelColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${escapeXml(
-            edge.label
-          )}</text>`
+          if (edge.label) {
+            const midX = (fromPos.x + newToX) / 2
+            const midY = (fromPos.y + newToY) / 2
+            const edgeLabelColor = theme === 'light' ? '#475569' : '#94a3b8'
+            edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter" font-size="12" fill="${edgeLabelColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${escapeXml(
+              edge.label
+            )}</text>`
+          }
         })
         edgePaths += '</g>'
 
@@ -285,37 +322,30 @@ const GraphVisualization = forwardRef(
           const pos = nodePositions[node.id]
           if (!pos) return
 
-          const color = getNodeColor(node.type, theme)
-          const shape = styleOptions.nodeShapes[node.type] || 'dot'
-          const nodeSize = node.type === 'PERSON' ? 30 : 25
-          const borderWidth = 3
+          const color = node.color.background
+          const shape = node.shape || 'dot'
+          const nodeSize = node.size
+          const borderWidth = node.borderWidth
+          const labelColor = node.font.color || defaultTextColor
 
           if (shape === 'dot' || shape === 'circle') {
-            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" stroke="${color}" stroke-width="${borderWidth}" />`
+            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
           } else if (shape === 'box' || shape === 'square') {
-            nodeElements += `<rect x="${pos.x - nodeSize}" y="${
-              pos.y - nodeSize
-            }" width="${nodeSize * 2}" height="${
+            nodeElements += `<rect x="${pos.x - nodeSize}" y="${pos.y - nodeSize}" width="${nodeSize * 2}" height="${
               nodeSize * 2
-            }" fill="${color}" stroke="${color}" stroke-width="${borderWidth}" />`
+            }" fill="${color}" />`
           } else if (shape === 'diamond') {
-            nodeElements += `<rect x="${pos.x - nodeSize}" y="${
-              pos.y - nodeSize
-            }" width="${nodeSize * 2}" height="${
+            nodeElements += `<rect x="${pos.x - nodeSize}" y="${pos.y - nodeSize}" width="${nodeSize * 2}" height="${
               nodeSize * 2
-            }" fill="${color}" stroke="${color}" stroke-width="${borderWidth}" transform="rotate(45, ${
-              pos.x
-            }, ${pos.y})" />`
+            }" fill="${color}" transform="rotate(45, ${pos.x}, ${pos.y})" />`
           } else {
-            // Default to circle for other shapes like star, triangle etc. for simplicity in SVG.
-            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" stroke="${color}" stroke-width="${borderWidth}" />`
+            // Fallback for star, triangle, etc.
+            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
           }
-          const labelColor = shape === 'dot' || shape === 'circle' ? '#ffffff' : textColor
-          nodeElements += `<text x="${pos.x}" y="${
-            pos.y + (shape === 'dot' || shape === 'circle' ? 5 : nodeSize + 14)
-          }" font-family="Inter" font-size="14" fill="${labelColor}" text-anchor="middle">${escapeXml(
-            node.label
-          )}</text>`
+
+          // Render label
+          const labelYOffset = shape === 'dot' || shape === 'circle' ? 5 : nodeSize + 14
+          nodeElements += `<text x="${pos.x}" y="${pos.y + labelYOffset}" font-family="Inter" font-size="14" fill="${labelColor}" text-anchor="middle">${escapeXml(node.label)}</text>`
         })
         nodeElements += '</g>'
 
@@ -323,23 +353,13 @@ const GraphVisualization = forwardRef(
 <svg width="${Math.round(width)}" height="${Math.round(
           height
         )}" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg">
-  <rect x="${viewBox.split(' ')[0]}" y="${
-          viewBox.split(' ')[1]
-        }" width="${width}" height="${height}" fill="${bgColor}" />
+  <rect x="${viewBox.split(' ')[0]}" y="${viewBox.split(' ')[1]}" width="${width}" height="${height}" fill="${bgColor}" />
   ${svgDefs}
   ${edgePaths}
   ${nodeElements}
 </svg>`
-
         const blob = new Blob([svgString], { type: 'image/svg+xml' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = 'synapse-graph.svg'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
+        triggerDownload(blob, 'synapse-graph.svg')
       },
     }))
 

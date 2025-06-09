@@ -13,6 +13,7 @@
     "concurrently": "^8.2.2"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
     "mongodb": "^6.17.0"
   }
 }

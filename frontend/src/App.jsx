@@ -10,8 +10,12 @@ import {
   ArrowRightOnRectangleIcon,
   DocumentArrowDownIcon,
   Bars3Icon,
+  CodeBracketIcon,
+  TableCellsIcon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from './contexts/AuthContext'
+import { Menu } from '@headlessui/react'
+import { Fragment } from 'react'
 
 const defaultPhysicsOptions = {
   gravitationalConstant: -40000,
@@ -95,6 +99,24 @@ function App() {
   const handleDownloadSVG = () => {
     if (graphRef.current) {
       graphRef.current.downloadSVG()
+    }
+  }
+
+  const handleDownloadNodesCSV = () => {
+    if (graphRef.current) {
+      graphRef.current.downloadNodesCSV()
+    }
+  }
+
+  const handleDownloadEdgesCSV = () => {
+    if (graphRef.current) {
+      graphRef.current.downloadEdgesCSV()
+    }
+  }
+
+  const handleDownloadJSON = () => {
+    if (graphRef.current) {
+      graphRef.current.downloadJSON()
     }
   }
 
@@ -186,24 +208,88 @@ function App() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-skin-bg p-1 rounded-full border border-skin-border">
-                <button
-                  onClick={handleDownloadPNG}
-                  disabled={isProcessing || graphData.nodes.length === 0 || !isGraphReady}
-                  className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-110"
-                  aria-label="Download graph as PNG"
-                >
-                  <ArrowDownTrayIcon className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={handleDownloadSVG}
-                  disabled={isProcessing || graphData.nodes.length === 0 || !isGraphReady}
-                  className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-110"
-                  aria-label="Download graph as SVG"
-                >
-                  <DocumentArrowDownIcon className="h-5 w-5" />
-                </button>
-              </div>
+              <Menu as="div" className="relative inline-block text-left">
+                <div>
+                  <Menu.Button
+                    disabled={isProcessing || graphData.nodes.length === 0 || !isGraphReady}
+                    className="inline-flex w-full justify-center items-center gap-2 rounded-full bg-skin-bg p-2 border border-skin-border text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ArrowDownTrayIcon className="h-5 w-5" />
+                    <span className="hidden sm:inline">Download</span>
+                  </Menu.Button>
+                </div>
+                <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-skin-border rounded-md bg-skin-bg-accent shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="px-1 py-1 ">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={handleDownloadPNG}
+                          className={`${
+                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          <ArrowDownTrayIcon className="mr-2 h-5 w-5" />
+                          PNG (High-Res)
+                        </button>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={handleDownloadSVG}
+                          className={`${
+                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          <DocumentArrowDownIcon className="mr-2 h-5 w-5" />
+                          SVG (Vector)
+                        </button>
+                      )}
+                    </Menu.Item>
+                  </div>
+                  <div className="px-1 py-1">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={handleDownloadJSON}
+                          className={`${
+                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          <CodeBracketIcon className="mr-2 h-5 w-5" />
+                          JSON (Graph Data)
+                        </button>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={handleDownloadNodesCSV}
+                          className={`${
+                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          <TableCellsIcon className="mr-2 h-5 w-5" />
+                          Nodes (CSV)
+                        </button>
+                      )}
+                    </Menu.Item>
+                     <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={handleDownloadEdgesCSV}
+                          className={`${
+                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          <TableCellsIcon className="mr-2 h-5 w-5" />
+                          Edges (CSV)
+                        </button>
+                      )}
+                    </Menu.Item>
+                  </div>
+                </Menu.Items>
+              </Menu>
               <div className="hidden sm:block h-6 border-l border-skin-border mx-1"></div>
               <div className="flex items-center gap-1 bg-skin-bg p-1 rounded-full border border-skin-border">
                 <ThemeToggleButton />
