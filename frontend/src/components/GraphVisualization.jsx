@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useRef, forwardRef, useImperativeHandle, useState } from 'react'
 import { Network } from 'vis-network'
 import { getNodeColor, getEdgeColor } from '../utils/colors'
 import { useTheme } from '../contexts/ThemeContext'
@@ -44,9 +44,13 @@ const createSphereImage = (color) => {
 }
 
 const GraphVisualization = forwardRef(
-  ({ data, isLoading, setTooltip, setSelectedNode, physicsOptions, styleOptions }, ref) => {
-    const networkRef = useRef(null)
+  (
+    { data, isLoading, setTooltip, setSelectedNode, physicsOptions, styleOptions, onGraphReady },
+    ref
+  ) => {
+    const containerRef = useRef(null)
     const networkInstance = useRef(null)
+    const [isRendered, setIsRendered] = useState(false)
     const { theme } = useTheme()
 
     useImperativeHandle(ref, () => ({
@@ -79,7 +83,10 @@ const GraphVisualization = forwardRef(
         }
       },
       downloadSVG: () => {
-        if (!networkInstance.current || Object.keys(networkInstance.current.body.nodes).length === 0) {
+        if (
+          !networkInstance.current ||
+          Object.keys(networkInstance.current.body.nodes).length === 0
+        ) {
           console.warn('SVG export cancelled: Network not ready or no nodes to export.')
           return
         }
@@ -207,9 +214,13 @@ const GraphVisualization = forwardRef(
     }))
 
     useEffect(() => {
-      if (!networkRef.current) return
+      if (!containerRef.current) {
+        return
+      }
+      setIsRendered(false)
+      if (onGraphReady) onGraphReady(false)
 
-      const nodes = data.nodes.map((node) => {
+      const nodesWithImages = data.nodes.map((node) => {
         const shape = styleOptions.nodeShapes[node.type] || 'sphere'
         const color = getNodeColor(node.type, theme)
 
@@ -236,82 +247,85 @@ const GraphVisualization = forwardRef(
         return nodeConfig
       })
 
-      const edges = data.edges.map((edge) => ({
-        from: edge.source,
-        to: edge.target,
-        label: edge.label,
-        arrows: 'to',
-        color: getEdgeColor(edge.sentiment),
-      }))
+      const visData = {
+        nodes: nodesWithImages,
+        edges: data.edges,
+      }
 
       const options = {
+        autoResize: true,
+        height: '100%',
+        width: '100%',
         nodes: {
+          shape: 'dot',
+          size: 30,
           font: {
             size: 14,
-            face: 'Inter',
             color: theme === 'light' ? '#111827' : '#ffffff',
+            face: 'Inter',
           },
+          borderWidth: 2,
+          shadow: true,
         },
         edges: {
           width: 2,
           font: {
             size: 12,
-            face: 'Inter',
             color: theme === 'light' ? '#111827' : '#E0E0E0',
             strokeWidth: 4,
             strokeColor: theme === 'light' ? '#ffffff' : '#212121',
           },
+          arrows: {
+            to: {
+              enabled: true,
+              scaleFactor: 0.8,
+            },
+          },
           smooth: {
-            type: styleOptions.edgeStyle,
+            enabled: true,
+            type: 'dynamic',
           },
         },
         physics: {
+          ...physicsOptions,
+          solver: 'barnesHut',
           barnesHut: {
-            gravitationalConstant: physicsOptions.gravitationalConstant,
-            springLength: physicsOptions.springLength,
-            springConstant: 0.04,
-            damping: physicsOptions.damping,
-            avoidOverlap: 0.1,
-          },
-          stabilization: {
-            iterations: 1000,
-            fit: true,
+            gravitationalConstant: -3000,
+            centralGravity: 0.1,
+            springLength: 150,
+            springConstant: 0.05,
+            damping: 0.1,
+            avoidOverlap: 0.5,
           },
         },
         interaction: {
           hover: true,
           tooltipDelay: 200,
-          dragNodes: true,
-          dragView: true,
-          zoomView: true,
+        },
+        layout: {
+          improvedLayout: true,
         },
       }
 
-      if (networkInstance.current) {
-        networkInstance.current.destroy()
-      }
+      const network = new Network(containerRef.current, visData, options)
+      networkInstance.current = network
 
-      networkInstance.current = new Network(
-        networkRef.current,
-        { nodes, edges },
-        options
-      )
-
-      networkInstance.current.on('click', ({ nodes: clickedNodes }) => {
-        if (clickedNodes.length > 0) {
-          const nodeId = clickedNodes[0]
-          const nodeInfo = data.nodes.find((n) => n.id === nodeId)
-          setSelectedNode(nodeInfo)
+      network.on('click', (event) => {
+        if (event.nodes.length > 0) {
+          const nodeId = event.nodes[0]
+          const node = data.nodes.find((n) => n.id === nodeId)
+          setSelectedNode(node)
         } else {
+          // If a user clicks on the background, deselect node
           setSelectedNode(null)
         }
       })
 
-      networkInstance.current.on('hoverNode', ({ node: nodeId, event }) => {
-        const node = data.nodes.find((n) => n.id === nodeId)
-        if (node) {
-          const content = `<b>${node.type}</b><br>${
-            node.sentiment ? `Sentiment: ${node.sentiment}` : ''
+      network.on('hoverNode', ({ node, event }) => {
+        const nodeData = data.nodes.find((n) => n.id === node)
+        if (nodeData) {
+          const content = `<b>${nodeData.type}</b><br>${
+            nodeData.sentiment ? `Sentiment: ${nodeData.sentiment}` : ''
           }`
           setTooltip({
             visible: true,
@@ -322,41 +336,33 @@ const GraphVisualization = forwardRef(
         }
       })
 
-      networkInstance.current.on('blurNode', () => {
+      network.on('blurNode', () => {
         setTooltip({ visible: false, content: '', x: 0, y: 0 })
       })
 
-      // Stop physics after initial layout to reduce sensitivity
-      networkInstance.current.on('stabilizationIterationsDone', () => {
-        networkInstance.current.setOptions({
-          physics: false,
-        })
+      network.on('afterDrawing', () => {
+        if (!isRendered) {
+          setIsRendered(true)
+          if (onGraphReady) onGraphReady(true)
+        }
       })
 
       return () => {
-        if (networkInstance.current) {
-          networkInstance.current.destroy()
+        if (network) {
+          network.destroy()
         }
       }
-    }, [data, setTooltip, setSelectedNode, theme, styleOptions])
-
-    // Apply physics changes dynamically
-    useEffect(() => {
-      if (networkInstance.current) {
-        networkInstance.current.setOptions({
-          physics: {
-            barnesHut: {
-              gravitationalConstant: physicsOptions.gravitationalConstant,
-              springLength: physicsOptions.springLength,
-              damping: physicsOptions.damping,
-            },
-          },
-        })
-        // Briefly re-enable physics to apply changes
-        networkInstance.current.setOptions({ physics: true })
-        setTimeout(() => networkInstance.current.setOptions({ physics: false }), 2000)
-      }
-    }, [physicsOptions])
+    }, [
+      data,
+      theme,
+      physicsOptions,
+      styleOptions.nodeShapes,
+      styleOptions.nodeColors,
+      setSelectedNode,
+      setTooltip,
+      isRendered,
+      onGraphReady,
+    ])
 
     return (
       <div className="relative h-full w-full">
@@ -365,7 +371,7 @@ const GraphVisualization = forwardRef(
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-skin-btn-primary"></div>
           </div>
         )}
-        <div ref={networkRef} className="h-full w-full" />
+        <div ref={containerRef} className="h-full w-full" />
       </div>
     )
   }

@@ -3,6 +3,7 @@ import GraphVisualization from './components/GraphVisualization'
 import { generateGraph, getHistory, deleteHistoryItem } from './services/api'
 import ThemeToggleButton from './components/ThemeToggleButton'
 import ControlSidebar from './components/ControlSidebar'
+import NodeInfoPanel from './components/NodeInfoPanel'
 import {
   ArrowDownTrayIcon,
   ArrowRightOnRectangleIcon,
@@ -44,6 +45,7 @@ function App() {
   const [physicsOptions, setPhysicsOptions] = useState(defaultPhysicsOptions)
   const [styleOptions, setStyleOptions] = useState(defaultStyleOptions)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isGraphReady, setIsGraphReady] = useState(false)
   const graphRef = useRef(null)
   const { user, logout } = useAuth()
 
@@ -157,50 +159,49 @@ function App() {
         physicsOptions={physicsOptions}
         setPhysicsOptions={setPhysicsOptions}
         resetPhysics={resetPhysics}
+        user={user}
+        logout={logout}
       />
 
-      <main className="flex-1 flex flex-col relative">
-        <header className="absolute top-0 left-0 right-0 z-20 p-4 flex justify-between items-start">
-          {/* Left-side controls */}
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={toggleSidebar}
-              className="p-3 rounded-full bg-skin-bg-accent text-skin-text shadow-lg hover:bg-skin-border transition-colors"
-              aria-label="Toggle controls sidebar"
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-          </div>
+      <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
 
-          {/* Right-side controls */}
-          <div className="flex flex-col gap-2">
-            <div className="bg-skin-bg-accent p-2 rounded-full shadow-lg flex flex-col gap-2">
+      <main className="flex-1 flex flex-col relative">
+        <header className="absolute top-0 left-0 right-0 z-20 p-4">
+          <div className="max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full p-2 pl-4 border border-skin-border shadow-lg">
+            <div className="flex items-center gap-3">
               <button
-                onClick={handleDownloadPNG}
-                disabled={isProcessing || graphData.nodes.length === 0}
-                className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label="Download graph as PNG"
+                onClick={toggleSidebar}
+                className="p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors"
+                aria-label="Toggle controls sidebar"
               >
-                <ArrowDownTrayIcon className="h-5 w-5" />
+                <Bars3Icon className="h-6 w-6" />
               </button>
-              <button
-                onClick={handleDownloadSVG}
-                disabled={isProcessing || graphData.nodes.length === 0}
-                className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label="Download graph as SVG"
-              >
-                <DocumentArrowDownIcon className="h-5 w-5" />
-              </button>
+              <h1 className="text-xl font-bold text-skin-text hidden sm:block">Synapse</h1>
             </div>
-            <div className="bg-skin-bg-accent p-2 rounded-full shadow-lg flex flex-col gap-2">
-              <ThemeToggleButton />
-              <button
-                onClick={logout}
-                className="p-2 rounded-full text-skin-text hover:bg-skin-border focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-skin-border transition-colors"
-                aria-label="Logout"
-              >
-                <ArrowRightOnRectangleIcon className="h-5 w-5" />
-              </button>
+
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-skin-bg p-1 rounded-full border border-skin-border">
+                <button
+                  onClick={handleDownloadPNG}
+                  disabled={isProcessing || graphData.nodes.length === 0 || !isGraphReady}
+                  className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Download graph as PNG"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={handleDownloadSVG}
+                  disabled={isProcessing || graphData.nodes.length === 0 || !isGraphReady}
+                  className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Download graph as SVG"
+                >
+                  <DocumentArrowDownIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="hidden sm:block h-6 border-l border-skin-border mx-1"></div>
+              <div className="flex items-center gap-1 bg-skin-bg p-1 rounded-full border border-skin-border">
+                <ThemeToggleButton />
+              </div>
             </div>
           </div>
         </header>
@@ -215,6 +216,7 @@ function App() {
             setSelectedNode={setSelectedNode}
             physicsOptions={physicsOptions}
             styleOptions={styleOptions}
+            onGraphReady={setIsGraphReady}
           />
         </div>
 
