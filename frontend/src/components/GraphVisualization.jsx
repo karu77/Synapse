@@ -267,18 +267,22 @@ const GraphVisualization = forwardRef(
         }
       },
       downloadSVG: () => {
-        if (
-          !networkInstance.current ||
-          networkInstance.current.body.nodeIndices.length === 0
-        ) {
-          console.warn('SVG export cancelled: Network not ready or no nodes to export.')
+        if (!networkInstance.current) {
+          console.warn('SVG export cancelled: Network instance not available.')
+          return
+        }
+
+        // CORRECT & ROBUST CHECK: Use the public getPositions() method.
+        // If there are no positions, there are no nodes to export.
+        const nodePositions = networkInstance.current.getPositions()
+        if (Object.keys(nodePositions).length === 0) {
+          console.warn('SVG export cancelled: No rendered nodes found.')
           return
         }
 
         const network = networkInstance.current
         const renderedNodes = network.body.nodes // Use the internal, rendered nodes for accuracy
         const renderedEdges = network.body.edges // Use rendered edges for accuracy
-        const nodePositions = network.getPositions()
         const boundingBox = network.getBoundingBox()
 
         // Get theme colors from CSS variables for perfect theme matching
