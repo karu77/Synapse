@@ -107,7 +107,9 @@ const GraphVisualization = forwardRef(
           setTooltip({ visible: false, content: '', x: 0, y: 0 })
         })
 
-        network.on('afterDrawing', () => {
+        // Use the 'stabilized' event to reliably determine when the graph is ready.
+        // This fires once the physics simulation has settled down.
+        network.on('stabilized', () => {
           onGraphReadyRef.current(true)
         })
 
