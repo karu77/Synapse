@@ -63,24 +63,31 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     const promptMessages = [/*...same prompt logic as before...*/]
     // ... logic to build promptMessages array ...
     
-    const textPrompt = `Analyze the provided inputs to extract key entities and their relationships.
+    const textPrompt = `Your primary goal is to build a comprehensive and highly-connected knowledge graph from the provided inputs. Identify *all* plausible entities and the relationships that connect them. It is crucial to be exhaustive.
+
       The user provided:
       ${textInput ? `Text: "${textInput}"` : ''}
       ${hasImage ? 'An image file.' : ''}
       ${audioPart ? 'An audio/video file.' : ''}
 
-      **Crucially, for every single entity and every single relationship you identify, you MUST perform sentiment analysis.** The sentiment value must be one of three specific strings: "positive", "negative", or "neutral", based on the overall context of the input. Do not skip this step.
+      **Instructions:**
+      1.  **Be Exhaustive:** Find every possible entity and relationship. It's better to include a minor relationship than to omit one. Aim for a dense, well-connected graph.
+      2.  **Perform Sentiment Analysis:** For every single entity and every single relationship, you MUST determine its sentiment from the context. The sentiment must be one of three string values: "positive", "negative", or "neutral".
+      3.  **Strict JSON Output:** Return the output *only* as a single JSON object. Do not include any other text, comments, or formatting.
 
-      Return the output *only* as a single JSON object. Do not include any other text, comments, or formatting. Here is the required structure with an example demonstrating varied sentiments:
+      Here is the required structure with an example demonstrating a dense graph with varied sentiments:
       {
         "entities": [
-          {"id": "e1", "label": "Amazing Product", "type": "PRODUCT", "sentiment": "positive"},
-          {"id": "e2", "label": "Company XYZ", "type": "ORG", "sentiment": "neutral"},
-          {"id": "e3", "label": "Terrible Experience", "type": "CONCEPT", "sentiment": "negative"}
+          {"id": "e1", "label": "Synapse", "type": "PRODUCT", "sentiment": "positive"},
+          {"id": "e2", "label": "Gemini API", "type": "PRODUCT", "sentiment": "neutral"},
+          {"id": "e3", "label": "Knowledge Graph", "type": "CONCEPT", "sentiment": "neutral"},
+          {"id": "e4", "label": "Frontend Developers", "type": "JOB_TITLE", "sentiment": "positive"}
         ],
         "relationships": [
-          {"source": "e1", "target": "e2", "label": "PRODUCED_BY", "sentiment": "neutral"},
-          {"source": "e3", "target": "e1", "label": "DESCRIBES", "sentiment": "negative"}
+          {"source": "e1", "target": "e2", "label": "USES", "sentiment": "neutral"},
+          {"source": "e1", "target": "e3", "label": "GENERATES", "sentiment": "positive"},
+          {"source": "e4", "target": "e1", "label": "DEVELOPS", "sentiment": "neutral"},
+          {"source": "e2", "target": "e3", "label": "ENABLES", "sentiment": "positive"}
         ]
       }
       
