@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import PasswordInput from '../components/PasswordInput'
 
 const LoginPage = () => {
   const [email, setEmail] = useState('')
@@ -37,16 +38,14 @@ const LoginPage = () => {
               className="mt-1 block w-full px-3 py-2 bg-skin-bg border border-skin-border rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-skin-btn-primary focus:border-skin-btn-primary"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-skin-text">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="mt-1 block w-full px-3 py-2 bg-skin-bg border border-skin-border rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-skin-btn-primary focus:border-skin-btn-primary"
-            />
-          </div>
+          <PasswordInput
+            label="Password"
+            id="password"
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
           <div>
             <button
               type="submit"
