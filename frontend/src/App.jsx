@@ -1,16 +1,13 @@
-import { useState, useRef, useEffect } from 'react'
-import TextInput from './components/TextInput'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import GraphVisualization from './components/GraphVisualization'
 import { generateGraph, getHistory, deleteHistoryItem } from './services/api'
-import NodeInfoPanel from './components/NodeInfoPanel'
 import ThemeToggleButton from './components/ThemeToggleButton'
-import HistoryPanel from './components/HistoryPanel'
-import CustomizationPanel from './components/CustomizationPanel'
-import StyleCustomizationPanel from './components/StyleCustomizationPanel'
+import ControlSidebar from './components/ControlSidebar'
 import {
   ArrowDownTrayIcon,
   ArrowRightOnRectangleIcon,
   DocumentArrowDownIcon,
+  Bars3Icon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from './contexts/AuthContext'
 
@@ -46,33 +43,33 @@ function App() {
   const [history, setHistory] = useState([])
   const [physicsOptions, setPhysicsOptions] = useState(defaultPhysicsOptions)
   const [styleOptions, setStyleOptions] = useState(defaultStyleOptions)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const graphRef = useRef(null)
   const { user, logout } = useAuth()
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const userHistory = await getHistory()
       setHistory(userHistory)
     } catch (error) {
       console.error('Failed to fetch history:', error)
-      // Potentially handle token expiry here, e.g., by logging out
       if (error.response && error.response.status === 401) {
         logout()
       }
     }
-  }
+  }, [logout])
 
   // Load history from backend on initial render
   useEffect(() => {
     if (user) {
       fetchHistory()
     }
-  }, [user])
+  }, [user, fetchHistory])
 
   const handleTextSubmit = async (text, imageFile, audioFile, audioVideoURL) => {
     setIsProcessing(true)
     setSelectedNode(null) // Clear selection on new graph
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setIsSidebarOpen(false) // Close sidebar on submission
     try {
       const data = await generateGraph(text, imageFile, audioFile, audioVideoURL)
       setGraphData(data)
@@ -100,6 +97,7 @@ function App() {
   const loadFromHistory = (historyItem) => {
     setGraphData(historyItem.graphData)
     setGraphKey((prevKey) => prevKey + 1)
+    setIsSidebarOpen(false)
   }
 
   const handleDeleteFromHistory = async (id) => {
@@ -129,8 +127,12 @@ function App() {
     setStyleOptions(defaultStyleOptions)
   }
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen)
+  }
+
   return (
-    <div className="min-h-screen flex flex-col font-sans p-4 md:p-8 relative">
+    <div className="h-screen w-screen overflow-hidden bg-skin-bg text-skin-text font-sans flex">
       {tooltip.visible && (
         <div
           className="absolute bg-skin-bg-accent text-skin-text text-sm p-2 rounded-md shadow-lg pointer-events-none z-50"
@@ -138,96 +140,88 @@ function App() {
           dangerouslySetInnerHTML={{ __html: tooltip.content }}
         />
       )}
-      <header className="w-full max-w-7xl mx-auto mb-10 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-skin-text">Synapse</h1>
-          {user && (
-            <span className="text-skin-text-muted hidden md:block">Welcome, {user.name}!</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggleButton />
-          <button
-            onClick={logout}
-            className="p-2 rounded-full text-skin-text hover:bg-skin-bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-skin-border transition-colors"
-            aria-label="Logout"
-          >
-            <ArrowRightOnRectangleIcon className="h-6 w-6" />
-          </button>
-        </div>
-      </header>
 
-      <main className="flex-1 flex w-full max-w-7xl mx-auto items-center">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Panel: Text Input & Node Info */}
-          <div className="lg:col-span-1 bg-skin-bg-accent rounded-3xl shadow-lg p-8 transition-shadow duration-300 hover:shadow-2xl flex flex-col">
-            <div className="flex-grow">
-              <h2 className="text-3xl font-bold text-skin-text mb-6">Text & Multimodal Input</h2>
-              <TextInput onSubmit={handleTextSubmit} isProcessing={isProcessing} />
-            </div>
-            <NodeInfoPanel node={selectedNode} />
-            <HistoryPanel
-              history={history}
-              onSelect={loadFromHistory}
-              onDelete={handleDeleteFromHistory}
-              onClear={clearHistory}
-            />
-            <StyleCustomizationPanel
-              options={styleOptions}
-              onUpdate={setStyleOptions}
-              onReset={resetStyles}
-            />
-            <CustomizationPanel
-              options={physicsOptions}
-              onUpdate={setPhysicsOptions}
-              onReset={resetPhysics}
-            />
+      <ControlSidebar
+        isOpen={isSidebarOpen}
+        onClose={toggleSidebar}
+        onSubmit={handleTextSubmit}
+        isProcessing={isProcessing}
+        selectedNode={selectedNode}
+        history={history}
+        loadFromHistory={loadFromHistory}
+        onDelete={handleDeleteFromHistory}
+        onClear={clearHistory}
+        styleOptions={styleOptions}
+        setStyleOptions={setStyleOptions}
+        resetStyles={resetStyles}
+        physicsOptions={physicsOptions}
+        setPhysicsOptions={setPhysicsOptions}
+        resetPhysics={resetPhysics}
+      />
+
+      <main className="flex-1 flex flex-col relative">
+        <header className="absolute top-0 left-0 right-0 z-20 p-4 flex justify-between items-start">
+          {/* Left-side controls */}
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={toggleSidebar}
+              className="p-3 rounded-full bg-skin-bg-accent text-skin-text shadow-lg hover:bg-skin-border transition-colors"
+              aria-label="Toggle controls sidebar"
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </button>
           </div>
 
-          {/* Right Panel: Graph Output (takes 2/3 of the space on large screens) */}
-          <div className="lg:col-span-2 bg-skin-bg-accent rounded-3xl shadow-lg p-6 transition-shadow duration-300 hover:shadow-2xl flex flex-col h-[75vh] overflow-hidden">
-            <div className="flex justify-between items-center mb-4 px-2">
-              <h2 className="text-2xl font-bold text-skin-text">Knowledge Graph Output</h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleDownloadPNG}
-                  disabled={isProcessing || graphData.nodes.length === 0}
-                  className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-semibold text-skin-text bg-skin-bg border border-skin-border hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  aria-label="Download graph as PNG"
-                >
-                  <ArrowDownTrayIcon className="h-4 w-4" />
-                  PNG
-                </button>
-                <button
-                  onClick={handleDownloadSVG}
-                  disabled={isProcessing || graphData.nodes.length === 0}
-                  className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-semibold text-skin-text bg-skin-bg border border-skin-border hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  aria-label="Download graph as SVG"
-                >
-                  <DocumentArrowDownIcon className="h-4 w-4" />
-                  SVG
-                </button>
-              </div>
+          {/* Right-side controls */}
+          <div className="flex flex-col gap-2">
+            <div className="bg-skin-bg-accent p-2 rounded-full shadow-lg flex flex-col gap-2">
+              <button
+                onClick={handleDownloadPNG}
+                disabled={isProcessing || graphData.nodes.length === 0}
+                className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="Download graph as PNG"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleDownloadSVG}
+                disabled={isProcessing || graphData.nodes.length === 0}
+                className="p-2 rounded-full text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="Download graph as SVG"
+              >
+                <DocumentArrowDownIcon className="h-5 w-5" />
+              </button>
             </div>
-            <div className="flex-grow">
-              <GraphVisualization
-                ref={graphRef}
-                key={graphKey}
-                data={graphData}
-                isLoading={isProcessing}
-                setTooltip={setTooltip}
-                setSelectedNode={setSelectedNode}
-                physicsOptions={physicsOptions}
-                styleOptions={styleOptions}
-              />
+            <div className="bg-skin-bg-accent p-2 rounded-full shadow-lg flex flex-col gap-2">
+              <ThemeToggleButton />
+              <button
+                onClick={logout}
+                className="p-2 rounded-full text-skin-text hover:bg-skin-border focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-skin-border transition-colors"
+                aria-label="Logout"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+              </button>
             </div>
           </div>
+        </header>
+
+        <div className="flex-grow h-full w-full">
+          <GraphVisualization
+            ref={graphRef}
+            key={graphKey}
+            data={graphData}
+            isLoading={isProcessing}
+            setTooltip={setTooltip}
+            setSelectedNode={setSelectedNode}
+            physicsOptions={physicsOptions}
+            styleOptions={styleOptions}
+          />
         </div>
+
+        <footer className="absolute bottom-0 left-0 p-4 text-skin-text-muted text-xs">
+          Welcome, {user?.name || 'Guest'}!
+        </footer>
       </main>
-
-      <footer className="w-full text-center text-skin-text-muted text-sm py-6">
-        &copy; {new Date().getFullYear()} Synapse. All rights reserved.
-      </footer>
     </div>
   )
 }

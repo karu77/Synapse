@@ -79,7 +79,10 @@ const GraphVisualization = forwardRef(
         }
       },
       downloadSVG: () => {
-        if (!networkInstance.current) return
+        if (!networkInstance.current || Object.keys(networkInstance.current.body.nodes).length === 0) {
+          console.warn('SVG export cancelled: Network not ready or no nodes to export.')
+          return
+        }
 
         const network = networkInstance.current
         const nodes = data.nodes
