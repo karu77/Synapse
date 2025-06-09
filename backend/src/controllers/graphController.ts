@@ -9,18 +9,39 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 const extractGraphData = (response: string) => {
   let jsonString = ''
   try {
-    console.log('Raw Gemini response received:\n', response)
-    const jsonMatch = response.match(/```json\s*([\s\S]*?)```/i) || response.match(/```\s*([\s\S]*?)```/i)
-    jsonString = jsonMatch ? jsonMatch[1].trim() : response.trim()
-    console.log('Attempting to parse JSON string:\n', jsonString)
+    console.log('Raw Gemini response received for parsing.')
 
+    // Try to find a markdown-style JSON block first
+    const jsonMatch = response.match(/```(json)?\s*([\s\S]*?)\s*```/i)
+    if (jsonMatch && jsonMatch[2]) {
+      jsonString = jsonMatch[2].trim()
+    } else {
+      // If no markdown block, be more aggressive: find the first '{' and last '}'
+      const firstBrace = response.indexOf('{')
+      const lastBrace = response.lastIndexOf('}')
+      if (firstBrace !== -1 && lastBrace > firstBrace) {
+        jsonString = response.substring(firstBrace, lastBrace + 1).trim()
+      }
+    }
+
+    if (!jsonString) {
+      console.error('Could not find any JSON content in the AI response.', { originalResponse: response })
+      return { nodes: [], edges: [] }
+    }
+    
+    console.log('Attempting to parse extracted JSON string.')
     const data = JSON.parse(jsonString)
+
     return {
       nodes: data.entities || [],
       edges: data.relationships || [],
     }
   } catch (error) {
-    console.error('Error parsing Gemini response. Raw string was:', jsonString, 'Error:', error)
+    console.error('Failed to parse JSON from AI response.', { 
+      extractedJsonString: jsonString,
+      originalResponse: response,
+      parsingError: error 
+    })
     return { nodes: [], edges: [] }
   }
 }
