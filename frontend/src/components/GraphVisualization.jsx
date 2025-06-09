@@ -269,7 +269,7 @@ const GraphVisualization = forwardRef(
       downloadSVG: () => {
         if (
           !networkInstance.current ||
-          Object.keys(networkInstance.current.body.nodes).length === 0
+          networkInstance.current.body.nodeIndices.length === 0
         ) {
           console.warn('SVG export cancelled: Network not ready or no nodes to export.')
           return
