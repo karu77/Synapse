@@ -63,21 +63,24 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     const promptMessages = [/*...same prompt logic as before...*/]
     // ... logic to build promptMessages array ...
     
-    const textPrompt = `Analyze the provided inputs to extract entities and relationships.
+    const textPrompt = `Analyze the provided inputs to extract key entities and their relationships.
       The user provided:
       ${textInput ? `Text: "${textInput}"` : ''}
       ${hasImage ? 'An image file.' : ''}
       ${audioPart ? 'An audio/video file.' : ''}
 
-      For each entity and relationship, you must determine its sentiment from the context provided. The sentiment must be one of three string values: "positive", "negative", or "neutral".
+      **Crucially, for every single entity and every single relationship you identify, you MUST perform sentiment analysis.** The sentiment value must be one of three specific strings: "positive", "negative", or "neutral", based on the overall context of the input. Do not skip this step.
 
-      Return the output *only* as a single JSON object. Do not include any other text or formatting. Here is the required structure with an example:
+      Return the output *only* as a single JSON object. Do not include any other text, comments, or formatting. Here is the required structure with an example demonstrating varied sentiments:
       {
         "entities": [
-          {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral"}
+          {"id": "e1", "label": "Amazing Product", "type": "PRODUCT", "sentiment": "positive"},
+          {"id": "e2", "label": "Company XYZ", "type": "ORG", "sentiment": "neutral"},
+          {"id": "e3", "label": "Terrible Experience", "type": "CONCEPT", "sentiment": "negative"}
         ],
         "relationships": [
-          {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral"}
+          {"source": "e1", "target": "e2", "label": "PRODUCED_BY", "sentiment": "neutral"},
+          {"source": "e3", "target": "e1", "label": "DESCRIBES", "sentiment": "negative"}
         ]
       }
       
