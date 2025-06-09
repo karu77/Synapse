@@ -58,6 +58,129 @@ const GraphVisualization = forwardRef(
           document.body.removeChild(link)
         }
       },
+      downloadSVG: () => {
+        if (!networkInstance.current) return
+
+        const network = networkInstance.current
+        const nodes = data.nodes
+        const edges = data.edges
+        const nodePositions = network.getPositions()
+        const boundingBox = network.getBoundingBox()
+        const padding = 50
+        const width = boundingBox.right - boundingBox.left + 2 * padding
+        const height = boundingBox.bottom - boundingBox.top + 2 * padding
+        const viewBox = `${boundingBox.left - padding} ${
+          boundingBox.top - padding
+        } ${width} ${height}`
+        const bgColor = theme === 'light' ? '#ffffff' : '#212121'
+        const textColor = theme === 'light' ? '#111827' : '#ffffff'
+
+        let svgDefs = `<defs>`
+        const gradients = {}
+        let gradCounter = 0
+
+        // Create gradients for sphere nodes and a single arrow marker
+        svgDefs += `
+<marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+  <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+</marker>`
+
+        nodes.forEach((node) => {
+          const shape = styleOptions.nodeShapes[node.type] || 'sphere'
+          if (shape === 'sphere') {
+            const color = getNodeColor(node.type, theme)
+            if (!gradients[color]) {
+              const gradId = `grad-${gradCounter++}`
+              svgDefs += `
+<radialGradient id="${gradId}" cx="35%" cy="35%" r="65%">
+  <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9" />
+  <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.4" />
+  <stop offset="100%" stop-color="${color}" />
+</radialGradient>`
+              gradients[color] = gradId
+            }
+          }
+        })
+        svgDefs += `</defs>`
+
+        let edgePaths = '<g>'
+        edges.forEach((edge) => {
+          const fromPos = nodePositions[edge.source]
+          const toPos = nodePositions[edge.target]
+          if (!fromPos || !toPos) return
+
+          const edgeColor = getEdgeColor(edge.sentiment)
+          const nodeSize = 30
+          const dx = toPos.x - fromPos.x
+          const dy = toPos.y - fromPos.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          const newToX = toPos.x - (dx / dist) * (nodeSize + 5) // +5 for padding
+          const newToY = toPos.y - (dy / dist) * (nodeSize + 5)
+
+          edgePaths += `<line x1="${fromPos.x}" y1="${fromPos.y}" x2="${newToX}" y2="${newToY}" stroke="${edgeColor}" stroke-width="2" marker-end="url(#arrowhead)" color="${edgeColor}" />`
+
+          const midX = (fromPos.x + toPos.x) / 2
+          const midY = (fromPos.y + toPos.y) / 2
+          const edgeLabelColor = theme === 'light' ? '#111827' : '#E0E0E0'
+          edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter" font-size="12" fill="${edgeLabelColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${edge.label}</text>`
+        })
+        edgePaths += '</g>'
+
+        let nodeElements = '<g>'
+        nodes.forEach((node) => {
+          const pos = nodePositions[node.id]
+          if (!pos) return
+
+          const color = getNodeColor(node.type, theme)
+          const shape = styleOptions.nodeShapes[node.type] || 'sphere'
+          const nodeSize = 30
+
+          if (shape === 'sphere') {
+            const gradId = gradients[color]
+            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="url(#${gradId})" />`
+          } else if (shape === 'box' || shape === 'square') {
+            nodeElements += `<rect x="${pos.x - nodeSize}" y="${
+              pos.y - nodeSize
+            }" width="${nodeSize * 2}" height="${nodeSize * 2}" fill="${color}" />`
+          } else if (shape === 'diamond') {
+            nodeElements += `<rect x="${pos.x - nodeSize}" y="${
+              pos.y - nodeSize
+            }" width="${nodeSize * 2}" height="${
+              nodeSize * 2
+            }" fill="${color}" transform="rotate(45, ${pos.x}, ${pos.y})" />`
+          } else {
+            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
+          }
+          nodeElements += `<text x="${pos.x}" y="${
+            pos.y + nodeSize + 14
+          }" font-family="Inter" font-size="14" fill="${textColor}" text-anchor="middle">${
+            node.label
+          }</text>`
+        })
+        nodeElements += '</g>'
+
+        const svgString = `
+<svg width="${Math.round(width)}" height="${Math.round(
+          height
+        )}" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg">
+  <rect x="${viewBox.split(' ')[0]}" y="${
+          viewBox.split(' ')[1]
+        }" width="${width}" height="${height}" fill="${bgColor}" />
+  ${svgDefs}
+  ${edgePaths}
+  ${nodeElements}
+</svg>`
+
+        const blob = new Blob([svgString], { type: 'image/svg+xml' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = 'synapse-graph.svg'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      },
     }))
 
     useEffect(() => {

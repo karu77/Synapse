@@ -7,7 +7,11 @@ import ThemeToggleButton from './components/ThemeToggleButton'
 import HistoryPanel from './components/HistoryPanel'
 import CustomizationPanel from './components/CustomizationPanel'
 import StyleCustomizationPanel from './components/StyleCustomizationPanel'
-import { ArrowDownTrayIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import {
+  ArrowDownTrayIcon,
+  ArrowRightOnRectangleIcon,
+  DocumentArrowDownIcon,
+} from '@heroicons/react/24/outline'
 import { useAuth } from './contexts/AuthContext'
 
 const defaultPhysicsOptions = {
@@ -81,9 +85,15 @@ function App() {
     }
   }
 
-  const handleDownload = () => {
+  const handleDownloadPNG = () => {
     if (graphRef.current) {
       graphRef.current.downloadGraph()
+    }
+  }
+
+  const handleDownloadSVG = () => {
+    if (graphRef.current) {
+      graphRef.current.downloadSVG()
     }
   }
 
@@ -178,15 +188,26 @@ function App() {
           <div className="lg:col-span-2 bg-skin-bg-accent rounded-3xl shadow-lg p-6 transition-shadow duration-300 hover:shadow-2xl flex flex-col h-[75vh] overflow-hidden">
             <div className="flex justify-between items-center mb-4 px-2">
               <h2 className="text-2xl font-bold text-skin-text">Knowledge Graph Output</h2>
-              <button
-                onClick={handleDownload}
-                disabled={isProcessing || graphData.nodes.length === 0}
-                className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-semibold text-skin-text bg-skin-bg border border-skin-border hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label="Download graph"
-              >
-                <ArrowDownTrayIcon className="h-4 w-4" />
-                Download
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadPNG}
+                  disabled={isProcessing || graphData.nodes.length === 0}
+                  className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-semibold text-skin-text bg-skin-bg border border-skin-border hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Download graph as PNG"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                  PNG
+                </button>
+                <button
+                  onClick={handleDownloadSVG}
+                  disabled={isProcessing || graphData.nodes.length === 0}
+                  className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-semibold text-skin-text bg-skin-bg border border-skin-border hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Download graph as SVG"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4" />
+                  SVG
+                </button>
+              </div>
             </div>
             <div className="flex-grow">
               <GraphVisualization
