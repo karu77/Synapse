@@ -23,26 +23,6 @@ const escapeXml = (unsafe) => {
   })
 }
 
-// Helper function to create a 3D-like sphere image using a radial gradient in SVG
-const createSphereImage = (color) => {
-  const lighterColor = '#FFFFFF' // Highlight color for the gradient
-
-  const svg = `
-<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <radialGradient id="grad" cx="35%" cy="35%" r="65%">
-      <stop offset="0%" stop-color="${lighterColor}" stop-opacity="0.9" />
-      <stop offset="30%" stop-color="${lighterColor}" stop-opacity="0.4" />
-      <stop offset="100%" stop-color="${color}" />
-    </radialGradient>
-  </defs>
-  <circle cx="100" cy="100" r="95" fill="url(#grad)" />
-</svg>`.trim()
-
-  const base64 = btoa(svg.replace(/\\n/g, ''))
-  return `data:image/svg+xml;base64,${base64}`
-}
-
 const GraphVisualization = forwardRef(
   (
     { data, isLoading, setTooltip, setSelectedNode, physicsOptions, styleOptions, onGraphReady },
@@ -118,23 +98,23 @@ const GraphVisualization = forwardRef(
       height: '100%',
       width: '100%',
       nodes: {
-        shape: 'dot',
-        size: 30,
+        size: 25,
+        borderWidth: 3,
+        borderWidthSelected: 6,
         font: {
           size: 14,
-          color: theme === 'light' ? '#111827' : '#ffffff',
           face: 'Inter',
+          color: '#ffffff',
         },
-        borderWidth: 2,
-        shadow: true,
+        shadow: false,
       },
       edges: {
         width: 2,
         font: {
           size: 12,
-          color: theme === 'light' ? '#111827' : '#E0E0E0',
+          color: theme === 'light' ? '#475569' : '#94a3b8',
           strokeWidth: 4,
-          strokeColor: theme === 'light' ? '#ffffff' : '#212121',
+          strokeColor: theme === 'light' ? '#f1f5f9' : '#0f172a',
         },
         arrows: {
           to: {
@@ -148,15 +128,10 @@ const GraphVisualization = forwardRef(
         },
       },
       physics: {
-        ...physicsOptions,
         solver: 'barnesHut',
         barnesHut: {
-          gravitationalConstant: -3000,
+          ...physicsOptions,
           centralGravity: 0.1,
-          springLength: 150,
-          springConstant: 0.05,
-          damping: 0.1,
-          avoidOverlap: 0.5,
         },
       },
       interaction: {
@@ -180,22 +155,28 @@ const GraphVisualization = forwardRef(
     useEffect(() => {
       if (networkInstance.current) {
         onGraphReadyRef.current(false)
-        const nodesWithImages = data.nodes.map((node) => {
-          const shape = styleOptions.nodeShapes[node.type] || 'sphere'
+        const highlightColor = '#8b5cf6' // Use theme's primary button color for consistency
+
+        const nodesWithStyling = data.nodes.map((node) => {
+          const shape = styleOptions.nodeShapes[node.type] || 'dot'
           const color = getNodeColor(node.type, theme)
-          if (shape === 'sphere') {
-            return {
-              ...node,
-              shape: 'image',
-              image: createSphereImage(color),
-              size: 40,
-            }
-          }
+
           return {
             ...node,
-            color,
-            shape,
-            size: 30,
+            shape: shape,
+            color: {
+              border: color,
+              background: color,
+              highlight: {
+                border: highlightColor,
+                background: color,
+              },
+              hover: {
+                border: highlightColor,
+                background: color,
+              },
+            },
+            size: node.type === 'PERSON' ? 30 : 25,
           }
         })
 
@@ -206,9 +187,9 @@ const GraphVisualization = forwardRef(
           color: getEdgeColor(edge.sentiment),
         }))
 
-        networkInstance.current.setData({ nodes: nodesWithImages, edges: visEdges })
+        networkInstance.current.setData({ nodes: nodesWithStyling, edges: visEdges })
       }
-    }, [data, theme, styleOptions.nodeShapes, styleOptions.nodeColors])
+    }, [data, theme, styleOptions])
 
     useImperativeHandle(ref, () => ({
       downloadGraph: () => {
@@ -262,33 +243,10 @@ const GraphVisualization = forwardRef(
         const bgColor = theme === 'light' ? '#ffffff' : '#212121'
         const textColor = theme === 'light' ? '#111827' : '#ffffff'
 
-        let svgDefs = `<defs>`
-        const gradients = {}
-        let gradCounter = 0
-
-        // Create gradients for sphere nodes and a single arrow marker
-        svgDefs += `
+        let svgDefs = `<defs>
 <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
   <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
-</marker>`
-
-        nodes.forEach((node) => {
-          const shape = styleOptions.nodeShapes[node.type] || 'sphere'
-          if (shape === 'sphere') {
-            const color = getNodeColor(node.type, theme)
-            if (!gradients[color]) {
-              const gradId = `grad-${gradCounter++}`
-              svgDefs += `
-<radialGradient id="${gradId}" cx="35%" cy="35%" r="65%">
-  <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9" />
-  <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.4" />
-  <stop offset="100%" stop-color="${color}" />
-</radialGradient>`
-              gradients[color] = gradId
-            }
-          }
-        })
-        svgDefs += `</defs>`
+</marker></defs>`
 
         let edgePaths = '<g>'
         edges.forEach((edge) => {
@@ -299,8 +257,8 @@ const GraphVisualization = forwardRef(
           const toNode = nodes.find((n) => n.id === edge.target)
           if (!toNode) return
 
-          const toNodeShape = styleOptions.nodeShapes[toNode.type] || 'sphere'
-          const toNodeSize = toNodeShape === 'sphere' ? 40 : 30
+          const toNodeShape = styleOptions.nodeShapes[toNode.type] || 'dot'
+          const toNodeSize = (toNode.type === 'PERSON' ? 30 : 25) + 3 // size + border
 
           const edgeColor = getEdgeColor(edge.sentiment)
           const dx = toPos.x - fromPos.x
@@ -328,28 +286,34 @@ const GraphVisualization = forwardRef(
           if (!pos) return
 
           const color = getNodeColor(node.type, theme)
-          const shape = styleOptions.nodeShapes[node.type] || 'sphere'
-          const nodeSize = shape === 'sphere' ? 40 : 30
+          const shape = styleOptions.nodeShapes[node.type] || 'dot'
+          const nodeSize = node.type === 'PERSON' ? 30 : 25
+          const borderWidth = 3
 
-          if (shape === 'sphere') {
-            const gradId = gradients[color]
-            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="url(#${gradId})" />`
+          if (shape === 'dot' || shape === 'circle') {
+            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" stroke="${color}" stroke-width="${borderWidth}" />`
           } else if (shape === 'box' || shape === 'square') {
             nodeElements += `<rect x="${pos.x - nodeSize}" y="${
               pos.y - nodeSize
-            }" width="${nodeSize * 2}" height="${nodeSize * 2}" fill="${color}" />`
+            }" width="${nodeSize * 2}" height="${
+              nodeSize * 2
+            }" fill="${color}" stroke="${color}" stroke-width="${borderWidth}" />`
           } else if (shape === 'diamond') {
             nodeElements += `<rect x="${pos.x - nodeSize}" y="${
               pos.y - nodeSize
             }" width="${nodeSize * 2}" height="${
               nodeSize * 2
-            }" fill="${color}" transform="rotate(45, ${pos.x}, ${pos.y})" />`
+            }" fill="${color}" stroke="${color}" stroke-width="${borderWidth}" transform="rotate(45, ${
+              pos.x
+            }, ${pos.y})" />`
           } else {
-            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
+            // Default to circle for other shapes like star, triangle etc. for simplicity in SVG.
+            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" stroke="${color}" stroke-width="${borderWidth}" />`
           }
+          const labelColor = shape === 'dot' || shape === 'circle' ? '#ffffff' : textColor
           nodeElements += `<text x="${pos.x}" y="${
-            pos.y + nodeSize + 14
-          }" font-family="Inter" font-size="14" fill="${textColor}" text-anchor="middle">${escapeXml(
+            pos.y + (shape === 'dot' || shape === 'circle' ? 5 : nodeSize + 14)
+          }" font-family="Inter" font-size="14" fill="${labelColor}" text-anchor="middle">${escapeXml(
             node.label
           )}</text>`
         })
@@ -376,8 +340,8 @@ const GraphVisualization = forwardRef(
         link.click()
         document.body.removeChild(link)
         URL.revokeObjectURL(url)
-      }
-    }));
+      },
+    }))
 
     return (
       <div className="h-full w-full relative">

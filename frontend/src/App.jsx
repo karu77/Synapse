@@ -14,16 +14,17 @@ import {
 import { useAuth } from './contexts/AuthContext'
 
 const defaultPhysicsOptions = {
-  gravitationalConstant: -25000,
-  springLength: 200,
+  gravitationalConstant: -40000,
+  springLength: 300,
   springConstant: 0.04,
   damping: 0.3,
+  avoidOverlap: 0.8,
 }
 
 const defaultStyleOptions = {
   edgeStyle: 'continuous',
   nodeShapes: {
-    PERSON: 'sphere',
+    PERSON: 'dot',
     ORG: 'box',
     LOCATION: 'diamond',
     DATE: 'triangle',
