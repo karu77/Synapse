@@ -237,152 +237,44 @@ const GraphVisualization = forwardRef(
       URL.revokeObjectURL(url)
     }
 
-    useImperativeHandle(ref, () => ({
-      downloadGraph: () => {
-        if (networkInstance.current) {
-          const rootStyle = getComputedStyle(document.documentElement)
-          const bgColor = rootStyle.getPropertyValue('--color-bg').trim() || '#ffffff'
+    const downloadHighResImage = (format, quality) => {
+      if (networkInstance.current) {
+        const mimeType = `image/${format}`
+        const fileExtension = format
+        const fileName = `synapse-graph-high-resolution.${fileExtension}`
 
-          const originalCanvas = networkInstance.current.canvas.getContext('2d').canvas
-          const scaleFactor = 8 // Increased scale factor for higher resolution
-          const newCanvas = document.createElement('canvas')
-          const ctx = newCanvas.getContext('2d')
-
-          newCanvas.width = originalCanvas.width * scaleFactor
-          newCanvas.height = originalCanvas.height * scaleFactor
-
-          ctx.fillStyle = bgColor
-          ctx.fillRect(0, 0, newCanvas.width, newCanvas.height)
-
-          ctx.save()
-          ctx.scale(scaleFactor, scaleFactor)
-          ctx.drawImage(originalCanvas, 0, 0)
-          ctx.restore()
-
-          const dataURL = newCanvas.toDataURL('image/png')
-          const link = document.createElement('a')
-          link.href = dataURL
-          link.download = 'synapse-graph-high-resolution.png'
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-        }
-      },
-      downloadSVG: () => {
-        if (!networkInstance.current) {
-          console.warn('SVG export cancelled: Network instance not available.')
-          return
-        }
-
-        // CORRECT & ROBUST CHECK: Use the public getPositions() method.
-        // If there are no positions, there are no nodes to export.
-        const nodePositions = networkInstance.current.getPositions()
-        if (Object.keys(nodePositions).length === 0) {
-          console.warn('SVG export cancelled: No rendered nodes found.')
-          return
-        }
-
-        const network = networkInstance.current
-        const renderedNodes = network.body.nodes // Use the internal, rendered nodes for accuracy
-        const renderedEdges = network.body.edges // Use rendered edges for accuracy
-        const boundingBox = network.getBoundingBox()
-
-        // Get theme colors from CSS variables for perfect theme matching
         const rootStyle = getComputedStyle(document.documentElement)
-        const bgColor = rootStyle.getPropertyValue('--color-bg').trim()
-        const defaultTextColor = rootStyle.getPropertyValue('--color-text').trim()
-        const textMutedColor = rootStyle.getPropertyValue('--color-text-muted').trim()
+        const bgColor = rootStyle.getPropertyValue('--color-bg').trim() || '#ffffff'
 
-        const padding = 50
-        const width = boundingBox.right - boundingBox.left + 2 * padding
-        const height = boundingBox.bottom - boundingBox.top + 2 * padding
-        const viewBox = `${boundingBox.left - padding} ${boundingBox.top - padding} ${width} ${height}`
+        const originalCanvas = networkInstance.current.canvas.getContext('2d').canvas
+        const scaleFactor = 8 // Increased scale factor for higher resolution
+        const newCanvas = document.createElement('canvas')
+        const ctx = newCanvas.getContext('2d')
 
-        const svgDefs = `<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>`
+        newCanvas.width = originalCanvas.width * scaleFactor
+        newCanvas.height = originalCanvas.height * scaleFactor
 
-        let edgePaths = '<g>'
-        Object.values(renderedEdges).forEach((edge) => {
-          const fromPos = nodePositions[edge.fromId]
-          const toPos = nodePositions[edge.toId]
-          if (!fromPos || !toPos) return
+        ctx.fillStyle = bgColor
+        ctx.fillRect(0, 0, newCanvas.width, newCanvas.height)
 
-          const toNode = renderedNodes[edge.toId]
-          if (!toNode) return
+        ctx.save()
+        ctx.scale(scaleFactor, scaleFactor)
+        ctx.drawImage(originalCanvas, 0, 0)
+        ctx.restore()
 
-          const toNodeSize = toNode.shape.size + toNode.shape.borderWidth
+        const dataURL = newCanvas.toDataURL(mimeType, quality)
+        const link = document.createElement('a')
+        link.href = dataURL
+        link.download = fileName
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+    }
 
-          const edgeColor = edge.options.color.color || textMutedColor
-          const dx = toPos.x - fromPos.x
-          const dy = toPos.y - fromPos.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist === 0) return
-
-          const arrowOffset = 5 // Add a small gap between arrow and node shape
-          const newToX = toPos.x - (dx / dist) * (toNodeSize + arrowOffset)
-          const newToY = toPos.y - (dy / dist) * (toNodeSize + arrowOffset)
-
-          edgePaths += `<line x1="${fromPos.x}" y1="${fromPos.y}" x2="${newToX}" y2="${newToY}" stroke="${edgeColor}" stroke-width="2" marker-end="url(#arrowhead)" color="${edgeColor}" />`
-
-          const label = edge.options.label
-          if (label) {
-            const midX = (fromPos.x + newToX) / 2
-            const midY = (fromPos.y + newToY) / 2
-            edgePaths += `<text x="${midX}" y="${midY}" font-family="Inter, sans-serif" font-size="12" fill="${textMutedColor}" text-anchor="middle" dominant-baseline="central" style="paint-order: stroke; stroke: ${bgColor}; stroke-width: 4px; stroke-linecap: butt; stroke-linejoin: miter;">${escapeXml(
-              label
-            )}</text>`
-          }
-        })
-        edgePaths += '</g>'
-
-        let nodeElements = '<g>'
-        Object.values(renderedNodes).forEach((node) => {
-          const pos = nodePositions[node.id]
-          if (!pos) return
-
-          const color = node.options.color.background
-          const shape = node.shape.name
-          const nodeSize = node.shape.size
-          const label = escapeXml(node.options.label)
-          const labelColor = node.options.font.color || defaultTextColor
-
-          if (shape === 'dot' || shape === 'circle') {
-            nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
-            nodeElements += `<text x="${pos.x}" y="${pos.y}" font-family="Inter, sans-serif" font-size="14" fill="${labelColor}" text-anchor="middle" dominant-baseline="central">${label}</text>`
-          } else {
-            const width = nodeSize * 2
-            const height = nodeSize * 2
-            const x = pos.x - nodeSize
-            const y = pos.y - nodeSize
-
-            if (shape === 'box' || shape === 'square') {
-              nodeElements += `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${color}" rx="3" />`
-            } else if (shape === 'diamond') {
-              nodeElements += `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${color}" transform="rotate(45, ${pos.x}, ${pos.y})" />`
-            } else {
-              // Fallback for star, triangle, etc.
-              nodeElements += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeSize}" fill="${color}" />`
-            }
-            nodeElements += `<text x="${pos.x}" y="${
-              pos.y + nodeSize + 8
-            }" font-family="Inter, sans-serif" font-size="14" fill="${labelColor}" text-anchor="middle" dominant-baseline="hanging">${label}</text>`
-          }
-        })
-        nodeElements += '</g>'
-
-        const svgString = `
-<svg width="${Math.round(width)}" height="${Math.round(
-          height
-        )}" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" style="font-family: Inter, sans-serif;">
-  <rect x="${viewBox.split(' ')[0]}" y="${
-          viewBox.split(' ')[1]
-        }" width="${width}" height="${height}" fill="${bgColor}" />
-  ${svgDefs}
-  ${edgePaths}
-  ${nodeElements}
-</svg>`
-        const blob = new Blob([svgString], { type: 'image/svg+xml' })
-        triggerDownload(blob, 'synapse-graph.svg')
-      },
+    useImperativeHandle(ref, () => ({
+      downloadPNG: () => downloadHighResImage('png'),
+      downloadWebP: () => downloadHighResImage('webp', 0.9),
       downloadJSON: () => {
         const jsonString = JSON.stringify(data, null, 2)
         const blob = new Blob([jsonString], { type: 'application/json' })

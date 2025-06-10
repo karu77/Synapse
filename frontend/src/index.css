@@ -47,5 +47,5 @@ body::before {
   background: var(--color-bg);
   background-image: radial-gradient(circle at 10% 10%, var(--gradient-color) 0px, transparent 50%),
     radial-gradient(circle at 90% 80%, var(--gradient-color) 0px, transparent 50%);
-}
+  }
 

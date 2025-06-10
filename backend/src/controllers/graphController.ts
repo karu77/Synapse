@@ -5,9 +5,29 @@ import axios from 'axios'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
+const sanitizeJsonString = (jsonString: string): string => {
+  // This regex is designed to fix a specific malformation observed from the AI model where an entity object
+  // is incorrectly structured as {"id": "e32": {"label":...}} instead of {"id": "e32", "label":...}.
+  // It finds these malformed objects and reconstructs them into the correct format.
+  const malformedEntityRegex = /\{\s*"id":\s*"(e\d+)"\s*:\s*(\{[\s\S]+?\})\s*\}/g
+  
+  return jsonString.replace(malformedEntityRegex, (match, id, innerJson) => {
+    // 'match' is the entire malformed object string, e.g., {"id": "e1": {"label": "..."}}
+    // 'id' is the captured entity ID, e.g., "e1"
+    // 'innerJson' is the captured inner JSON object string, e.g., {"label": "..."}
+    
+    // We strip the outer braces from the inner JSON content...
+    const innerContent = innerJson.substring(1, innerJson.length - 1)
+    
+    // ...and then construct the corrected object string.
+    return `{"id": "${id}", ${innerContent}}`
+  });
+};
+
 // Helper to sanitize and extract graph data from Gemini response
 const extractGraphData = (response: string) => {
   let jsonString = ''
+  let sanitizedJsonString = ''
   try {
     console.log('Raw Gemini response received for parsing.')
 
@@ -29,8 +49,10 @@ const extractGraphData = (response: string) => {
       return { nodes: [], edges: [] }
     }
     
-    console.log('Attempting to parse extracted JSON string.')
-    const data = JSON.parse(jsonString)
+    sanitizedJsonString = sanitizeJsonString(jsonString);
+
+    console.log('Attempting to parse sanitized JSON string.')
+    const data = JSON.parse(sanitizedJsonString)
 
     const relationshipsWithIds = (data.relationships || []).map((edge: any, index: number) => ({
       ...edge,
@@ -43,7 +65,8 @@ const extractGraphData = (response: string) => {
     }
   } catch (error) {
     console.error('Failed to parse JSON from AI response.', { 
-      extractedJsonString: jsonString,
+      originalJsonString: jsonString,
+      sanitizedJsonString: sanitizedJsonString,
       originalResponse: response,
       parsingError: error 
     })

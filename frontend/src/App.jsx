@@ -95,13 +95,13 @@ function App() {
 
   const handleDownloadPNG = () => {
     if (graphRef.current) {
-      graphRef.current.downloadGraph()
+      graphRef.current.downloadPNG()
     }
   }
 
-  const handleDownloadSVG = () => {
+  const handleDownloadWebP = () => {
     if (graphRef.current) {
-      graphRef.current.downloadSVG()
+      graphRef.current.downloadWebP()
     }
   }
 
@@ -241,13 +241,13 @@ function App() {
                     <Menu.Item>
                       {({ active }) => (
                         <button
-                          onClick={handleDownloadSVG}
+                          onClick={handleDownloadWebP}
                           className={`${
                             active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <DocumentArrowDownIcon className="mr-2 h-5 w-5" />
-                          SVG (Vector)
+                          WebP (High-Quality)
                         </button>
                       )}
                     </Menu.Item>
