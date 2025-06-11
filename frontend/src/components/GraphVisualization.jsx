@@ -216,7 +216,7 @@ const GraphVisualization = forwardRef(
 
       const visEdges = (data?.edges ?? []).map((edge) => ({
         ...edge,
-        id: edge.id,
+        id: edge.id || edge._id || edge.uuid, // ensure id is preserved from original data
         from: edge.source,
         to: edge.target,
         label: edge.label,
