@@ -131,6 +131,7 @@ To make this application accessible to anyone on the web, you need to deploy the
         3.  Ensure your `package.json`'s `start` script runs the compiled JavaScript (e.g., `node dist/server.js`). The current configuration is correct.
         4.  Add your `GEMINI_API_KEY`, `MONGO_URI`, and `JWT_SECRET` environment variables in the provider's dashboard.
         5.  **Crucially**, add a `FRONTEND_URL` environment variable and set it to the full URL of your deployed frontend (e.g., `https://your-app-name.vercel.app`). This is required for security.
+        6.  **(Highly Recommended)** Add a `PROXY_URL` environment variable. YouTube and other sites often block requests from cloud providers like Render. To ensure the URL download feature works reliably, you must use a proxy. Set the value to your proxy server's URL (e.g., `http://user:pass@p.example.com:8080`).
 
 ## License
 
