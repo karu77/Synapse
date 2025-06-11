@@ -16,14 +16,10 @@ const panelVariants = {
   },
 }
 
-const EdgeInfoPanel = ({ edge, nodes, onClose }) => {
-  if (!edge) {
-    return null
-  }
-
-  const sourceNode = nodes.find((n) => n.id === edge.source)
-  const targetNode = nodes.find((n) => n.id === edge.target)
-
+const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
+  if (!edge) return null
+  const fromNode = nodes.find((n) => n.id === edge.from || n.id === edge.source)
+  const toNode = nodes.find((n) => n.id === edge.to || n.id === edge.target)
   return (
     <AnimatePresence>
       {edge && (
@@ -65,17 +61,28 @@ const EdgeInfoPanel = ({ edge, nodes, onClose }) => {
                   <span className="block mt-1">{edge.description}</span>
                 </div>
               )}
-              <div className="flex justify-between items-start gap-4 bg-skin-bg p-2 rounded-md">
-                <span className="font-semibold text-skin-text">Source:</span>
-                <span className="break-all text-right">{sourceNode?.label || edge.source}</span>
+              <div className="mb-2 text-skin-text-muted text-xs font-semibold">
+                Connection
               </div>
-              <div className="flex justify-between items-start gap-4 bg-skin-bg p-2 rounded-md">
-                <span className="font-semibold text-skin-text">Target:</span>
-                <span className="break-all text-right">{targetNode?.label || edge.target}</span>
+              <div className="mb-2 flex items-center justify-between bg-skin-bg rounded p-2 text-sm">
+                <span className="font-semibold">Id:</span>
+                <span className="text-skin-text-muted">{edge.id}</span>
               </div>
-              <div className="flex justify-between items-start gap-4 bg-skin-bg p-2 rounded-md">
-                <span className="font-semibold text-skin-text">Sentiment:</span>
-                <span className="break-all text-right capitalize">{edge.sentiment || 'neutral'}</span>
+              <div className="mb-2 flex items-center justify-between bg-skin-bg rounded p-2 text-sm">
+                <span className="font-semibold">From:</span>
+                <span className="text-skin-text-muted">
+                  {fromNode ? fromNode.label : edge.from || edge.source}
+                </span>
+              </div>
+              <div className="mb-2 flex items-center justify-between bg-skin-bg rounded p-2 text-sm">
+                <span className="font-semibold">To:</span>
+                <span className="text-skin-text-muted">
+                  {toNode ? toNode.label : edge.to || edge.target}
+                </span>
+              </div>
+              <div className="mb-2 flex items-center justify-between bg-skin-bg rounded p-2 text-sm">
+                <span className="font-semibold">Sentiment:</span>
+                <span className="text-skin-text-muted">{edge.sentiment}</span>
               </div>
             </div>
           </div>

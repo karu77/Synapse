@@ -235,8 +235,14 @@ function App() {
         </div>
       )}
 
-      <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} panelClassName="animate-fade-in-panel" />
-      <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} panelClassName="animate-fade-in-panel" />
+      {/* Node info panel: only show if a node is selected and no edge is selected */}
+      {selectedNode && !selectedEdge && (
+        <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} panelClassName="animate-fade-in-panel" />
+      )}
+      {/* Edge (connection line) info panel: only show if an edge is selected and no node is selected */}
+      {selectedEdge && !selectedNode && (
+        <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} panelClassName="animate-fade-in-panel" />
+      )}
 
       <main className="flex-1 flex flex-col relative animate-fade-in-panel">
         <header className="absolute top-0 left-0 right-0 z-20 p-4 animate-fade-in-panel">
