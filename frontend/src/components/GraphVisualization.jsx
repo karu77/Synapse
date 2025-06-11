@@ -73,7 +73,7 @@ const GraphVisualization = forwardRef(
 
         network.on('hoverNode', ({ node, event }) => {
           const nodeData = (dataRef.current?.nodes ?? []).find((n) => n.id === node)
-          if (nodeData) {
+          if (nodeData && event.pointer && event.pointer.DOM) {
             const content = `<b>${nodeData.type}</b><br>${
               nodeData.sentiment ? `Sentiment: ${nodeData.sentiment}` : ''
             }`
@@ -88,7 +88,7 @@ const GraphVisualization = forwardRef(
 
         network.on('hoverEdge', ({ edge, event }) => {
           const edgeData = (dataRef.current?.edges ?? []).find((e) => e.id === edge)
-          if (edgeData) {
+          if (edgeData && event.pointer && event.pointer.DOM) {
             const content = `<b>${edgeData.label}</b><br>${
               edgeData.sentiment ? `Sentiment: ${edgeData.sentiment}` : ''
             }`
@@ -185,8 +185,9 @@ const GraphVisualization = forwardRef(
 
     // Update data
     useEffect(() => {
+      // Defensive: Only proceed if networkInstance, data, and DOM container are ready
       if (!networkInstance.current) return;
-      if (!data?.nodes || !data?.edges) return;
+      if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) return;
       if (!networkInstance.current.body || !networkInstance.current.body.container) return;
 
       onGraphReadyRef.current(false)
@@ -225,12 +226,13 @@ const GraphVisualization = forwardRef(
       networkInstance.current.setData({ nodes: nodesWithStyling, edges: visEdges })
 
       return () => {
+        // Clean up event listeners if needed
         if (networkInstance.current && networkInstance.current.off) {
           networkInstance.current.off('selectEdge');
           networkInstance.current.off('selectNode');
         }
       };
-    }, [data, theme, styleOptions])
+    }, [data, theme, styleOptions, setSelectedNode, setSelectedEdge])
 
     // Robust selectEdge and selectNode event handlers
     useEffect(() => {
