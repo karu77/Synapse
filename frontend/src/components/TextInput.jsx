@@ -57,7 +57,12 @@ const TextInput = ({ onSubmit, isProcessing }) => {
   const [audioUrl, setAudioUrl] = useState('')
   const [error, setError] = useState(null)
 
-  const handleFileChange = (file) => {
+  // Add separate handlers for image and audio/video
+  const handleImageFileChange = (file) => {
+    setImageFile(file)
+  }
+
+  const handleAudioFileChange = (file) => {
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
         setError('Audio/Video file size should not exceed 10MB.')
@@ -135,7 +140,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
             id="image-upload"
             label="Image File"
             accept="image/*"
-            onFileChange={setImageFile}
+            onFileChange={handleImageFileChange}
             disabled={isProcessing}
           />
           <input
@@ -151,7 +156,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
             id="audio-upload"
             label="Audio/Video File"
             accept="audio/*,video/*"
-            onFileChange={handleFileChange}
+            onFileChange={handleAudioFileChange}
             disabled={isProcessing}
           />
           <input

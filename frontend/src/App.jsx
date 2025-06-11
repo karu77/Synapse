@@ -220,9 +220,11 @@ function App() {
       </AnimatePresence>
 
       {/* Move AI Answer panel to the left, make it dynamic */}
-      <div className="fixed top-4 left-4 z-30 max-w-xs w-full sm:w-96">
-        <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
-      </div>
+      {answer && (
+        <div className="fixed top-4 left-4 z-30 max-w-xs w-full sm:w-96">
+          <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
+        </div>
+      )}
 
       <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
       <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} />

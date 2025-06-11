@@ -55,6 +55,12 @@ const NodeInfoPanel = ({ node, onClose }) => {
               <h4 className="text-sm font-semibold text-skin-text border-b border-skin-border pb-2 mb-2">
                 Details
               </h4>
+              {node.description && (
+                <div className="mb-2 p-2 rounded bg-skin-bg border border-skin-border text-skin-text">
+                  <span className="font-semibold text-skin-text">About:</span>
+                  <span className="block mt-1">{node.description}</span>
+                </div>
+              )}
               {Object.entries(node)
                 .filter(
                   ([key]) =>
@@ -72,6 +78,7 @@ const NodeInfoPanel = ({ node, onClose }) => {
                       'image',
                       'size',
                       'font',
+                      'description', // Exclude description from generic list
                     ].includes(key)
                 )
                 .map(([key, value]) => {
@@ -99,4 +106,4 @@ const NodeInfoPanel = ({ node, onClose }) => {
   )
 }
 
-export default NodeInfoPanel 
+export default NodeInfoPanel

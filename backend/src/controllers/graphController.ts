@@ -225,7 +225,8 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       2.  **Build Graph:** Based on your answer, identify all relevant entities (people, organizations, locations, concepts, etc.) and the relationships connecting them.
       3.  **Be Comprehensive:** The graph should not just represent the direct answer, but also include important related context to provide a richer understanding.
       4.  **Perform Sentiment Analysis:** For every single entity and every single relationship, you MUST determine its sentiment from the context. The sentiment must be one of three string values: "positive", "negative", or "neutral".
-      5.  **Strict JSON Output:** Return the output *only* as a single JSON object with two top-level keys: "answer" and "graph". Do not include any other text, comments, or formatting.
+      5.  **Add Descriptions:** For every entity (node) and every relationship (edge), include a 'description' field with a concise, informative summary (e.g., for a person: a short bio; for a concept: a definition; for a relationship: what connects the two nodes).
+      6.  **Strict JSON Output:** Return the output *only* as a single JSON object with two top-level keys: "answer" and "graph". Do not include any other text, comments, or formatting.
       `
     } else {
       // For all other input (text, image, audio/video), only generate a graph, no answer
@@ -239,7 +240,8 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       **Instructions:**
       1.  **Be Exhaustive:** Find every possible entity and relationship. It's better to include a minor relationship than to omit one. Aim for a dense, well-connected graph.
       2.  **Perform Sentiment Analysis:** For every single entity and every single relationship, you MUST determine its sentiment from the context. The sentiment must be one of three string values: "positive", "negative", or "neutral".
-      3.  **Strict JSON Output:** Return the output *only* as a single JSON object with a single top-level key: "graph". Do not include any other text, comments, or formatting.
+      3.  **Add Descriptions:** For every entity (node) and every relationship (edge), include a 'description' field with a concise, informative summary (e.g., for a person: a short bio; for a concept: a definition; for a relationship: what connects the two nodes).
+      4.  **Strict JSON Output:** Return the output *only* as a single JSON object with a single top-level key: "graph". Do not include any other text, comments, or formatting.
       `
     }
 
@@ -252,10 +254,10 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
         "answer": "A detailed textual answer to the user's question goes here...",
         "graph": {
           "entities": [
-            {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral"}
+            {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "A brief summary or definition of the entity."}
           ],
           "relationships": [
-            {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral"}
+            {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral", "description": "What connects the two nodes."}
           ]
         }
       }
@@ -264,11 +266,11 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       {
         "graph": {
           "entities": [
-            {"id": "e1", "label": "Synapse", "type": "PRODUCT", "sentiment": "positive"},
-            {"id": "e2", "label": "Gemini API", "type": "PRODUCT", "sentiment": "neutral"}
+            {"id": "e1", "label": "Synapse", "type": "PRODUCT", "sentiment": "positive", "description": "A brief summary or definition of the entity."},
+            {"id": "e2", "label": "Gemini API", "type": "PRODUCT", "sentiment": "neutral", "description": "A brief summary or definition of the entity."}
           ],
           "relationships": [
-            {"source": "e1", "target": "e2", "label": "USES", "sentiment": "neutral"}
+            {"source": "e1", "target": "e2", "label": "USES", "sentiment": "neutral", "description": "What connects the two nodes."}
           ]
         }
       }

@@ -59,6 +59,12 @@ const EdgeInfoPanel = ({ edge, nodes, onClose }) => {
               <h4 className="text-sm font-semibold text-skin-text border-b border-skin-border pb-2 mb-2">
                 Details
               </h4>
+              {edge.description && (
+                <div className="mb-2 p-2 rounded bg-skin-bg border border-skin-border text-skin-text">
+                  <span className="font-semibold text-skin-text">About:</span>
+                  <span className="block mt-1">{edge.description}</span>
+                </div>
+              )}
               <div className="flex justify-between items-start gap-4 bg-skin-bg p-2 rounded-md">
                 <span className="font-semibold text-skin-text">Source:</span>
                 <span className="break-all text-right">{sourceNode?.label || edge.source}</span>
@@ -79,4 +85,4 @@ const EdgeInfoPanel = ({ edge, nodes, onClose }) => {
   )
 }
 
-export default EdgeInfoPanel 
+export default EdgeInfoPanel
