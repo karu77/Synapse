@@ -44,10 +44,12 @@ const GraphVisualization = forwardRef(
     }, [data])
 
     // Initialize network
-  useEffect(() => {
+    useEffect(() => {
       if (containerRef.current) {
         const options = getOptions()
-        const network = new Network(containerRef.current, {}, options)
+        // Initialize with empty data to prevent undefined errors
+        const emptyData = { nodes: [], edges: [] };
+        const network = new Network(containerRef.current, emptyData, options)
         networkInstance.current = network
 
         network.on('click', (event) => {

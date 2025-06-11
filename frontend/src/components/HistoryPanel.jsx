@@ -1,7 +1,10 @@
 import { TrashIcon, XMarkIcon } from '@heroicons/react/24/outline'
 
-const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
-  if (history.length === 0) {
+const HistoryPanel = ({ history = [], onSelect, onDelete, onClear }) => {
+  // Ensure history is always an array and handle empty state
+  const safeHistory = Array.isArray(history) ? history : [];
+
+  if (!safeHistory || safeHistory.length === 0) {
     return (
       <div className="mt-4 text-center text-sm text-skin-text-muted">
         Your generated graphs will appear here.
