@@ -53,19 +53,18 @@ const TextInput = ({ onSubmit, isProcessing }) => {
   const [question, setQuestion] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [audioFile, setAudioFile] = useState(null)
-  const [audioVideoURL, setAudioVideoURL] = useState('')
-
-  const handleURLChange = (e) => {
-    setAudioVideoURL(e.target.value)
-    if (e.target.value !== '') {
-      setAudioFile(null) // Clear file input if URL is being used
-    }
-  }
+  const [error, setError] = useState(null)
 
   const handleFileChange = (file) => {
-    setAudioFile(file)
-    if (file !== null) {
-      setAudioVideoURL('') // Clear URL input if file is being used
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Audio/Video file size should not exceed 10MB.')
+        return
+      }
+      setAudioFile(file)
+      setError(null)
+    } else {
+      setAudioFile(null)
     }
   }
 
@@ -83,16 +82,11 @@ const TextInput = ({ onSubmit, isProcessing }) => {
     }
   }
 
-  const hasInput =
-    text.trim() !== '' ||
-    question.trim() !== '' ||
-    imageFile !== null ||
-    audioFile !== null ||
-    audioVideoURL.trim() !== ''
+  const hasInput = text.trim() !== '' || question.trim() !== '' || imageFile !== null || audioFile !== null
 
   const handleSubmit = async () => {
     if (!hasInput) return
-    await onSubmit(text, question, imageFile, audioFile, audioVideoURL)
+    await onSubmit(text, question, imageFile, audioFile)
   }
 
   return (
@@ -129,47 +123,28 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           placeholder="e.g., What is the powerhouse of the cell?"
           value={question}
           onChange={handleQuestionChange}
-          disabled={isProcessing || text !== '' || imageFile !== null || audioFile !== null || audioVideoURL !== ''}
+          disabled={isProcessing || text !== '' || imageFile !== null || audioFile !== null}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FileInput
+          id="image-upload"
           label="Image File"
           accept="image/*"
           onFileChange={setImageFile}
           disabled={isProcessing || question !== ''}
         />
-        {/* Audio/Video Input Section */}
-        <div className="space-y-2">
-          <FileInput
-            label="Audio/Video File"
-            accept="audio/*,video/*"
-            onFileChange={handleFileChange}
-            disabled={isProcessing || audioVideoURL !== '' || question !== ''}
-          />
-          <div className="relative flex items-center">
-            <div className="flex-grow border-t border-skin-border"></div>
-            <span className="flex-shrink mx-2 text-skin-text-muted text-xs">OR</span>
-            <div className="flex-grow border-t border-skin-border"></div>
-          </div>
-          <input
-            type="text"
-            placeholder="Paste Audio/Video URL..."
-            value={audioVideoURL}
-            onChange={handleURLChange}
-            disabled={isProcessing || audioFile !== null || question !== ''}
-            className={`block w-full text-left rounded-lg border shadow-sm text-sm p-2 ${
-              isProcessing || audioFile !== null || question !== ''
-                ? 'bg-skin-bg border-skin-border text-skin-text-muted cursor-not-allowed'
-                : 'bg-skin-bg-accent border-skin-border focus:border-skin-btn-primary focus:ring-skin-btn-primary text-skin-text'
-            }`}
-          />
-          <div className="text-center text-xs text-skin-text-muted p-2 bg-skin-bg rounded-lg">
-            Note: The URL feature may not work on deployed servers. For best results, upload the file directly.
-          </div>
-        </div>
+        <FileInput
+          id="audio-upload"
+          label="Audio/Video File"
+          accept="audio/*,video/*"
+          onFileChange={handleFileChange}
+          disabled={isProcessing || question !== ''}
+        />
       </div>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="flex justify-end">
         <button

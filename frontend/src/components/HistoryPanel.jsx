@@ -10,8 +10,7 @@ const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
   }
 
   const getHistoryItemLabel = (item) => {
-    const { textInput, question, audioVideoURL, imageFileName, audioFileName, answer } =
-      item.inputs || {}
+    const { textInput, question, imageFileName, audioFileName, answer } = item.inputs || {}
     if (question) {
       const label = answer
         ? `A: ${answer.substring(0, 25)}...`
@@ -21,19 +20,13 @@ const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
     if (textInput) {
       return `Text: "${textInput.substring(0, 30)}..."`
     }
-    if (audioVideoURL) {
-      return `URL: ${audioVideoURL.substring(0, 30)}...`
-    }
-    if (imageFileName && audioFileName) {
-      return `Files: ${imageFileName}, ${audioFileName}`
-    }
     if (imageFileName) {
-      return `Image: ${imageFileName}`
+      return `Image: "${imageFileName}"`
     }
     if (audioFileName) {
-      return `Audio: ${audioFileName}`
+      return `Media: "${audioFileName}"`
     }
-    return `Graph from ${new Date(item.createdAt).toLocaleString()}`
+    return 'Graph'
   }
 
   return (

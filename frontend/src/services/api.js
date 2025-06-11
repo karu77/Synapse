@@ -26,10 +26,9 @@ api.interceptors.request.use(
  * @param {string} question A question to be answered.
  * @param {File | null} imageFile Optional image file.
  * @param {File | null} audioFile Optional audio/video file.
- * @param {string} [audioVideoURL] Optional audio/video URL.
  * @returns {Promise<import('../types/index').GraphData>} The graph data.
  */
-export const generateGraph = async (text, question, imageFile, audioFile, audioVideoURL) => {
+export const generateGraph = async (text, question, imageFile, audioFile) => {
   try {
     const formData = new FormData()
     formData.append('textInput', text)
@@ -40,9 +39,6 @@ export const generateGraph = async (text, question, imageFile, audioFile, audioV
     }
     if (audioFile) {
       formData.append('audioFile', audioFile)
-    }
-    if (audioVideoURL) {
-      formData.append('audioVideoURL', audioVideoURL)
     }
 
     const token = JSON.parse(localStorage.getItem('userInfo'))?.token

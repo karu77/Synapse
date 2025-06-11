@@ -17,7 +17,9 @@ const historySchema = new mongoose.Schema(
       answer: { type: String },
       imageFileName: { type: String },
       audioFileName: { type: String },
-      audioVideoURL: { type: String },
+    },
+    createdAt: {
+      type: Date,
     },
   },
   {

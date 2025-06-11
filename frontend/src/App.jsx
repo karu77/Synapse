@@ -85,7 +85,7 @@ function App() {
     }
   }, [user, fetchHistory])
 
-  const handleTextSubmit = async (text, question, imageFile, audioFile, audioVideoURL) => {
+  const handleTextSubmit = async (text, question, imageFile, audioFile) => {
     setIsProcessing(true)
     setSelectedNode(null)
     setSelectedEdge(null)
@@ -96,8 +96,7 @@ function App() {
         text,
         question,
         imageFile,
-        audioFile,
-        audioVideoURL
+        audioFile
       )
       setAnswer(answer)
       setGraphData(graphData)

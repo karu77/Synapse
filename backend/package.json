@@ -23,8 +23,7 @@
     "mongodb": "^6.17.0",
     "mongoose": "^8.15.1",
     "multer": "^1.4.5-lts.1",
-    "synapse": "file:..",
-    "youtube-dl-exec": "^3.0.22"
+    "synapse": "file:.."
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

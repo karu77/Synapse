@@ -1,9 +1,10 @@
 import { Request, Response } from 'express'
 import History from '../models/History'
 import { GoogleGenerativeAI, Part } from '@google/generative-ai'
-import youtubedl from 'youtube-dl-exec'
+import { AuthenticatedRequest } from '../middleware/authMiddleware'
+import { Readable } from 'stream'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '')
 
 const sanitizeJsonString = (jsonString: string): string => {
   const malformedEntityRegex = /\{\s*"id":\s*"(e\d+)"\s*:\s*(\{[\s\S]+?\})\s*\}/g
@@ -77,22 +78,35 @@ const extractGraphData = (response: string) => {
   }
 }
 
-const streamToBuffer = (stream: NodeJS.ReadableStream): Promise<Buffer> => {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = []
-    stream.on('data', (chunk) => chunks.push(chunk as Buffer))
-    stream.on('error', reject)
-    stream.on('end', () => resolve(Buffer.concat(chunks)))
-  })
-}
-
-const fileToGenerativePart = (file: Express.Multer.File): Part => {
+function fileToGenerativePart(file: Express.Multer.File): Part {
   return {
     inlineData: {
       data: file.buffer.toString('base64'),
       mimeType: file.mimetype,
     },
   }
+}
+
+function streamToGenerativePart(stream: Readable, mimeType: string): Promise<Part> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    stream.on('data', (chunk) => chunks.push(chunk))
+    stream.on('end', () => {
+      const buffer = Buffer.concat(chunks)
+      resolve({
+        inlineData: {
+          data: buffer.toString('base64'),
+          mimeType,
+        },
+      })
+    })
+    stream.on('error', reject)
+  })
+}
+
+const extractJson = (text: string) => {
+  const match = text.match(/```json\n([\s\S]*?)\n```/)
+  return match ? match[1] : null
 }
 
 const isYouTubeUrl = (url: string): boolean => {
@@ -132,64 +146,15 @@ const isValidHttpUrl = (string: string) => {
 
 export const generateGraphAndSave = async (req: Request, res: Response) => {
   try {
-    const { textInput, question, audioVideoURL } = req.body
+    const { textInput, question } = req.body
     const files = req.files as { [fieldname: string]: Express.Multer.File[] }
 
     let audioPart: Part | null = null
     const hasImage = files.imageFile && files.imageFile.length > 0
+    const hasAudio = files.audioFile && files.audioFile.length > 0
 
-    if (files.audioFile && files.audioFile.length > 0) {
+    if (hasAudio) {
       audioPart = fileToGenerativePart(files.audioFile[0])
-    } else if (audioVideoURL) {
-      if (!isValidHttpUrl(audioVideoURL)) {
-        return res.status(400).json({ error: 'Invalid URL format provided.' })
-      }
-      try {
-        let buffer: Buffer
-        let mimeType: string
-
-        if (isYouTubeUrl(audioVideoURL)) {
-          const cleanUrl = cleanYouTubeUrl(audioVideoURL)
-          console.log(`Downloading audio from cleaned YouTube URL: ${cleanUrl}`)
-
-          const options: any = {
-            format: 'bestaudio',
-            output: '-',
-          }
-
-          if (process.env.PROXY_URL) {
-            console.log('Using proxy for youtube download.')
-            options.proxy = process.env.PROXY_URL
-          }
-
-          const child = youtubedl.exec(cleanUrl, options, { stdio: ['ignore', 'pipe', 'pipe'] })
-
-          if (!child.stdout || !child.stderr) {
-            throw new Error('Could not get stdout/stderr stream from child process.')
-          }
-
-          let errorLog = ''
-          child.stderr.on('data', (data: any) => (errorLog += data.toString()))
-          child.stderr.on('end', () => {
-            if (errorLog) console.error('[yt-dlp stderr]:', errorLog)
-          })
-
-          buffer = await streamToBuffer(child.stdout)
-          mimeType = 'audio/webm'
-        } else {
-          // Restrict to only YouTube URLs for now to prevent misuse
-          console.warn(`Attempt to use non-YouTube URL blocked: ${audioVideoURL}`)
-          return res.status(400).json({ error: 'URL input is currently limited to YouTube links only.' })
-        }
-
-        const data = buffer.toString('base64')
-        audioPart = { inlineData: { data, mimeType } }
-      } catch (urlError) {
-        console.error(`Failed to download or process from URL: ${audioVideoURL}`, urlError)
-        return res.status(500).json({
-          error: 'Failed to download or process the provided URL. The server may be blocked or the URL may be invalid.',
-        })
-      }
     }
 
     if (!textInput && !question && !hasImage && !audioPart) {
@@ -288,7 +253,6 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
         textInput: textInput || '',
         question: question || '',
         answer: answer || '',
-        audioVideoURL: audioVideoURL || '',
         imageFileName: files.imageFile ? files.imageFile[0].originalname : '',
         audioFileName: files.audioFile ? files.audioFile[0].originalname : '',
       },
