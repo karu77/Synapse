@@ -237,11 +237,11 @@ function App() {
 
       {/* Node info panel: only show if a node is selected and no edge is selected */}
       {selectedNode && !selectedEdge && (
-        <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} panelClassName="animate-fade-in-panel" />
+        <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} panelClassName="animate-fade-in-panel glass-panel" />
       )}
       {/* Edge (connection line) info panel: only show if an edge is selected and no node is selected */}
       {selectedEdge && !selectedNode && (
-        <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} panelClassName="animate-fade-in-panel" />
+        <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} panelClassName="animate-fade-in-panel glass-panel" />
       )}
 
       <main className="flex-1 flex flex-col relative animate-fade-in-panel">
@@ -358,6 +358,19 @@ function App() {
         </footer>
       </main>
       <style>{`
+        .glass-panel {
+          background: linear-gradient(135deg, rgba(40,40,50,0.65) 60%, rgba(80,120,255,0.18) 100%);
+          box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37), 0 1.5px 8px 0 rgba(80,120,255,0.12);
+          backdrop-filter: blur(18px) saturate(180%) brightness(1.15);
+          -webkit-backdrop-filter: blur(18px) saturate(180%) brightness(1.15);
+          border-radius: 22px;
+          border: 1.5px solid rgba(255,255,255,0.18);
+          transition: box-shadow 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        .glass-panel:hover {
+          box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45), 0 2.5px 16px 0 rgba(80,120,255,0.18);
+          background: linear-gradient(135deg, rgba(40,40,60,0.82) 60%, rgba(80,120,255,0.22) 100%);
+        }
         .animate-slide-in-left {
           animation: slideInLeft 0.5s cubic-bezier(0.4,0,0.2,1);
         }
