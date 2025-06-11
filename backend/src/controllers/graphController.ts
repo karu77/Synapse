@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import History from '../models/History'
 import { GoogleGenerativeAI, Part } from '@google/generative-ai'
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '')
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 const sanitizeJsonString = (jsonString: string): string => {
   const malformedEntityRegex = /\{\s*"id":\s*"(e\d+)"\s*:\s*(\{[\s\S]+?\})\s*\}/g
