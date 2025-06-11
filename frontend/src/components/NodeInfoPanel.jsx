@@ -155,3 +155,4 @@ const EdgeInfoPanel = ({ edge, nodes, onClose }) => {
 }
 
 export { NodeInfoPanel, EdgeInfoPanel }
+export default NodeInfoPanel
