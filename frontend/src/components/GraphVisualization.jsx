@@ -189,33 +189,29 @@ const GraphVisualization = forwardRef(
         onGraphReadyRef.current(false)
         const highlightColor = '#8b5cf6' // Use theme's primary button color for consistency
 
-        const nodesWithStyling = (data?.nodes ?? []).map((node) => {
-          const shape = styleOptions.nodeShapes[node.type] || 'dot'
-          const color = getNodeColor(node.type, theme)
-
-          return {
-            ...node,
-            shape: shape,
-            color: {
-              border: color,
-              background: color,
-              highlight: {
-                border: highlightColor,
-                background: color,
-              },
-              hover: {
-                border: highlightColor,
-                background: color,
-              },
+        const nodesWithStyling = (data?.nodes ?? []).map((node) => ({
+          ...node,
+          shape: styleOptions.nodeShapes[node.type] || 'dot',
+          color: {
+            border: getNodeColor(node.type, theme),
+            background: getNodeColor(node.type, theme),
+            highlight: {
+              border: highlightColor,
+              background: getNodeColor(node.type, theme),
             },
-            font: {
-              color: shape === 'dot' || shape === 'circle' ? '#ffffff' : theme === 'light' ? '#1e293b' : '#f1f5f9',
+            hover: {
+              border: highlightColor,
+              background: getNodeColor(node.type, theme),
             },
-            size: node.type === 'PERSON' ? 30 : 25,
-          }
-        })
+          },
+          font: {
+            color: shape === 'dot' || shape === 'circle' ? '#ffffff' : theme === 'light' ? '#1e293b' : '#f1f5f9',
+          },
+          size: node.type === 'PERSON' ? 30 : 25,
+        }))
 
         const visEdges = (data?.edges ?? []).map((edge) => ({
+          ...edge,
           id: edge.id,
           from: edge.source,
           to: edge.target,

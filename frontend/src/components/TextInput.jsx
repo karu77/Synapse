@@ -89,7 +89,14 @@ const TextInput = ({ onSubmit, isProcessing }) => {
     }
   }
 
-  const hasInput = text.trim() !== '' || question.trim() !== '' || imageFile !== null || audioFile !== null
+  // Helper to determine if any input is present
+  const hasInput =
+    !!text?.trim() ||
+    !!question?.trim() ||
+    !!imageFile ||
+    !!audioFile ||
+    (typeof imageUrl === 'string' && imageUrl.trim().length > 0) ||
+    (typeof audioUrl === 'string' && audioUrl.trim().length > 0)
 
   const handleSubmit = async () => {
     if (!hasInput) return
