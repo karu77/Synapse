@@ -2,80 +2,59 @@ import { Request, Response } from 'express'
 import History from '../models/History'
 import { GoogleGenerativeAI, Part } from '@google/generative-ai'
 import axios from 'axios'
-import ytdl from 'ytdl-core'
+import youtubedl from 'youtube-dl-exec'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 const sanitizeJsonString = (jsonString: string): string => {
-  // This regex is designed to fix a specific malformation observed from the AI model where an entity object
-  // is incorrectly structured as {"id": "e32": {"label":...}} instead of {"id": "e32", "label":...}.
-  // It finds these malformed objects and reconstructs them into the correct format.
   const malformedEntityRegex = /\{\s*"id":\s*"(e\d+)"\s*:\s*(\{[\s\S]+?\})\s*\}/g
-  
   return jsonString.replace(malformedEntityRegex, (match, id, innerJson) => {
-    // 'match' is the entire malformed object string, e.g., {"id": "e1": {"label": "..."}}
-    // 'id' is the captured entity ID, e.g., "e1"
-    // 'innerJson' is the captured inner JSON object string, e.g., {"label": "..."}
-    
-    // We strip the outer braces from the inner JSON content...
     const innerContent = innerJson.substring(1, innerJson.length - 1)
-    
-    // ...and then construct the corrected object string.
     return `{"id": "${id}", ${innerContent}}`
-  });
-};
+  })
+}
 
-// Helper to sanitize and extract graph data from Gemini response
 const extractGraphData = (response: string) => {
   let jsonString = ''
   let sanitizedJsonString = ''
   try {
-    console.log('Raw Gemini response received for parsing.')
-
-    // Try to find a markdown-style JSON block first
     const jsonMatch = response.match(/```(json)?\s*([\s\S]*?)\s*```/i)
     if (jsonMatch && jsonMatch[2]) {
       jsonString = jsonMatch[2].trim()
     } else {
-      // If no markdown block, be more aggressive: find the first '{' and last '}'
       const firstBrace = response.indexOf('{')
       const lastBrace = response.lastIndexOf('}')
       if (firstBrace !== -1 && lastBrace > firstBrace) {
         jsonString = response.substring(firstBrace, lastBrace + 1).trim()
       }
     }
-
     if (!jsonString) {
-      console.error('Could not find any JSON content in the AI response.', { originalResponse: response })
+      console.error('Could not find any JSON content in the AI response.', {
+        originalResponse: response,
+      })
       return { nodes: [], edges: [] }
     }
-    
-    sanitizedJsonString = sanitizeJsonString(jsonString);
-
-    console.log('Attempting to parse sanitized JSON string.')
+    sanitizedJsonString = sanitizeJsonString(jsonString)
     const data = JSON.parse(sanitizedJsonString)
-
     const relationshipsWithIds = (data.relationships || []).map((edge: any, index: number) => ({
       ...edge,
       id: `edge_${Date.now()}_${index}`,
     }))
-
     return {
       nodes: data.entities || [],
       edges: relationshipsWithIds,
     }
   } catch (error) {
-    console.error('Failed to parse JSON from AI response.', { 
+    console.error('Failed to parse JSON from AI response.', {
       originalJsonString: jsonString,
       sanitizedJsonString: sanitizedJsonString,
       originalResponse: response,
-      parsingError: error 
+      parsingError: error,
     })
     return { nodes: [], edges: [] }
   }
 }
 
-// Helper to stream to buffer
 const streamToBuffer = (stream: NodeJS.ReadableStream): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []
@@ -85,7 +64,6 @@ const streamToBuffer = (stream: NodeJS.ReadableStream): Promise<Buffer> => {
   })
 }
 
-// Helper to convert buffer to a Gemini-compatible part
 const fileToGenerativePart = (file: Express.Multer.File): Part => {
   return {
     inlineData: {
@@ -93,6 +71,11 @@ const fileToGenerativePart = (file: Express.Multer.File): Part => {
       mimeType: file.mimetype,
     },
   }
+}
+
+const isYouTubeUrl = (url: string): boolean => {
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/
+  return youtubeRegex.test(url)
 }
 
 export const generateGraphAndSave = async (req: Request, res: Response) => {
@@ -110,15 +93,13 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
         let buffer: Buffer
         let mimeType: string
 
-        if (ytdl.validateURL(audioVideoURL)) {
+        if (isYouTubeUrl(audioVideoURL)) {
           console.log(`Downloading audio from YouTube URL: ${audioVideoURL}`)
-          const stream = ytdl(audioVideoURL, {
-            filter: 'audioonly',
-            quality: 'lowestaudio',
-          })
+          const stream = youtubedl.exec(audioVideoURL, { format: 'bestaudio', output: '-' }, { stdio: ['ignore', 'pipe', 'ignore'] }).stdout
+          if (!stream) {
+            throw new Error('Failed to get a download stream from youtube-dl-exec.')
+          }
           buffer = await streamToBuffer(stream)
-          // Gemini supports various audio formats. Opus/WebM from ytdl-core should be fine.
-          // Let's be explicit with a common mimetype.
           mimeType = 'audio/webm'
         } else {
           console.log(`Downloading from non-YouTube URL: ${audioVideoURL}`)
@@ -126,19 +107,13 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
             responseType: 'arraybuffer',
           })
           buffer = Buffer.from(response.data)
-          mimeType =
-            response.headers['content-type'] || 'application/octet-stream'
+          mimeType = response.headers['content-type'] || 'application/octet-stream'
         }
 
         const data = buffer.toString('base64')
         audioPart = { inlineData: { data, mimeType } }
       } catch (urlError) {
-        console.error(
-          `Failed to download or process from URL: ${audioVideoURL}`,
-          urlError,
-        )
-        // We will proceed without audio if the download fails, but we should log it.
-        // A user-facing error could also be sent, but for now, we'll just log.
+        console.error(`Failed to download or process from URL: ${audioVideoURL}`, urlError)
       }
     }
 
@@ -146,9 +121,6 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'At least one input is required.' })
     }
 
-    const promptMessages = [/*...same prompt logic as before...*/]
-    // ... logic to build promptMessages array ...
-    
     const textPrompt = `Your primary goal is to build a comprehensive and highly-connected knowledge graph from the provided inputs. Identify *all* plausible entities and the relationships that connect them. It is crucial to be exhaustive.
 
       The user provided:
@@ -183,7 +155,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     const promptParts: Part[] = [{ text: textPrompt }]
     if (hasImage) promptParts.push(fileToGenerativePart(files.imageFile[0]))
     if (audioPart) promptParts.push(audioPart)
-    
+
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
     const result = await model.generateContent(promptParts)
     const response = await result.response
@@ -192,10 +164,9 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     const graphData = extractGraphData(text)
 
     if (graphData.nodes.length === 0 && graphData.edges.length === 0) {
-      return res.status(500).json({ error: 'Failed to parse a valid graph from the AI response.'})
+      return res.status(500).json({ error: 'Failed to parse a valid graph from the AI response.' })
     }
 
-    // Save to history
     const historyItem = new History({
       user: req.user._id,
       graphData,
@@ -213,4 +184,4 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     console.error('Error generating graph:', error)
     res.status(500).json({ error: 'Failed to generate graph' })
   }
-} 
+}
