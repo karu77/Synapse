@@ -50,6 +50,7 @@ const FileInput = ({ label, accept, onFileChange, disabled }) => {
 
 const TextInput = ({ onSubmit, isProcessing }) => {
   const [text, setText] = useState('')
+  const [question, setQuestion] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [audioFile, setAudioFile] = useState(null)
   const [audioVideoURL, setAudioVideoURL] = useState('')
@@ -68,19 +69,37 @@ const TextInput = ({ onSubmit, isProcessing }) => {
     }
   }
 
+  const handleTextChange = (e) => {
+    setText(e.target.value)
+    if (e.target.value !== '') {
+      setQuestion('')
+    }
+  }
+
+  const handleQuestionChange = (e) => {
+    setQuestion(e.target.value)
+    if (e.target.value !== '') {
+      setText('')
+    }
+  }
+
   const hasInput =
-    text.trim() !== '' || imageFile !== null || audioFile !== null || audioVideoURL.trim() !== ''
+    text.trim() !== '' ||
+    question.trim() !== '' ||
+    imageFile !== null ||
+    audioFile !== null ||
+    audioVideoURL.trim() !== ''
 
   const handleSubmit = async () => {
     if (!hasInput) return
-    await onSubmit(text, imageFile, audioFile, audioVideoURL)
+    await onSubmit(text, question, imageFile, audioFile, audioVideoURL)
   }
 
   return (
     <div className="space-y-6">
       <div>
         <label htmlFor="text" className="block text-base font-semibold text-skin-text mb-1">
-          Enter your text
+          Analyze Text & Files
         </label>
         <textarea
           id="text"
@@ -88,8 +107,29 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-btn-primary focus:ring-skin-btn-primary text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical"
           placeholder="Paste text here, or provide an image/audio file below..."
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          disabled={isProcessing}
+          onChange={handleTextChange}
+          disabled={isProcessing || question !== ''}
+        />
+      </div>
+
+      <div className="relative flex items-center">
+        <div className="flex-grow border-t border-skin-border"></div>
+        <span className="flex-shrink mx-4 text-skin-text-muted font-semibold">OR</span>
+        <div className="flex-grow border-t border-skin-border"></div>
+      </div>
+
+      <div>
+        <label htmlFor="question" className="block text-base font-semibold text-skin-text mb-1">
+          Ask a Question
+        </label>
+        <textarea
+          id="question"
+          rows={3}
+          className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-btn-primary focus:ring-skin-btn-primary text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical"
+          placeholder="e.g., What is the powerhouse of the cell?"
+          value={question}
+          onChange={handleQuestionChange}
+          disabled={isProcessing || text !== '' || imageFile !== null || audioFile !== null || audioVideoURL !== ''}
         />
       </div>
 
@@ -98,7 +138,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           label="Image File"
           accept="image/*"
           onFileChange={setImageFile}
-          disabled={isProcessing}
+          disabled={isProcessing || question !== ''}
         />
         {/* Audio/Video Input Section */}
         <div className="space-y-2">
@@ -106,7 +146,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
             label="Audio/Video File"
             accept="audio/*,video/*"
             onFileChange={handleFileChange}
-            disabled={isProcessing || audioVideoURL !== ''}
+            disabled={isProcessing || audioVideoURL !== '' || question !== ''}
           />
           <div className="relative flex items-center">
             <div className="flex-grow border-t border-skin-border"></div>
@@ -118,9 +158,9 @@ const TextInput = ({ onSubmit, isProcessing }) => {
             placeholder="Paste Audio/Video URL..."
             value={audioVideoURL}
             onChange={handleURLChange}
-            disabled={isProcessing || audioFile !== null}
+            disabled={isProcessing || audioFile !== null || question !== ''}
             className={`block w-full text-left rounded-lg border shadow-sm text-sm p-2 ${
-              isProcessing || audioFile !== null
+              isProcessing || audioFile !== null || question !== ''
                 ? 'bg-skin-bg border-skin-border text-skin-text-muted cursor-not-allowed'
                 : 'bg-skin-bg-accent border-skin-border focus:border-skin-btn-primary focus:ring-skin-btn-primary text-skin-text'
             }`}

@@ -132,7 +132,7 @@ const isValidHttpUrl = (string: string) => {
 
 export const generateGraphAndSave = async (req: Request, res: Response) => {
   try {
-    const { textInput, audioVideoURL } = req.body
+    const { textInput, question, audioVideoURL } = req.body
     const files = req.files as { [fieldname: string]: Express.Multer.File[] }
 
     let audioPart: Part | null = null
@@ -192,11 +192,26 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       }
     }
 
-    if (!textInput && !hasImage && !audioPart) {
+    if (!textInput && !question && !hasImage && !audioPart) {
       return res.status(400).json({ error: 'At least one input is required.' })
     }
 
-    const textPrompt = `Your primary goal is to build a comprehensive and highly-connected knowledge graph from the provided inputs. Identify *all* plausible entities and the relationships that connect them. It is crucial to be exhaustive.
+    let textPrompt: string
+
+    if (question) {
+      textPrompt = `The user has asked a question. Your task is to first provide a concise answer, and then create a detailed knowledge graph that visualizes the key entities and relationships from your answer.
+
+      User's Question: "${question}"
+
+      **Instructions:**
+      1.  **Answer the Question:** In your internal thought process, formulate a clear and accurate answer to the user's question.
+      2.  **Build the Graph:** Based on your answer, identify all relevant entities (people, places, concepts, etc.) and the relationships connecting them.
+      3.  **Be Comprehensive:** The graph should not just represent the direct answer, but also include important related context to provide a richer understanding.
+      4.  **Perform Sentiment Analysis:** For every single entity and every single relationship, you MUST determine its sentiment from the context. The sentiment must be one of three string values: "positive", "negative", or "neutral".
+      5.  **Strict JSON Output:** Return the output *only* as a single JSON object. Do not include any other text, comments, or formatting.
+      `
+    } else {
+      textPrompt = `Your primary goal is to build a comprehensive and highly-connected knowledge graph from the provided inputs. Identify *all* plausible entities and the relationships that connect them. It is crucial to be exhaustive.
 
       The user provided:
       ${textInput ? `Text: "${textInput}"` : ''}
@@ -207,6 +222,10 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       1.  **Be Exhaustive:** Find every possible entity and relationship. It's better to include a minor relationship than to omit one. Aim for a dense, well-connected graph.
       2.  **Perform Sentiment Analysis:** For every single entity and every single relationship, you MUST determine its sentiment from the context. The sentiment must be one of three string values: "positive", "negative", or "neutral".
       3.  **Strict JSON Output:** Return the output *only* as a single JSON object. Do not include any other text, comments, or formatting.
+      `
+    }
+
+    const fullPrompt = `${textPrompt}
 
       Here is the required structure with an example demonstrating a dense graph with varied sentiments:
       {
@@ -227,7 +246,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       Use only the following specific entity types: PERSON, ORG, LOCATION, DATE, EVENT, PRODUCT, CONCEPT, JOB_TITLE, FIELD_OF_STUDY, THEORY, ART_WORK.
     `
 
-    const promptParts: Part[] = [{ text: textPrompt }]
+    const promptParts: Part[] = [{ text: fullPrompt }]
     if (hasImage) promptParts.push(fileToGenerativePart(files.imageFile[0]))
     if (audioPart) promptParts.push(audioPart)
 
@@ -247,6 +266,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       graphData,
       inputs: {
         textInput: textInput || '',
+        question: question || '',
         audioVideoURL: audioVideoURL || '',
         imageFileName: files.imageFile ? files.imageFile[0].originalname : '',
         audioFileName: files.audioFile ? files.audioFile[0].originalname : '',

@@ -13,6 +13,7 @@ const historySchema = new mongoose.Schema(
     },
     inputs: {
       textInput: { type: String },
+      question: { type: String },
       imageFileName: { type: String },
       audioFileName: { type: String },
       audioVideoURL: { type: String },

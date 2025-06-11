@@ -23,15 +23,17 @@ api.interceptors.request.use(
 /**
  * Generates a graph from text and optional files using the backend API.
  * @param {string} text The main text input.
+ * @param {string} question A question to be answered.
  * @param {File | null} imageFile Optional image file.
  * @param {File | null} audioFile Optional audio/video file.
  * @param {string} [audioVideoURL] Optional audio/video URL.
  * @returns {Promise<import('../types/index').GraphData>} The graph data.
  */
-export const generateGraph = async (text, imageFile, audioFile, audioVideoURL) => {
+export const generateGraph = async (text, question, imageFile, audioFile, audioVideoURL) => {
   try {
     const formData = new FormData()
     formData.append('textInput', text)
+    formData.append('question', question)
 
     if (imageFile) {
       formData.append('imageFile', imageFile)
