@@ -69,11 +69,11 @@ function App() {
 
   const fetchHistory = useCallback(async () => {
     if (user) {
-      try {
+    try {
         const historyData = await getHistory()
         setHistory(historyData.reverse())
-      } catch (error) {
-        console.error('Failed to fetch history:', error)
+    } catch (error) {
+      console.error('Failed to fetch history:', error)
       }
     }
   }, [user])
