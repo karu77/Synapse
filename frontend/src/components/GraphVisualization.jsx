@@ -185,42 +185,42 @@ const GraphVisualization = forwardRef(
 
     // Update data
     useEffect(() => {
-      if (networkInstance.current) {
-        onGraphReadyRef.current(false)
-        const highlightColor = '#8b5cf6' // Use theme's primary button color for consistency
+      if (!networkInstance.current || !data?.nodes || !data?.edges) return;
 
-        const nodesWithStyling = (data?.nodes ?? []).map((node) => ({
-          ...node,
-          shape: styleOptions.nodeShapes[node.type] || 'dot',
-          color: {
-            border: getNodeColor(node.type, theme),
+      onGraphReadyRef.current(false)
+      const highlightColor = '#8b5cf6' // Use theme's primary button color for consistency
+
+      const nodesWithStyling = (data?.nodes ?? []).map((node) => ({
+        ...node,
+        shape: styleOptions.nodeShapes[node.type] || 'dot',
+        color: {
+          border: getNodeColor(node.type, theme),
+          background: getNodeColor(node.type, theme),
+          highlight: {
+            border: highlightColor,
             background: getNodeColor(node.type, theme),
-            highlight: {
-              border: highlightColor,
-              background: getNodeColor(node.type, theme),
-            },
-            hover: {
-              border: highlightColor,
-              background: getNodeColor(node.type, theme),
-            },
           },
-          font: {
-            color: (node.shape === 'dot' || node.shape === 'circle') ? '#ffffff' : theme === 'light' ? '#1e293b' : '#f1f5f9',
+          hover: {
+            border: highlightColor,
+            background: getNodeColor(node.type, theme),
           },
-          size: node.type === 'PERSON' ? 30 : 25,
-        }))
+        },
+        font: {
+          color: (node.shape === 'dot' || node.shape === 'circle') ? '#ffffff' : theme === 'light' ? '#1e293b' : '#f1f5f9',
+        },
+        size: node.type === 'PERSON' ? 30 : 25,
+      }))
 
-        const visEdges = (data?.edges ?? []).map((edge) => ({
-          ...edge,
-          id: edge.id,
-          from: edge.source,
-          to: edge.target,
-          label: edge.label,
-          color: getEdgeColor(edge.sentiment),
-        }))
+      const visEdges = (data?.edges ?? []).map((edge) => ({
+        ...edge,
+        id: edge.id,
+        from: edge.source,
+        to: edge.target,
+        label: edge.label,
+        color: getEdgeColor(edge.sentiment),
+      }))
 
-        networkInstance.current.setData({ nodes: nodesWithStyling, edges: visEdges })
-      }
+      networkInstance.current.setData({ nodes: nodesWithStyling, edges: visEdges })
     }, [data, theme, styleOptions])
 
     // Robust selectEdge and selectNode event handlers
