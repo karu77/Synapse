@@ -31,28 +31,24 @@ const port = process.env.PORT || 3000
 const storage = multer.memoryStorage()
 const upload = multer({ storage })
 
-// More secure CORS configuration
-const allowedOrigins =
-  process.env.NODE_ENV === 'production'
-    ? [process.env.FRONTEND_URL] // Your production frontend URL is now required
-    : ['http://localhost:5173', 'http://127.0.0.1:5173']
+// More secure and flexible CORS configuration
+const productionOrigins = [
+  process.env.FRONTEND_URL, // Main Vercel production URL, e.g. https://synapse-lac.vercel.app
+  /^https:\/\/synapse-.*-karu77s-projects\.vercel\.app$/, // Regex for Vercel preview URLs
+]
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true)
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`
-        console.error(msg)
-        return callback(new Error(msg), false)
-      }
-      return callback(null, true)
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // Allow cookies to be sent
-  })
-)
+const developmentOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173']
+
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' ? productionOrigins : developmentOrigins,
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // Allow cookies to be sent
+}
+
+// Log the effective CORS origins being used for easier debugging
+console.log('CORS enabled for origins:', corsOptions.origin)
+
+app.use(cors(corsOptions))
 
 app.use(express.json())
 
