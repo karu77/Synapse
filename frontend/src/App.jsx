@@ -99,7 +99,11 @@ function App() {
         audioFile
       )
       setAnswer(answer)
-      setGraphData(graphData)
+      // Defensive: always ensure nodes/edges are arrays
+      setGraphData({
+        nodes: Array.isArray(graphData?.nodes) ? graphData.nodes : [],
+        edges: Array.isArray(graphData?.edges) ? graphData.edges : []
+      })
       setGraphKey((prevKey) => prevKey + 1)
       await fetchHistory()
     } catch (error) {
