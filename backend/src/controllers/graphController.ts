@@ -324,6 +324,22 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'The AI response did not contain valid graph data.' })
     }
 
+    // Ensure every edge has a unique, stable id
+    const edgeIdSet = new Set()
+    edges = edges.map((edge) => {
+      let baseId = `${edge.source || edge.from}-${edge.target || edge.to}-${edge.label || 'REL'}`
+      // Remove spaces and special chars for safety
+      baseId = baseId.replace(/[^a-zA-Z0-9_-]/g, '')
+      let uniqueId = baseId
+      let suffix = 1
+      while (edgeIdSet.has(uniqueId)) {
+        uniqueId = `${baseId}-${suffix}`
+        suffix++
+      }
+      edgeIdSet.add(uniqueId)
+      return { ...edge, id: uniqueId }
+    })
+
     // PATCH: Always return { nodes, edges } to the frontend
     const graphDataForFrontend = {
       nodes,

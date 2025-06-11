@@ -46,8 +46,10 @@ const GraphVisualization = forwardRef(
     // Normalize edge ids before using anywhere in the component
     const normalizedEdges = (data?.edges ?? []).map(edge => ({
       ...edge,
-      id: edge.id || edge._id || edge.uuid,
+      id: edge.id || edge._id || edge.uuid || String(edge.source) + '-' + String(edge.target),
     }))
+    console.log('Normalized edge ids:', normalizedEdges.map(e => e.id));
+    console.log('Normalized edges:', normalizedEdges);
     const normalizedData = { ...data, edges: normalizedEdges }
 
     // Initialize network
@@ -249,7 +251,7 @@ const GraphVisualization = forwardRef(
       network.on('selectEdge', function (params) {
         if (params.edges && params.edges.length > 0) {
           const edgeId = params.edges[0];
-          const edge = (normalizedData?.edges ?? []).find(e => e.id === edgeId);
+          const edge = normalizedEdges.find(e => e.id === edgeId);
           console.log('selectEdge event:', { edgeId, edge }); // Debug log
           setSelectedEdge(edge);
           setSelectedNode(null);
