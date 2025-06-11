@@ -22,7 +22,7 @@ const FileInput = ({ label, accept, onFileChange, disabled }) => {
   return (
     <div>
       <label className="block text-sm font-medium text-skin-text mb-1">
-        {label} <span className="text-skin-text-muted">(Optional)</span>
+        {label}
       </label>
       <input
         type="file"
@@ -130,36 +130,36 @@ const TextInput = ({ onSubmit, isProcessing }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className={isProcessing || question !== '' ? 'file-input-disabled' : ''}>
+        <div className={isProcessing ? 'file-input-disabled' : ''}>
           <FileInput
             id="image-upload"
             label="Image File"
             accept="image/*"
             onFileChange={setImageFile}
-            disabled={isProcessing || question !== ''}
+            disabled={isProcessing}
           />
           <input
             type="url"
             placeholder="Paste image URL..."
             className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text"
             onChange={e => setImageUrl(e.target.value)}
-            disabled={isProcessing || question !== ''}
+            disabled={isProcessing}
           />
         </div>
-        <div className={isProcessing || question !== '' ? 'file-input-disabled' : ''}>
+        <div className={isProcessing ? 'file-input-disabled' : ''}>
           <FileInput
             id="audio-upload"
             label="Audio/Video File"
             accept="audio/*,video/*"
             onFileChange={handleFileChange}
-            disabled={isProcessing || question !== ''}
+            disabled={isProcessing}
           />
           <input
             type="url"
             placeholder="Paste audio/video URL..."
             className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text"
             onChange={e => setAudioUrl(e.target.value)}
-            disabled={isProcessing || question !== ''}
+            disabled={isProcessing}
           />
         </div>
       </div>

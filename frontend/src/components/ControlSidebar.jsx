@@ -114,7 +114,7 @@ const ControlSidebar = ({
         {/* Content Body */}
         <div className="overflow-y-auto flex-grow p-6 md:p-8">
           <Section icon={<SparklesIcon className="h-6 w-6" />} title="Generate">
-            <TextInput onSubmit={onSubmit} isProcessing={isProcessing} />
+            <TextInput onSubmit={onSubmit} isProcessing={isProcessing} alwaysShowMediaInputs={true} />
           </Section>
 
           <Section icon={<ClockIcon className="h-6 w-6" />} title="History">
@@ -167,4 +167,4 @@ const ControlSidebar = ({
   )
 }
 
-export default ControlSidebar 
+export default ControlSidebar

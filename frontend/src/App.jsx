@@ -214,13 +214,18 @@ function App() {
             resetPhysics={resetPhysics}
             user={user}
             logout={logout}
+            alwaysShowMediaInputs={true} // <-- Always show image/audio/video inputs
           />
         )}
       </AnimatePresence>
 
+      {/* Move AI Answer panel to the left, make it dynamic */}
+      <div className="fixed top-4 left-4 z-30 max-w-xs w-full sm:w-96">
+        <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
+      </div>
+
       <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
       <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} />
-      <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
 
       <main className="flex-1 flex flex-col relative">
         <header className="absolute top-0 left-0 right-0 z-20 p-4">
@@ -235,7 +240,6 @@ function App() {
               </button>
               <h1 className="text-xl font-bold text-skin-text hidden sm:block">Synapse</h1>
             </div>
-
             <div className="flex items-center gap-2">
               <Menu as="div" className="relative inline-block text-left">
                 <div>
@@ -253,9 +257,7 @@ function App() {
                       {({ active }) => (
                         <button
                           onClick={handleDownloadPNG}
-                          className={`${
-                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <ArrowDownTrayIcon className="mr-2 h-5 w-5" />
                           PNG (High-Res)
@@ -266,9 +268,7 @@ function App() {
                       {({ active }) => (
                         <button
                           onClick={handleDownloadWebP}
-                          className={`${
-                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <DocumentArrowDownIcon className="mr-2 h-5 w-5" />
                           WebP (High-Quality)
@@ -281,9 +281,7 @@ function App() {
                       {({ active }) => (
                         <button
                           onClick={handleDownloadJSON}
-                          className={`${
-                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <CodeBracketIcon className="mr-2 h-5 w-5" />
                           JSON (Graph Data)
@@ -294,22 +292,18 @@ function App() {
                       {({ active }) => (
                         <button
                           onClick={handleDownloadNodesCSV}
-                          className={`${
-                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <TableCellsIcon className="mr-2 h-5 w-5" />
                           Nodes (CSV)
                         </button>
                       )}
                     </Menu.Item>
-                     <Menu.Item>
+                    <Menu.Item>
                       {({ active }) => (
                         <button
                           onClick={handleDownloadEdgesCSV}
-                          className={`${
-                            active ? 'bg-skin-border text-skin-text' : 'text-skin-text'
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <TableCellsIcon className="mr-2 h-5 w-5" />
                           Edges (CSV)
@@ -346,79 +340,6 @@ function App() {
           Welcome, {user?.name || 'Guest'}!
         </footer>
       </main>
-
-      <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="p-3 rounded-full bg-skin-bg-accent text-skin-text shadow-lg hover:bg-skin-border transition-all hover:scale-110"
-          aria-label="Open controls"
-        >
-          <Bars3Icon className="h-6 w-6" />
-        </button>
-      </div>
-
-      <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
-        <ThemeToggleButton />
-        <div className="relative">
-          <button
-            onClick={() => setShowExportMenu(!showExportMenu)}
-            disabled={!isGraphReady || isProcessing}
-            className="p-3 rounded-full bg-skin-bg-accent text-skin-text shadow-lg hover:bg-skin-border transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Export graph"
-          >
-            <ArrowDownOnSquareIcon className="h-6 w-6" />
-          </button>
-          {showExportMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-skin-bg-accent rounded-lg shadow-xl py-1 z-30">
-              <button
-                onClick={() => {
-                  graphRef.current.downloadPNG()
-                  setShowExportMenu(false)
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
-              >
-                Download PNG
-              </button>
-              <button
-                onClick={() => {
-                  graphRef.current.downloadWebP()
-                  setShowExportMenu(false)
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
-              >
-                Download WebP
-              </button>
-              <button
-                onClick={() => {
-                  graphRef.current.downloadJSON()
-                  setShowExportMenu(false)
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
-              >
-                Download JSON
-              </button>
-              <button
-                onClick={() => {
-                  graphRef.current.downloadNodesCSV()
-                  setShowExportMenu(false)
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
-              >
-                Download Nodes (CSV)
-              </button>
-              <button
-                onClick={() => {
-                  graphRef.current.downloadEdgesCSV()
-                  setShowExportMenu(false)
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
-              >
-                Download Edges (CSV)
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
