@@ -230,7 +230,7 @@ function App() {
               <Menu as="div" className="relative inline-block text-left">
                 <div>
                   <Menu.Button
-                    disabled={isProcessing || graphData.nodes.length === 0 || !isGraphReady}
+                    disabled={isProcessing || !(Array.isArray(graphData.nodes) && graphData.nodes.length > 0) || !isGraphReady}
                     className="inline-flex w-full justify-center items-center gap-2 rounded-full bg-skin-bg p-2 border border-skin-border text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <ArrowDownTrayIcon className="h-5 w-5" />
@@ -413,4 +413,4 @@ function App() {
   )
 }
 
-export default App 
+export default App
