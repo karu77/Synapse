@@ -219,9 +219,9 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Move AI Answer panel to the left, make it dynamic */}
+      {/* Move AI Answer panel to the left, vertically centered, and always visible */}
       {answer && (
-        <div className="fixed top-4 left-4 z-30 max-w-xs w-full sm:w-96">
+        <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-30 max-w-xs w-full sm:w-96">
           <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
         </div>
       )}
