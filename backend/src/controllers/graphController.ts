@@ -326,7 +326,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
 
     // Ensure every edge has a unique, stable id
     const edgeIdSet = new Set()
-    edges = edges.map((edge) => {
+    edges = edges.map((edge: any) => {
       let baseId = `${edge.source || edge.from}-${edge.target || edge.to}-${edge.label || 'REL'}`
       // Remove spaces and special chars for safety
       baseId = baseId.replace(/[^a-zA-Z0-9_-]/g, '')
