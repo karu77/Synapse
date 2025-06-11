@@ -243,6 +243,7 @@ const GraphVisualization = forwardRef(
         if (params.edges && params.edges.length > 0) {
           const edgeId = params.edges[0];
           const edge = (data?.edges ?? []).find(e => e.id === edgeId);
+          console.log('selectEdge event:', { edgeId, edge }); // Debug log
           setSelectedEdge(edge);
           setSelectedNode(null);
         }
