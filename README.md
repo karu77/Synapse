@@ -130,6 +130,7 @@ To make this application accessible to anyone on the web, you need to deploy the
         2.  Set the start command: `npm start`.
         3.  Ensure your `package.json`'s `start` script runs the compiled JavaScript (e.g., `node dist/server.js`). The current configuration is correct.
         4.  Add your `GEMINI_API_KEY`, `MONGO_URI`, and `JWT_SECRET` environment variables in the provider's dashboard.
+        5.  **Crucially**, add a `FRONTEND_URL` environment variable and set it to the full URL of your deployed frontend (e.g., `https://your-app-name.vercel.app`). This is required for security.
 
 ## License
 

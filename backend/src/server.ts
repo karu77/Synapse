@@ -16,6 +16,12 @@ if (!process.env.GEMINI_API_KEY || !process.env.JWT_SECRET) {
   process.exit(1)
 }
 
+// Ensure the frontend URL is set in production for CORS to work correctly.
+if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
+  console.error('FATAL ERROR: FRONTEND_URL environment variable is not set for production.')
+  process.exit(1)
+}
+
 connectDB()
 
 const app = express()
@@ -28,7 +34,7 @@ const upload = multer({ storage })
 // More secure CORS configuration
 const allowedOrigins =
   process.env.NODE_ENV === 'production'
-    ? [process.env.FRONTEND_URL || ''] // Your production frontend URL
+    ? [process.env.FRONTEND_URL] // Your production frontend URL is now required
     : ['http://localhost:5173', 'http://127.0.0.1:5173']
 
 app.use(
