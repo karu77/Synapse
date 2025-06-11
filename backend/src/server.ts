@@ -25,13 +25,25 @@ const port = process.env.PORT || 3000
 const storage = multer.memoryStorage()
 const upload = multer({ storage })
 
-// Explicitly configure CORS to be more permissive for production
+// More secure CORS configuration
+const allowedOrigins =
+  process.env.NODE_ENV === 'production'
+    ? [process.env.FRONTEND_URL || ''] // Your production frontend URL
+    : ['http://localhost:5173', 'http://127.0.0.1:5173']
+
 app.use(
   cors({
-    origin: '*', // Allow all origins
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = 'The CORS policy for this site does not allow access from the specified Origin.'
+        return callback(new Error(msg), false)
+      }
+      return callback(null, true)
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
+    credentials: true, // Allow cookies to be sent
   })
 )
 

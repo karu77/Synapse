@@ -9,6 +9,14 @@ const getHistory = async (req: Request, res: Response) => {
   res.json(history)
 }
 
+// @desc    Clear all user history
+// @route   DELETE /api/history
+// @access  Private
+const clearHistory = async (req: Request, res: Response) => {
+  await History.deleteMany({ user: req.user._id })
+  res.json({ message: 'All history items removed' })
+}
+
 // @desc    Delete a history item
 // @route   DELETE /api/history/:id
 // @access  Private
@@ -28,4 +36,4 @@ const deleteHistoryItem = async (req: Request, res: Response) => {
   }
 }
 
-export { getHistory, deleteHistoryItem } 
+export { getHistory, deleteHistoryItem, clearHistory } 

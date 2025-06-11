@@ -1,7 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import GraphVisualization from './components/GraphVisualization'
-import { generateGraph, getHistory, deleteHistoryItem } from './services/api'
+import {
+  generateGraph,
+  getHistory,
+  deleteHistoryItem,
+  clearHistory as clearHistoryService,
+} from './services/api'
 import ThemeToggleButton from './components/ThemeToggleButton'
 import ControlSidebar from './components/ControlSidebar'
 import NodeInfoPanel from './components/NodeInfoPanel'
@@ -139,10 +144,9 @@ function App() {
   }
 
   const clearHistory = async () => {
-    // This would require a new backend endpoint, for now we delete one by one
     try {
-      await Promise.all(history.map((item) => deleteHistoryItem(item._id)))
-      fetchHistory()
+      await clearHistoryService()
+      fetchHistory() // Refresh history after clearing
     } catch (error) {
       console.error('Failed to clear history:', error)
     }

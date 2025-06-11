@@ -16,42 +16,65 @@ const sanitizeJsonString = (jsonString: string): string => {
 
 const extractGraphData = (response: string) => {
   let jsonString = ''
-  let sanitizedJsonString = ''
   try {
-    const jsonMatch = response.match(/```(json)?\s*([\s\S]*?)\s*```/i)
-    if (jsonMatch && jsonMatch[2]) {
-      jsonString = jsonMatch[2].trim()
+    // Attempt to find JSON within triple backticks, with or without the 'json' language identifier
+    const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+    if (jsonMatch && jsonMatch[1]) {
+      jsonString = jsonMatch[1].trim()
     } else {
+      // As a fallback, find the first '{' and the last '}'
       const firstBrace = response.indexOf('{')
       const lastBrace = response.lastIndexOf('}')
       if (firstBrace !== -1 && lastBrace > firstBrace) {
         jsonString = response.substring(firstBrace, lastBrace + 1).trim()
+      } else {
+        // If no JSON structure is found, log it and return empty
+        console.error('Could not find any JSON-like structure in the AI response.')
+        return { nodes: [], edges: [] }
       }
     }
-    if (!jsonString) {
-      console.error('Could not find any JSON content in the AI response.', {
-        originalResponse: response,
-      })
-      return { nodes: [], edges: [] }
-    }
-    sanitizedJsonString = sanitizeJsonString(jsonString)
-    const data = JSON.parse(sanitizedJsonString)
+
+    // At this point, jsonString should contain our best guess for the JSON content.
+    // It might still be malformed, so the final parsing is in a try-catch.
+    const data = JSON.parse(jsonString)
+
+    // Ensure relationships have unique IDs for the frontend
     const relationshipsWithIds = (data.relationships || []).map((edge: any, index: number) => ({
       ...edge,
       id: `edge_${Date.now()}_${index}`,
     }))
+
     return {
       nodes: data.entities || [],
       edges: relationshipsWithIds,
     }
   } catch (error) {
     console.error('Failed to parse JSON from AI response.', {
-      originalJsonString: jsonString,
-      sanitizedJsonString: sanitizedJsonString,
+      // Use the jsonString we attempted to parse, not a sanitized version
+      attemptedJsonString: jsonString,
       originalResponse: response,
       parsingError: error,
     })
-    return { nodes: [], edges: [] }
+    // Sanitize and retry only if there is a parsing error
+    try {
+      console.log('Attempting to parse sanitized JSON...')
+      const sanitizedJsonString = sanitizeJsonString(jsonString)
+      const data = JSON.parse(sanitizedJsonString)
+      const relationshipsWithIds = (data.relationships || []).map((edge: any, index: number) => ({
+        ...edge,
+        id: `edge_${Date.now()}_${index}`,
+      }))
+      return {
+        nodes: data.entities || [],
+        edges: relationshipsWithIds,
+      }
+    } catch (finalError) {
+      console.error('Failed to parse even after sanitization.', {
+        originalJsonString: jsonString,
+        finalParsingError: finalError,
+      })
+      return { nodes: [], edges: [] }
+    }
   }
 }
 
@@ -98,6 +121,16 @@ const cleanYouTubeUrl = (url: string): string => {
   }
 }
 
+const isValidHttpUrl = (string: string) => {
+  let url
+  try {
+    url = new URL(string)
+  } catch (_) {
+    return false
+  }
+  return url.protocol === 'http:' || url.protocol === 'https:'
+}
+
 export const generateGraphAndSave = async (req: Request, res: Response) => {
   try {
     const { textInput, audioVideoURL } = req.body
@@ -109,6 +142,9 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     if (files.audioFile && files.audioFile.length > 0) {
       audioPart = fileToGenerativePart(files.audioFile[0])
     } else if (audioVideoURL) {
+      if (!isValidHttpUrl(audioVideoURL)) {
+        return res.status(400).json({ error: 'Invalid URL format provided.' })
+      }
       try {
         let buffer: Buffer
         let mimeType: string
@@ -146,12 +182,11 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
           buffer = await streamToBuffer(child.stdout)
           mimeType = 'audio/webm'
         } else {
-          console.log(`Downloading from non-YouTube URL: ${audioVideoURL}`)
-          const response = await axios.get(audioVideoURL, {
-            responseType: 'arraybuffer',
-          })
-          buffer = Buffer.from(response.data)
-          mimeType = response.headers['content-type'] || 'application/octet-stream'
+          // Restrict to only YouTube URLs for now to prevent misuse
+          console.warn(`Attempt to use non-YouTube URL blocked: ${audioVideoURL}`)
+          return res
+            .status(400)
+            .json({ error: 'URL input is currently limited to YouTube links only.' })
         }
 
         const data = buffer.toString('base64')

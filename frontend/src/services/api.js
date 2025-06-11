@@ -72,4 +72,13 @@ export const deleteHistoryItem = async (id) => {
     console.error('Error deleting history item:', error)
     throw error
   }
+}
+
+export const clearHistory = async () => {
+  try {
+    await api.delete('/api/history')
+  } catch (error) {
+    console.error('Error clearing history:', error)
+    throw error
+  }
 } 

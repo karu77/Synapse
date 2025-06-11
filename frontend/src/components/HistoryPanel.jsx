@@ -1,6 +1,12 @@
+import { TrashIcon, XMarkIcon } from '@heroicons/react/24/outline'
+
 const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
   if (history.length === 0) {
-    return null // Don't render if there's no history
+    return (
+      <div className="mt-4 text-center text-sm text-skin-text-muted">
+        Your generated graphs will appear here.
+      </div>
+    )
   }
 
   const getHistoryItemLabel = (item) => {
@@ -20,17 +26,18 @@ const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
     if (audioFileName) {
       return `Audio: ${audioFileName}`
     }
-    return 'Graph from Media'
+    return `Graph from ${new Date(item.createdAt).toLocaleString()}`
   }
 
   return (
-    <div className="mt-6 pt-6 border-t border-skin-border">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold text-skin-text">History</h3>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-skin-text">History</h3>
         <button
           onClick={onClear}
-          className="text-sm text-skin-text-muted hover:text-skin-text"
+          className="text-sm font-semibold text-skin-text-muted hover:text-skin-text transition-colors flex items-center gap-1"
         >
+          <TrashIcon className="h-4 w-4" />
           Clear All
         </button>
       </div>
@@ -38,7 +45,7 @@ const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
         {history.map((item) => (
           <div
             key={item._id}
-            className="p-3 rounded-lg bg-skin-bg flex justify-between items-center cursor-pointer hover:bg-skin-border transition-colors duration-200"
+            className="p-3 rounded-lg bg-skin-bg flex justify-between items-center group cursor-pointer hover:bg-skin-border transition-colors duration-200"
             onClick={() => onSelect(item)}
           >
             <span className="text-sm font-medium text-skin-text truncate">
@@ -49,10 +56,10 @@ const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
                 e.stopPropagation() // Prevent onSelect from firing
                 onDelete(item._id)
               }}
-              className="text-skin-text-muted hover:text-skin-text ml-4 transition-colors"
+              className="text-skin-text-muted hover:text-red-500 ml-4 transition-colors opacity-0 group-hover:opacity-100"
               aria-label="Delete history item"
             >
-              &times;
+              <XMarkIcon className="h-4 w-4" />
             </button>
           </div>
         ))}
@@ -61,4 +68,4 @@ const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
   )
 }
 
-export default HistoryPanel 
+export default HistoryPanel
