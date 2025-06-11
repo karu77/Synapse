@@ -92,14 +92,15 @@ function App() {
     setAnswer('')
     setIsSidebarOpen(false)
     try {
+      // Always treat the input as both a question (for answer) and as content for a knowledge graph
+      // If the user only provides text, we still want both an answer and a graph
       const { answer, graphData } = await generateGraph(
         text,
-        question,
+        question || text, // If no question, use the text as the question to force answer+graph
         imageFile,
         audioFile
       )
       setAnswer(answer)
-      // Defensive: always ensure nodes/edges are arrays
       setGraphData({
         nodes: Array.isArray(graphData?.nodes) ? graphData.nodes : [],
         edges: Array.isArray(graphData?.edges) ? graphData.edges : []
