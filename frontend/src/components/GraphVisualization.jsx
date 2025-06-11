@@ -223,6 +223,31 @@ const GraphVisualization = forwardRef(
       }
     }, [data, theme, styleOptions])
 
+    // Robust selectEdge and selectNode event handlers
+    useEffect(() => {
+      if (!networkInstance.current) return;
+      const network = networkInstance.current;
+
+      network.on('selectEdge', function (params) {
+        if (params.edges && params.edges.length > 0) {
+          const edgeId = params.edges[0];
+          const edge = (data?.edges ?? []).find(e => e.id === edgeId);
+          setSelectedEdge(edge);
+          setSelectedNode(null);
+        }
+      });
+
+      network.on('selectNode', function (params) {
+        if (params.nodes && params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          const node = (data?.nodes ?? []).find(n => n.id === nodeId);
+          setSelectedNode(node);
+          setSelectedEdge(null);
+        }
+      });
+
+    }, [data, setSelectedNode, setSelectedEdge]);
+
     // Helper to trigger file download
     const triggerDownload = (blob, fileName) => {
       const url = URL.createObjectURL(blob)
