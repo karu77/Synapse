@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import GraphVisualization from './components/GraphVisualization'
 import {
   generateGraph,
@@ -195,7 +195,14 @@ function App() {
 
       <AnimatePresence>
         {isSidebarOpen && (
-          <div className="animate-slide-in-left">
+          <motion.div
+            initial={{ x: '-100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '-100%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed inset-y-0 left-0 z-40 w-full max-w-md bg-skin-bg-accent shadow-2xl border-r border-skin-border animate-fade-in-panel"
+            style={{ maxWidth: 400 }}
+          >
             <ControlSidebar
               isOpen={isSidebarOpen}
               onClose={toggleSidebar}
@@ -217,7 +224,7 @@ function App() {
               logout={logout}
               alwaysShowMediaInputs={true}
             />
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
