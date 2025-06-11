@@ -43,6 +43,13 @@ const GraphVisualization = forwardRef(
       dataRef.current = data
     }, [data])
 
+    // Normalize edge ids before using anywhere in the component
+    const normalizedEdges = (data?.edges ?? []).map(edge => ({
+      ...edge,
+      id: edge.id || edge._id || edge.uuid,
+    }))
+    const normalizedData = { ...data, edges: normalizedEdges }
+
     // Initialize network
     useEffect(() => {
       if (containerRef.current) {
@@ -193,7 +200,7 @@ const GraphVisualization = forwardRef(
       onGraphReadyRef.current(false)
       const highlightColor = '#8b5cf6' // Use theme's primary button color for consistency
 
-      const nodesWithStyling = (data?.nodes ?? []).map((node) => ({
+      const nodesWithStyling = (normalizedData?.nodes ?? []).map((node) => ({
         ...node,
         shape: styleOptions.nodeShapes[node.type] || 'dot',
         color: {
@@ -214,9 +221,9 @@ const GraphVisualization = forwardRef(
         size: node.type === 'PERSON' ? 30 : 25,
       }))
 
-      const visEdges = (data?.edges ?? []).map((edge) => ({
+      const visEdges = (normalizedData?.edges ?? []).map((edge) => ({
         ...edge,
-        id: edge.id || edge._id || edge.uuid, // ensure id is preserved from original data
+        id: edge.id, // now always present
         from: edge.source,
         to: edge.target,
         label: edge.label,
@@ -242,7 +249,7 @@ const GraphVisualization = forwardRef(
       network.on('selectEdge', function (params) {
         if (params.edges && params.edges.length > 0) {
           const edgeId = params.edges[0];
-          const edge = (data?.edges ?? []).find(e => e.id === edgeId);
+          const edge = (normalizedData?.edges ?? []).find(e => e.id === edgeId);
           console.log('selectEdge event:', { edgeId, edge }); // Debug log
           setSelectedEdge(edge);
           setSelectedNode(null);
@@ -252,7 +259,7 @@ const GraphVisualization = forwardRef(
       network.on('selectNode', function (params) {
         if (params.nodes && params.nodes.length > 0) {
           const nodeId = params.nodes[0];
-          const node = (data?.nodes ?? []).find(n => n.id === nodeId);
+          const node = (normalizedData?.nodes ?? []).find(n => n.id === nodeId);
           setSelectedNode(node);
           setSelectedEdge(null);
         }
