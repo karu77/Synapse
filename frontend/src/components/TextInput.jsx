@@ -154,9 +154,18 @@ const TextInput = ({ onSubmit, isProcessing }) => {
             type="url"
             placeholder="Paste image URL..."
             className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text"
-            onChange={e => setImageUrl(e.target.value)}
+            onChange={e => {
+              const url = e.target.value;
+              setImageUrl(url);
+              if (/youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|facebook\.com\/.*\/videos\//i.test(url)) {
+                alert('Only direct links to image files are supported. YouTube and other streaming/video platform URLs will not work.');
+              }
+            }}
             disabled={isProcessing}
           />
+          <div className="text-xs text-skin-text-muted mt-1">
+            Only direct links to image files are supported. YouTube and other streaming/video platform URLs will not work.
+          </div>
         </div>
         <div className={isProcessing ? 'file-input-disabled' : ''}>
           <FileInput
@@ -170,9 +179,18 @@ const TextInput = ({ onSubmit, isProcessing }) => {
             type="url"
             placeholder="Paste audio/video URL..."
             className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text"
-            onChange={e => setAudioUrl(e.target.value)}
+            onChange={e => {
+              const url = e.target.value;
+              setAudioUrl(url);
+              if (/youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|facebook\.com\/.*\/videos\//i.test(url)) {
+                alert('Only direct links to audio/video files are supported. YouTube and other streaming/video platform URLs will not work.');
+              }
+            }}
             disabled={isProcessing}
           />
+          <div className="text-xs text-skin-text-muted mt-1">
+            Only direct links to audio/video files are supported. YouTube and other streaming/video platform URLs will not work.
+          </div>
         </div>
       </div>
 
