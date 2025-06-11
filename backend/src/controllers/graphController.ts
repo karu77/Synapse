@@ -87,27 +87,33 @@ function fileToGenerativePart(file: Express.Multer.File): Part {
 
 const extractJson = (text: string): any => {
   if (!text) return null
-  
+
   try {
-    // First, try to find JSON in code blocks
-    const codeBlockMatch = text.match(/```(?:json)?\n([\s\S]*?)\n```/)
-    const jsonString = codeBlockMatch ? codeBlockMatch[1] : text
-    
+    // Try to extract JSON from a code block (```json ... ```) or (``` ...)
+    let jsonString = text.trim()
+    const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+    if (codeBlockMatch && codeBlockMatch[1]) {
+      jsonString = codeBlockMatch[1].trim()
+    } else {
+      // Fallback: extract from first '{' to last '}'
+      const firstBrace = jsonString.indexOf('{')
+      const lastBrace = jsonString.lastIndexOf('}')
+      if (firstBrace !== -1 && lastBrace > firstBrace) {
+        jsonString = jsonString.substring(firstBrace, lastBrace + 1)
+      }
+    }
+
     // Clean up the JSON string
     const cleanJsonString = jsonString
       .replace(/^[^{[]*([{\[])/, '$1')  // Remove any text before the first { or [
       .replace(/[^}\]]*$/, '')          // Remove any text after the last } or ]
       .replace(/[\u2018\u2019]/g, "'")  // Replace smart quotes with straight quotes
       .replace(/[\u201C\u201D]/g, '"')
-      .replace(/\n/g, '\\n')           // Preserve newlines in strings
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t')
-      
-    // Try to parse the JSON
+
     return JSON.parse(cleanJsonString)
   } catch (error) {
     console.error('Failed to parse JSON:', error)
-    console.error('Problematic text:', text.substring(0, 200) + '...')
+    console.error('Problematic text:', text.substring(0, 500) + '...')
     return null
   }
 }
