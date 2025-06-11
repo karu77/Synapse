@@ -5,12 +5,13 @@ import {
   generateGraph,
   getHistory,
   deleteHistoryItem,
-  clearHistory as clearHistoryService,
+  clearAllHistory,
 } from './services/api'
 import ThemeToggleButton from './components/ThemeToggleButton'
 import ControlSidebar from './components/ControlSidebar'
 import NodeInfoPanel from './components/NodeInfoPanel'
 import EdgeInfoPanel from './components/EdgeInfoPanel'
+import AnswerPanel from './components/AnswerPanel'
 import {
   ArrowDownTrayIcon,
   ArrowRightOnRectangleIcon,
@@ -18,10 +19,12 @@ import {
   Bars3Icon,
   CodeBracketIcon,
   TableCellsIcon,
+  ArrowDownOnSquareIcon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from './contexts/AuthContext'
 import { Menu } from '@headlessui/react'
 import { Fragment } from 'react'
+import Tooltip from './components/Tooltip'
 
 const defaultPhysicsOptions = {
   gravitationalConstant: -40000,
@@ -54,25 +57,26 @@ function App() {
   })
   const [selectedNode, setSelectedNode] = useState(null)
   const [selectedEdge, setSelectedEdge] = useState(null)
+  const [answer, setAnswer] = useState('')
   const [history, setHistory] = useState([])
   const [physicsOptions, setPhysicsOptions] = useState(defaultPhysicsOptions)
   const [styleOptions, setStyleOptions] = useState(defaultStyleOptions)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isGraphReady, setIsGraphReady] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
   const graphRef = useRef(null)
   const { user, logout } = useAuth()
 
   const fetchHistory = useCallback(async () => {
-    try {
-      const userHistory = await getHistory()
-      setHistory(userHistory)
-    } catch (error) {
-      console.error('Failed to fetch history:', error)
-      if (error.response && error.response.status === 401) {
-        logout()
+    if (user) {
+      try {
+        const historyData = await getHistory()
+        setHistory(historyData.reverse())
+      } catch (error) {
+        console.error('Failed to fetch history:', error)
       }
     }
-  }, [logout])
+  }, [user])
 
   // Load history from backend on initial render
   useEffect(() => {
@@ -83,16 +87,25 @@ function App() {
 
   const handleTextSubmit = async (text, question, imageFile, audioFile, audioVideoURL) => {
     setIsProcessing(true)
-    setSelectedNode(null) // Clear selection on new graph
-    setSelectedEdge(null) // Clear selection on new graph
-    setIsSidebarOpen(false) // Close sidebar on submission
+    setSelectedNode(null)
+    setSelectedEdge(null)
+    setAnswer('')
+    setIsSidebarOpen(false)
     try {
-      const data = await generateGraph(text, question, imageFile, audioFile, audioVideoURL)
-      setGraphData(data)
+      const { answer, graphData } = await generateGraph(
+        text,
+        question,
+        imageFile,
+        audioFile,
+        audioVideoURL
+      )
+      setAnswer(answer)
+      setGraphData(graphData)
       setGraphKey((prevKey) => prevKey + 1)
-      fetchHistory() // Refresh history after generating a new graph
+      await fetchHistory()
     } catch (error) {
-      console.error('Error processing text:', error)
+      console.error('Submission error:', error)
+      alert(error.message || 'An unexpected error occurred.')
     } finally {
       setIsProcessing(false)
     }
@@ -129,7 +142,10 @@ function App() {
   }
 
   const loadFromHistory = (historyItem) => {
+    setSelectedNode(null)
+    setSelectedEdge(null)
     setGraphData(historyItem.graphData)
+    setAnswer(historyItem.inputs.answer || '')
     setGraphKey((prevKey) => prevKey + 1)
     setIsSidebarOpen(false)
   }
@@ -137,16 +153,16 @@ function App() {
   const handleDeleteFromHistory = async (id) => {
     try {
       await deleteHistoryItem(id)
-      fetchHistory() // Refresh history after deleting an item
+      await fetchHistory()
     } catch (error) {
       console.error('Failed to delete history item:', error)
     }
   }
 
-  const clearHistory = async () => {
+  const handleClearHistory = async () => {
     try {
-      await clearHistoryService()
-      fetchHistory() // Refresh history after clearing
+      await clearAllHistory()
+      setHistory([])
     } catch (error) {
       console.error('Failed to clear history:', error)
     }
@@ -166,13 +182,7 @@ function App() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-skin-bg text-skin-text font-sans flex">
-      {tooltip.visible && (
-        <div
-          className="absolute bg-skin-bg-accent text-skin-text text-sm p-2 rounded-md shadow-lg pointer-events-none z-50"
-          style={{ top: tooltip.y + 15, left: tooltip.x + 15 }}
-          dangerouslySetInnerHTML={{ __html: tooltip.content }}
-        />
-      )}
+      <Tooltip {...tooltip} />
 
       <AnimatePresence>
         {isSidebarOpen && (
@@ -186,7 +196,7 @@ function App() {
             history={history}
             loadFromHistory={loadFromHistory}
             onDelete={handleDeleteFromHistory}
-            onClear={clearHistory}
+            onClear={handleClearHistory}
             styleOptions={styleOptions}
             setStyleOptions={setStyleOptions}
             resetStyles={resetStyles}
@@ -201,6 +211,7 @@ function App() {
 
       <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
       <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} />
+      <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
 
       <main className="flex-1 flex flex-col relative">
         <header className="absolute top-0 left-0 right-0 z-20 p-4">
@@ -326,6 +337,79 @@ function App() {
           Welcome, {user?.name || 'Guest'}!
         </footer>
       </main>
+
+      <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="p-3 rounded-full bg-skin-bg-accent text-skin-text shadow-lg hover:bg-skin-border transition-all hover:scale-110"
+          aria-label="Open controls"
+        >
+          <Bars3Icon className="h-6 w-6" />
+        </button>
+      </div>
+
+      <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+        <ThemeToggleButton />
+        <div className="relative">
+          <button
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            disabled={!isGraphReady || isProcessing}
+            className="p-3 rounded-full bg-skin-bg-accent text-skin-text shadow-lg hover:bg-skin-border transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Export graph"
+          >
+            <ArrowDownOnSquareIcon className="h-6 w-6" />
+          </button>
+          {showExportMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-skin-bg-accent rounded-lg shadow-xl py-1 z-30">
+              <button
+                onClick={() => {
+                  graphRef.current.downloadPNG()
+                  setShowExportMenu(false)
+                }}
+                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
+              >
+                Download PNG
+              </button>
+              <button
+                onClick={() => {
+                  graphRef.current.downloadWebP()
+                  setShowExportMenu(false)
+                }}
+                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
+              >
+                Download WebP
+              </button>
+              <button
+                onClick={() => {
+                  graphRef.current.downloadJSON()
+                  setShowExportMenu(false)
+                }}
+                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
+              >
+                Download JSON
+              </button>
+              <button
+                onClick={() => {
+                  graphRef.current.downloadNodesCSV()
+                  setShowExportMenu(false)
+                }}
+                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
+              >
+                Download Nodes (CSV)
+              </button>
+              <button
+                onClick={() => {
+                  graphRef.current.downloadEdgesCSV()
+                  setShowExportMenu(false)
+                }}
+                className="block w-full text-left px-4 py-2 text-sm text-skin-text hover:bg-skin-border"
+              >
+                Download Edges (CSV)
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -10,9 +10,13 @@ const HistoryPanel = ({ history, onSelect, onDelete, onClear }) => {
   }
 
   const getHistoryItemLabel = (item) => {
-    const { textInput, question, audioVideoURL, imageFileName, audioFileName } = item.inputs || {}
+    const { textInput, question, audioVideoURL, imageFileName, audioFileName, answer } =
+      item.inputs || {}
     if (question) {
-      return `Question: "${question.substring(0, 30)}..."`
+      const label = answer
+        ? `A: ${answer.substring(0, 25)}...`
+        : `Q: ${question.substring(0, 30)}...`
+      return label
     }
     if (textInput) {
       return `Text: "${textInput.substring(0, 30)}..."`

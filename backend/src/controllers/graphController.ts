@@ -199,16 +199,16 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     let textPrompt: string
 
     if (question) {
-      textPrompt = `The user has asked a question. Your task is to first provide a concise answer, and then create a detailed knowledge graph that visualizes the key entities and relationships from your answer.
+      textPrompt = `The user has asked a question. Your task is to first provide a concise and informative textual answer, and then create a detailed knowledge graph that visualizes the key entities and relationships from your answer. The graph should be comprehensive, including pioneers, key concepts, and related ideas.
 
       User's Question: "${question}"
 
       **Instructions:**
-      1.  **Answer the Question:** In your internal thought process, formulate a clear and accurate answer to the user's question.
-      2.  **Build the Graph:** Based on your answer, identify all relevant entities (people, places, concepts, etc.) and the relationships connecting them.
+      1.  **Formulate Answer:** First, create a clear, detailed, and well-structured textual answer to the user's question.
+      2.  **Build Graph:** Based on your answer, identify all relevant entities (people, organizations, locations, concepts, etc.) and the relationships connecting them.
       3.  **Be Comprehensive:** The graph should not just represent the direct answer, but also include important related context to provide a richer understanding.
       4.  **Perform Sentiment Analysis:** For every single entity and every single relationship, you MUST determine its sentiment from the context. The sentiment must be one of three string values: "positive", "negative", or "neutral".
-      5.  **Strict JSON Output:** Return the output *only* as a single JSON object. Do not include any other text, comments, or formatting.
+      5.  **Strict JSON Output:** Return the output *only* as a single JSON object with two top-level keys: "answer" and "graph". Do not include any other text, comments, or formatting.
       `
     } else {
       textPrompt = `Your primary goal is to build a comprehensive and highly-connected knowledge graph from the provided inputs. Identify *all* plausible entities and the relationships that connect them. It is crucial to be exhaustive.
@@ -221,26 +221,38 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       **Instructions:**
       1.  **Be Exhaustive:** Find every possible entity and relationship. It's better to include a minor relationship than to omit one. Aim for a dense, well-connected graph.
       2.  **Perform Sentiment Analysis:** For every single entity and every single relationship, you MUST determine its sentiment from the context. The sentiment must be one of three string values: "positive", "negative", or "neutral".
-      3.  **Strict JSON Output:** Return the output *only* as a single JSON object. Do not include any other text, comments, or formatting.
+      3.  **Strict JSON Output:** Return the output *only* as a single JSON object with a single top-level key: "graph". Do not include any other text, comments, or formatting.
       `
     }
 
     const fullPrompt = `${textPrompt}
 
-      Here is the required structure with an example demonstrating a dense graph with varied sentiments:
+      Here is the required structure with an example. If the user asks a question, use the first structure. Otherwise, use the second.
+      
+      Structure for Questions:
       {
-        "entities": [
-          {"id": "e1", "label": "Synapse", "type": "PRODUCT", "sentiment": "positive"},
-          {"id": "e2", "label": "Gemini API", "type": "PRODUCT", "sentiment": "neutral"},
-          {"id": "e3", "label": "Knowledge Graph", "type": "CONCEPT", "sentiment": "neutral"},
-          {"id": "e4", "label": "Frontend Developers", "type": "JOB_TITLE", "sentiment": "positive"}
-        ],
-        "relationships": [
-          {"source": "e1", "target": "e2", "label": "USES", "sentiment": "neutral"},
-          {"source": "e1", "target": "e3", "label": "GENERATES", "sentiment": "positive"},
-          {"source": "e4", "target": "e1", "label": "DEVELOPS", "sentiment": "neutral"},
-          {"source": "e2", "target": "e3", "label": "ENABLES", "sentiment": "positive"}
-        ]
+        "answer": "A detailed textual answer to the user's question goes here...",
+        "graph": {
+          "entities": [
+            {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral"}
+          ],
+          "relationships": [
+            {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral"}
+          ]
+        }
+      }
+
+      Structure for General Text/File Analysis:
+      {
+        "graph": {
+          "entities": [
+            {"id": "e1", "label": "Synapse", "type": "PRODUCT", "sentiment": "positive"},
+            {"id": "e2", "label": "Gemini API", "type": "PRODUCT", "sentiment": "neutral"}
+          ],
+          "relationships": [
+            {"source": "e1", "target": "e2", "label": "USES", "sentiment": "neutral"}
+          ]
+        }
       }
       
       Use only the following specific entity types: PERSON, ORG, LOCATION, DATE, EVENT, PRODUCT, CONCEPT, JOB_TITLE, FIELD_OF_STUDY, THEORY, ART_WORK.
@@ -250,15 +262,23 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     if (hasImage) promptParts.push(fileToGenerativePart(files.imageFile[0]))
     if (audioPart) promptParts.push(audioPart)
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-    const result = await model.generateContent(promptParts)
-    const response = await result.response
-    const text = response.text()
+    const result = await genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }).generateContent({
+      contents: [{ role: 'user', parts: promptParts }],
+    })
 
-    const graphData = extractGraphData(text)
+    const jsonString = extractJson(result.response.text())
+    if (!jsonString) {
+      return res.status(500).json({ error: 'The AI response was not valid JSON.' })
+    }
 
-    if (graphData.nodes.length === 0 && graphData.edges.length === 0) {
-      return res.status(500).json({ error: 'Failed to parse a valid graph from the AI response.' })
+    const aiResponse = JSON.parse(jsonString)
+
+    // The AI response could be { graph: { ... } } OR { answer: '...', graph: { ... } }
+    const graphData = aiResponse.graph || (aiResponse.graphData ? aiResponse.graphData : null)
+    const answer = aiResponse.answer || ''
+
+    if (!graphData || !graphData.entities || !graphData.relationships) {
+      return res.status(500).json({ error: 'The AI response did not contain valid graph data.' })
     }
 
     const historyItem = new History({
@@ -267,6 +287,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       inputs: {
         textInput: textInput || '',
         question: question || '',
+        answer: answer || '',
         audioVideoURL: audioVideoURL || '',
         imageFileName: files.imageFile ? files.imageFile[0].originalname : '',
         audioFileName: files.audioFile ? files.audioFile[0].originalname : '',
@@ -274,9 +295,9 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     })
     await historyItem.save()
 
-    res.status(201).json(graphData)
-  } catch (error) {
-    console.error('Error generating graph:', error)
+    res.json({ answer, graphData })
+  } catch (error: any) {
+    console.error('Error in graph generation:', error)
     res.status(500).json({ error: 'Failed to generate graph' })
   }
 }

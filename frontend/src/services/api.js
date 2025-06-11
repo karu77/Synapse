@@ -45,15 +45,19 @@ export const generateGraph = async (text, question, imageFile, audioFile, audioV
       formData.append('audioVideoURL', audioVideoURL)
     }
 
-    const { data } = await api.post('/api/generate-graph', formData, {
+    const token = JSON.parse(localStorage.getItem('userInfo'))?.token
+    const config = {
       headers: {
         'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
       },
-    })
-    return data
+    }
+
+    const { data } = await axios.post(`${API_BASE_URL}/api/graph/generate`, formData, config)
+    return data // Now returns an object: { answer: '...', graphData: { ... } }
   } catch (error) {
     console.error('Error generating graph:', error)
-    throw error
+    throw error.response?.data?.error || 'Failed to generate graph. Please try again.'
   }
 }
 
