@@ -85,9 +85,31 @@ function fileToGenerativePart(file: Express.Multer.File): Part {
   }
 }
 
-const extractJson = (text: string) => {
-  const match = text.match(/```json\n([\s\S]*?)\n```/)
-  return match ? match[1] : null
+const extractJson = (text: string): any => {
+  if (!text) return null
+  
+  try {
+    // First, try to find JSON in code blocks
+    const codeBlockMatch = text.match(/```(?:json)?\n([\s\S]*?)\n```/)
+    const jsonString = codeBlockMatch ? codeBlockMatch[1] : text
+    
+    // Clean up the JSON string
+    const cleanJsonString = jsonString
+      .replace(/^[^{[]*([{\[])/, '$1')  // Remove any text before the first { or [
+      .replace(/[^}\]]*$/, '')          // Remove any text after the last } or ]
+      .replace(/[\u2018\u2019]/g, "'")  // Replace smart quotes with straight quotes
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/\n/g, '\\n')           // Preserve newlines in strings
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t')
+      
+    // Try to parse the JSON
+    return JSON.parse(cleanJsonString)
+  } catch (error) {
+    console.error('Failed to parse JSON:', error)
+    console.error('Problematic text:', text.substring(0, 200) + '...')
+    return null
+  }
 }
 
 const isYouTubeUrl = (url: string): boolean => {
@@ -212,12 +234,13 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       contents: [{ role: 'user', parts: promptParts }],
     })
 
-    const jsonString = extractJson(result.response.text())
-    if (!jsonString) {
-      return res.status(500).json({ error: 'The AI response was not valid JSON.' })
+    const aiResponse = extractJson(result.response.text())
+    if (!aiResponse) {
+      return res.status(500).json({ 
+        error: 'The AI response was not valid JSON.',
+        details: 'Could not parse the response into valid JSON format.'
+      })
     }
-
-    const aiResponse = JSON.parse(jsonString)
 
     // The AI response could be { graph: { ... } } OR { answer: '...', graph: { ... } }
     const graphData = aiResponse.graph || (aiResponse.graphData ? aiResponse.graphData : null)
