@@ -85,23 +85,6 @@ function fileToGenerativePart(file: Express.Multer.File): Part {
   }
 }
 
-function streamToGenerativePart(stream: Readable, mimeType: string): Promise<Part> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = []
-    stream.on('data', (chunk) => chunks.push(chunk))
-    stream.on('end', () => {
-      const buffer = Buffer.concat(chunks)
-      resolve({
-        inlineData: {
-          data: buffer.toString('base64'),
-          mimeType,
-        },
-      })
-    })
-    stream.on('error', reject)
-  })
-}
-
 const extractJson = (text: string) => {
   const match = text.match(/```json\n([\s\S]*?)\n```/)
   return match ? match[1] : null
