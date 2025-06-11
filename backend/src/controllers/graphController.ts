@@ -117,9 +117,19 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
           const cleanUrl = cleanYouTubeUrl(audioVideoURL)
           console.log(`Downloading audio from cleaned YouTube URL: ${cleanUrl}`)
           
+          const options: any = {
+            format: 'bestaudio',
+            output: '-',
+          }
+
+          if (process.env.PROXY_URL) {
+            console.log('Using proxy for youtube download.')
+            options.proxy = process.env.PROXY_URL
+          }
+          
           const child = youtubedl.exec(
             cleanUrl,
-            { format: 'bestaudio', output: '-' },
+            options,
             { stdio: ['ignore', 'pipe', 'pipe'] }
           )
 
