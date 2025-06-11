@@ -29,7 +29,7 @@ const GraphVisualization = forwardRef(
     ref
   ) => {
     const containerRef = useRef(null)
-    const networkInstance = useRef(null)
+  const networkInstance = useRef(null)
     const { theme } = useTheme()
 
     // Use refs for callbacks to prevent re-triggering useEffect
@@ -44,7 +44,7 @@ const GraphVisualization = forwardRef(
     }, [data])
 
     // Initialize network
-    useEffect(() => {
+  useEffect(() => {
       if (containerRef.current) {
         const options = getOptions()
         const network = new Network(containerRef.current, {}, options)
@@ -183,7 +183,7 @@ const GraphVisualization = forwardRef(
 
     // Update data
     useEffect(() => {
-      if (networkInstance.current) {
+    if (networkInstance.current) {
         onGraphReadyRef.current(false)
         const highlightColor = '#8b5cf6' // Use theme's primary button color for consistency
 
@@ -302,17 +302,17 @@ const GraphVisualization = forwardRef(
       },
     }))
 
-    return (
+  return (
       <div className="h-full w-full relative">
-        {isLoading && (
+      {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
             <div className="text-white text-lg font-semibold">Generating...</div>
-          </div>
-        )}
+        </div>
+      )}
         <div ref={containerRef} className="h-full w-full" />
-      </div>
-    )
-  }
+    </div>
+  )
+}
 )
 
 export default GraphVisualization

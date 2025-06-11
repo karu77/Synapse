@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import History from '../models/History'
 import { GoogleGenerativeAI, Part } from '@google/generative-ai'
 import axios from 'axios'
+import ytdl from 'ytdl-core'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -74,6 +75,16 @@ const extractGraphData = (response: string) => {
   }
 }
 
+// Helper to stream to buffer
+const streamToBuffer = (stream: NodeJS.ReadableStream): Promise<Buffer> => {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    stream.on('data', (chunk) => chunks.push(chunk as Buffer))
+    stream.on('error', reject)
+    stream.on('end', () => resolve(Buffer.concat(chunks)))
+  })
+}
+
 // Helper to convert buffer to a Gemini-compatible part
 const fileToGenerativePart = (file: Express.Multer.File): Part => {
   return {
@@ -96,12 +107,38 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       audioPart = fileToGenerativePart(files.audioFile[0])
     } else if (audioVideoURL) {
       try {
-        const response = await axios.get(audioVideoURL, { responseType: 'arraybuffer' })
-        const mimeType = response.headers['content-type'] || 'application/octet-stream'
-        const data = Buffer.from(response.data).toString('base64')
+        let buffer: Buffer
+        let mimeType: string
+
+        if (ytdl.validateURL(audioVideoURL)) {
+          console.log(`Downloading audio from YouTube URL: ${audioVideoURL}`)
+          const stream = ytdl(audioVideoURL, {
+            filter: 'audioonly',
+            quality: 'lowestaudio',
+          })
+          buffer = await streamToBuffer(stream)
+          // Gemini supports various audio formats. Opus/WebM from ytdl-core should be fine.
+          // Let's be explicit with a common mimetype.
+          mimeType = 'audio/webm'
+        } else {
+          console.log(`Downloading from non-YouTube URL: ${audioVideoURL}`)
+          const response = await axios.get(audioVideoURL, {
+            responseType: 'arraybuffer',
+          })
+          buffer = Buffer.from(response.data)
+          mimeType =
+            response.headers['content-type'] || 'application/octet-stream'
+        }
+
+        const data = buffer.toString('base64')
         audioPart = { inlineData: { data, mimeType } }
       } catch (urlError) {
-        console.error(`Failed to download from URL: ${audioVideoURL}`, urlError)
+        console.error(
+          `Failed to download or process from URL: ${audioVideoURL}`,
+          urlError,
+        )
+        // We will proceed without audio if the download fails, but we should log it.
+        // A user-facing error could also be sent, but for now, we'll just log.
       }
     }
 
