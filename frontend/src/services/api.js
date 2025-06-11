@@ -72,13 +72,23 @@ export const deleteHistoryItem = async (id) => {
     await api.delete(`/api/history/${id}`)
   } catch (error) {
     console.error('Error deleting history item:', error)
-    throw error
+    throw error.response?.data?.error || 'Failed to delete history item.'
   }
 }
 
-export const clearHistory = async () => {
+/**
+ * Clears all history for the logged-in user.
+ */
+export const clearAllHistory = async () => {
   try {
-    await api.delete('/api/history')
+    const token = JSON.parse(localStorage.getItem('userInfo'))?.token
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+
+    await api.delete('/api/history', config)
   } catch (error) {
     console.error('Error clearing history:', error)
     throw error
