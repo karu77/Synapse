@@ -78,6 +78,26 @@ const isYouTubeUrl = (url: string): boolean => {
   return youtubeRegex.test(url)
 }
 
+const cleanYouTubeUrl = (url: string): string => {
+  try {
+    const urlObject = new URL(url)
+    if (urlObject.hostname === 'youtu.be') {
+      const videoId = urlObject.pathname.slice(1)
+      return `https://www.youtube.com/watch?v=${videoId}`
+    }
+    if (urlObject.hostname.includes('youtube.com')) {
+      const videoId = urlObject.searchParams.get('v')
+      if (videoId) {
+        return `https://www.youtube.com/watch?v=${videoId}`
+      }
+    }
+    return url
+  } catch (error) {
+    console.error('Error parsing or cleaning YouTube URL, returning original:', error)
+    return url
+  }
+}
+
 export const generateGraphAndSave = async (req: Request, res: Response) => {
   try {
     const { textInput, audioVideoURL } = req.body
@@ -94,12 +114,26 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
         let mimeType: string
 
         if (isYouTubeUrl(audioVideoURL)) {
-          console.log(`Downloading audio from YouTube URL: ${audioVideoURL}`)
-          const stream = youtubedl.exec(audioVideoURL, { format: 'bestaudio', output: '-' }, { stdio: ['ignore', 'pipe', 'ignore'] }).stdout
-          if (!stream) {
-            throw new Error('Failed to get a download stream from youtube-dl-exec.')
+          const cleanUrl = cleanYouTubeUrl(audioVideoURL)
+          console.log(`Downloading audio from cleaned YouTube URL: ${cleanUrl}`)
+          
+          const child = youtubedl.exec(
+            cleanUrl,
+            { format: 'bestaudio', output: '-' },
+            { stdio: ['ignore', 'pipe', 'pipe'] }
+          )
+
+          if (!child.stdout || !child.stderr) {
+            throw new Error('Could not get stdout/stderr stream from child process.')
           }
-          buffer = await streamToBuffer(stream)
+
+          let errorLog = ''
+          child.stderr.on('data', (data: any) => (errorLog += data.toString()))
+          child.stderr.on('end', () => {
+            if (errorLog) console.error('[yt-dlp stderr]:', errorLog)
+          })
+
+          buffer = await streamToBuffer(child.stdout)
           mimeType = 'audio/webm'
         } else {
           console.log(`Downloading from non-YouTube URL: ${audioVideoURL}`)
