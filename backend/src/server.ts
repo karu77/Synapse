@@ -65,7 +65,7 @@ app.use('/api/history', historyRoutes)
 
 // Generate graph from text (now requires auth)
 app.post(
-  '/api/generate-graph',
+  '/api/graph/generate',
   protect,
   upload.fields([
     { name: 'imageFile', maxCount: 1 },
