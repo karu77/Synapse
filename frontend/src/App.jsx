@@ -100,8 +100,13 @@ function App() {
         imageUrl,
         audioUrl
       )
+      console.log('Received graphData from backend:', graphData)
       setAnswer(answer)
       setGraphData({
+        nodes: Array.isArray(graphData?.nodes) ? graphData.nodes : [],
+        edges: Array.isArray(graphData?.edges) ? graphData.edges : []
+      })
+      console.log('Set graphData in state:', {
         nodes: Array.isArray(graphData?.nodes) ? graphData.nodes : [],
         edges: Array.isArray(graphData?.edges) ? graphData.edges : []
       })

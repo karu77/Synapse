@@ -214,6 +214,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
 
     let textPrompt: string
 
+    // Only provide an answer if the question field is filled
     if (question) {
       textPrompt = `The user has asked a question. Your task is to first provide a concise and informative textual answer, and then create a detailed knowledge graph that visualizes the key entities and relationships from your answer. The graph should be comprehensive, including pioneers, key concepts, and related ideas.
 
@@ -227,12 +228,13 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       5.  **Strict JSON Output:** Return the output *only* as a single JSON object with two top-level keys: "answer" and "graph". Do not include any other text, comments, or formatting.
       `
     } else {
+      // For all other input (text, image, audio/video), only generate a graph, no answer
       textPrompt = `Your primary goal is to build a comprehensive and highly-connected knowledge graph from the provided inputs. Identify *all* plausible entities and the relationships that connect them. It is crucial to be exhaustive.
 
       The user provided:
       ${textInput ? `Text: "${textInput}"` : ''}
-      ${hasImage ? 'An image file.' : ''}
-      ${audioPart ? 'An audio/video file.' : ''}
+      ${hasImage ? 'An image file or image URL.' : ''}
+      ${audioPart ? 'An audio/video file or audio URL.' : ''}
 
       **Instructions:**
       1.  **Be Exhaustive:** Find every possible entity and relationship. It's better to include a minor relationship than to omit one. Aim for a dense, well-connected graph.
@@ -303,13 +305,32 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       }
     }
 
-    if (!graphData || !graphData.entities || !graphData.relationships) {
+    // Accept both {entities, relationships} and {nodes, edges} for robustness
+    let nodes = []
+    let edges = []
+    if (graphData) {
+      if (Array.isArray(graphData.nodes) && Array.isArray(graphData.edges)) {
+        nodes = graphData.nodes
+        edges = graphData.edges
+      } else if (Array.isArray(graphData.entities) && Array.isArray(graphData.relationships)) {
+        nodes = graphData.entities
+        edges = graphData.relationships
+      }
+    }
+
+    if (!nodes.length || !edges.length) {
       return res.status(500).json({ error: 'The AI response did not contain valid graph data.' })
+    }
+
+    // PATCH: Always return { nodes, edges } to the frontend
+    const graphDataForFrontend = {
+      nodes,
+      edges,
     }
 
     const historyItem = new History({
       user: req.user._id,
-      graphData,
+      graphData: graphDataForFrontend,
       inputs: {
         textInput: textInput || '',
         question: question || '',
@@ -320,7 +341,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     })
     await historyItem.save()
 
-    res.json({ answer, graphData })
+    res.json({ answer, graphData: graphDataForFrontend })
   } catch (error: any) {
     console.error('Error in graph generation:', error)
     res.status(500).json({ error: 'Failed to generate graph' })
