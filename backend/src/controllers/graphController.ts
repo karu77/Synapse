@@ -1,8 +1,6 @@
 import { Request, Response } from 'express'
 import History from '../models/History'
 import { GoogleGenerativeAI, Part } from '@google/generative-ai'
-import { AuthenticatedRequest } from '../middleware/authMiddleware'
-import { Readable } from 'stream'
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '')
 
