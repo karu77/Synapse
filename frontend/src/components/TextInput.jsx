@@ -201,21 +201,42 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           type="button"
           onClick={handleSubmit}
           disabled={isProcessing || !hasInput}
-          className={`inline-flex justify-center rounded-lg border border-transparent px-6 py-2 text-base font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition ${
-            isProcessing || !hasInput
-              ? 'bg-skin-border text-skin-text-muted cursor-not-allowed'
-              : 'bg-skin-btn-primary text-skin-btn-primary-text hover:opacity-90 focus:ring-skin-btn-primary'
-          }`}
+          className={`inline-flex justify-center rounded-lg border border-transparent px-6 py-2 text-base font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
+            ${isProcessing || !hasInput
+              ? 'bg-skin-border text-skin-text-muted cursor-not-allowed scale-100'
+              : 'bg-skin-btn-primary text-skin-btn-primary-text hover:opacity-90 hover:scale-105 focus:ring-skin-btn-primary'}
+          `}
         >
-          {isProcessing ? 'Generating...' : 'Generate Graph'}
+          {isProcessing ? (
+            <span className="flex items-center gap-2">
+              <span className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></span>
+              Generating...
+            </span>
+          ) : 'Generate Graph'}
         </button>
       </div>
 
-      {/* PATCH: Add overlay to make file inputs visually unclickable when disabled */}
+      {/* Modern input focus and panel animation styles */}
       <style>{`
         .file-input-disabled {
           pointer-events: none;
           opacity: 0.6;
+        }
+        textarea:focus, input[type='url']:focus {
+          border-color: #6366f1;
+          box-shadow: 0 0 0 2px #6366f1;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        button:active:not(:disabled) {
+          transform: scale(0.97);
+          transition: transform 0.1s;
         }
       `}</style>
     </div>

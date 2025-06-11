@@ -195,59 +195,61 @@ function App() {
 
       <AnimatePresence>
         {isSidebarOpen && (
-          <ControlSidebar
-            isOpen={isSidebarOpen}
-            onClose={toggleSidebar}
-            onSubmit={handleTextSubmit}
-            isProcessing={isProcessing}
-            selectedNode={selectedNode}
-            selectedEdge={selectedEdge}
-            history={history}
-            loadFromHistory={loadFromHistory}
-            onDelete={handleDeleteFromHistory}
-            onClear={handleClearHistory}
-            styleOptions={styleOptions}
-            setStyleOptions={setStyleOptions}
-            resetStyles={resetStyles}
-            physicsOptions={physicsOptions}
-            setPhysicsOptions={setPhysicsOptions}
-            resetPhysics={resetPhysics}
-            user={user}
-            logout={logout}
-            alwaysShowMediaInputs={true} // <-- Always show image/audio/video inputs
-          />
+          <div className="animate-slide-in-left">
+            <ControlSidebar
+              isOpen={isSidebarOpen}
+              onClose={toggleSidebar}
+              onSubmit={handleTextSubmit}
+              isProcessing={isProcessing}
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              history={history}
+              loadFromHistory={loadFromHistory}
+              onDelete={handleDeleteFromHistory}
+              onClear={handleClearHistory}
+              styleOptions={styleOptions}
+              setStyleOptions={setStyleOptions}
+              resetStyles={resetStyles}
+              physicsOptions={physicsOptions}
+              setPhysicsOptions={setPhysicsOptions}
+              resetPhysics={resetPhysics}
+              user={user}
+              logout={logout}
+              alwaysShowMediaInputs={true}
+            />
+          </div>
         )}
       </AnimatePresence>
 
       {/* Move AI Answer panel to the left, vertically centered, and always visible */}
       {answer && (
-        <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-30 max-w-xs w-full sm:w-96">
+        <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-30 max-w-xs w-full sm:w-96 animate-fade-in-panel">
           <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
         </div>
       )}
 
-      <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
-      <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} />
+      <NodeInfoPanel node={selectedNode} onClose={() => setSelectedNode(null)} panelClassName="animate-fade-in-panel" />
+      <EdgeInfoPanel edge={selectedEdge} nodes={graphData.nodes} onClose={() => setSelectedEdge(null)} panelClassName="animate-fade-in-panel" />
 
-      <main className="flex-1 flex flex-col relative">
-        <header className="absolute top-0 left-0 right-0 z-20 p-4">
+      <main className="flex-1 flex flex-col relative animate-fade-in-panel">
+        <header className="absolute top-0 left-0 right-0 z-20 p-4 animate-fade-in-panel">
           <div className="max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full p-2 pl-4 border border-skin-border shadow-xl">
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleSidebar}
-                className="p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors"
+                className="p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150"
                 aria-label="Toggle controls sidebar"
               >
                 <Bars3Icon className="h-6 w-6" />
               </button>
-              <h1 className="text-xl font-bold text-skin-text hidden sm:block">Synapse</h1>
+              <h1 className="text-xl font-bold text-skin-text hidden sm:block animate-fade-in-panel">Synapse</h1>
             </div>
             <div className="flex items-center gap-2">
               <Menu as="div" className="relative inline-block text-left">
                 <div>
                   <Menu.Button
                     disabled={isProcessing || !(Array.isArray(graphData.nodes) && graphData.nodes.length > 0) || !isGraphReady}
-                    className="inline-flex w-full justify-center items-center gap-2 rounded-full bg-skin-bg p-2 border border-skin-border text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="inline-flex w-full justify-center items-center gap-2 rounded-full bg-skin-bg p-2 border border-skin-border text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:scale-105 focus:scale-105 active:scale-95 duration-150"
                   >
                     <ArrowDownTrayIcon className="h-5 w-5" />
                     <span className="hidden sm:inline">Download</span>
@@ -316,7 +318,7 @@ function App() {
                 </Menu.Items>
               </Menu>
               <div className="hidden sm:block h-6 border-l border-skin-border mx-1"></div>
-              <div className="flex items-center gap-1 bg-skin-bg p-1 rounded-full border border-skin-border">
+              <div className="flex items-center gap-1 bg-skin-bg p-1 rounded-full border border-skin-border animate-fade-in-panel">
                 <ThemeToggleButton />
               </div>
             </div>
@@ -338,10 +340,26 @@ function App() {
           />
         </div>
 
-        <footer className="absolute bottom-0 left-0 p-4 text-skin-text-muted text-xs">
+        <footer className="absolute bottom-0 left-0 p-4 text-skin-text-muted text-xs animate-fade-in-panel">
           Welcome, {user?.name || 'Guest'}!
         </footer>
       </main>
+      <style>{`
+        .animate-slide-in-left {
+          animation: slideInLeft 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-fade-in-panel {
+          animation: fadeInPanel 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes fadeInPanel {
+          from { opacity: 0; transform: scale(0.98) translateY(20px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
     </div>
   )
 }
