@@ -52,12 +52,28 @@ const TextInput = ({ onSubmit, isProcessing }) => {
   const [text, setText] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [audioFile, setAudioFile] = useState(null)
+  const [audioVideoURL, setAudioVideoURL] = useState('')
 
-  const hasInput = text.trim() !== '' || imageFile !== null || audioFile !== null
+  const handleURLChange = (e) => {
+    setAudioVideoURL(e.target.value)
+    if (e.target.value !== '') {
+      setAudioFile(null) // Clear file input if URL is being used
+    }
+  }
+
+  const handleFileChange = (file) => {
+    setAudioFile(file)
+    if (file !== null) {
+      setAudioVideoURL('') // Clear URL input if file is being used
+    }
+  }
+
+  const hasInput =
+    text.trim() !== '' || imageFile !== null || audioFile !== null || audioVideoURL.trim() !== ''
 
   const handleSubmit = async () => {
     if (!hasInput) return
-    await onSubmit(text, imageFile, audioFile)
+    await onSubmit(text, imageFile, audioFile, audioVideoURL)
   }
 
   return (
@@ -89,11 +105,28 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           <FileInput
             label="Audio/Video File"
             accept="audio/*,video/*"
-            onFileChange={setAudioFile}
-            disabled={isProcessing}
+            onFileChange={handleFileChange}
+            disabled={isProcessing || audioVideoURL !== ''}
+          />
+          <div className="relative flex items-center">
+            <div className="flex-grow border-t border-skin-border"></div>
+            <span className="flex-shrink mx-2 text-skin-text-muted text-xs">OR</span>
+            <div className="flex-grow border-t border-skin-border"></div>
+          </div>
+          <input
+            type="text"
+            placeholder="Paste Audio/Video URL..."
+            value={audioVideoURL}
+            onChange={handleURLChange}
+            disabled={isProcessing || audioFile !== null}
+            className={`block w-full text-left rounded-lg border shadow-sm text-sm p-2 ${
+              isProcessing || audioFile !== null
+                ? 'bg-skin-bg border-skin-border text-skin-text-muted cursor-not-allowed'
+                : 'bg-skin-bg-accent border-skin-border focus:border-skin-btn-primary focus:ring-skin-btn-primary text-skin-text'
+            }`}
           />
           <div className="text-center text-xs text-skin-text-muted p-2 bg-skin-bg rounded-lg">
-            To analyze a YouTube video, use an online converter to save it as an audio file, then upload it here.
+            Note: The URL feature may not work on deployed servers. For best results, upload the file directly.
           </div>
         </div>
       </div>
