@@ -185,7 +185,9 @@ const GraphVisualization = forwardRef(
 
     // Update data
     useEffect(() => {
-      if (!networkInstance.current || !data?.nodes || !data?.edges) return;
+      if (!networkInstance.current) return;
+      if (!data?.nodes || !data?.edges) return;
+      if (!networkInstance.current.body || !networkInstance.current.body.container) return;
 
       onGraphReadyRef.current(false)
       const highlightColor = '#8b5cf6' // Use theme's primary button color for consistency
@@ -221,6 +223,13 @@ const GraphVisualization = forwardRef(
       }))
 
       networkInstance.current.setData({ nodes: nodesWithStyling, edges: visEdges })
+
+      return () => {
+        if (networkInstance.current && networkInstance.current.off) {
+          networkInstance.current.off('selectEdge');
+          networkInstance.current.off('selectNode');
+        }
+      };
     }, [data, theme, styleOptions])
 
     // Robust selectEdge and selectNode event handlers
