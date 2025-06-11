@@ -205,7 +205,7 @@ const GraphVisualization = forwardRef(
             },
           },
           font: {
-            color: shape === 'dot' || shape === 'circle' ? '#ffffff' : theme === 'light' ? '#1e293b' : '#f1f5f9',
+            color: (node.shape === 'dot' || node.shape === 'circle') ? '#ffffff' : theme === 'light' ? '#1e293b' : '#f1f5f9',
           },
           size: node.type === 'PERSON' ? 30 : 25,
         }))
