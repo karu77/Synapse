@@ -6,6 +6,7 @@ import cors from 'cors'
 import connectDB from './config/db'
 import userRoutes from './routes/userRoutes'
 import historyRoutes from './routes/historyRoutes'
+import graphRoutes from './routes/graphRoutes'
 import { protect } from './middleware/authMiddleware'
 import { generateGraphAndSave } from './controllers/graphController'
 import multer from 'multer'
@@ -62,17 +63,7 @@ app.get('/', (req, res) => {
 // API Routes
 app.use('/api/users', userRoutes)
 app.use('/api/history', historyRoutes)
-
-// Generate graph from text (now requires auth)
-app.post(
-  '/api/graph/generate',
-  protect,
-  upload.fields([
-    { name: 'imageFile', maxCount: 1 },
-    { name: 'audioFile', maxCount: 1 },
-  ]),
-  generateGraphAndSave
-)
+app.use('/api/graph', graphRoutes)
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`)
