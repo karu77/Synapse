@@ -29,7 +29,7 @@ const GraphVisualization = forwardRef(
     ref
   ) => {
     const containerRef = useRef(null)
-  const networkInstance = useRef(null)
+    const networkInstance = useRef(null)
     const { theme } = useTheme()
 
     // Use refs for callbacks to prevent re-triggering useEffect
@@ -48,19 +48,19 @@ const GraphVisualization = forwardRef(
       if (containerRef.current) {
         const options = getOptions()
         // Initialize with empty data to prevent undefined errors
-        const emptyData = { nodes: [], edges: [] };
+        const emptyData = { nodes: [], edges: [] }
         const network = new Network(containerRef.current, emptyData, options)
         networkInstance.current = network
 
         network.on('click', (event) => {
           if (event.nodes.length > 0) {
             const nodeId = event.nodes[0]
-            const node = dataRef.current.nodes.find((n) => n.id === nodeId)
+            const node = (dataRef.current?.nodes ?? []).find((n) => n.id === nodeId)
             setSelectedNode(node)
             setSelectedEdge(null)
           } else if (event.edges.length > 0) {
             const edgeId = event.edges[0]
-            const edge = dataRef.current.edges.find((e) => e.id === edgeId)
+            const edge = (dataRef.current?.edges ?? []).find((e) => e.id === edgeId)
             if (edge) {
               setSelectedEdge(edge)
               setSelectedNode(null)
@@ -72,7 +72,7 @@ const GraphVisualization = forwardRef(
         })
 
         network.on('hoverNode', ({ node, event }) => {
-          const nodeData = dataRef.current.nodes.find((n) => n.id === node)
+          const nodeData = (dataRef.current?.nodes ?? []).find((n) => n.id === node)
           if (nodeData) {
             const content = `<b>${nodeData.type}</b><br>${
               nodeData.sentiment ? `Sentiment: ${nodeData.sentiment}` : ''
@@ -87,7 +87,7 @@ const GraphVisualization = forwardRef(
         })
 
         network.on('hoverEdge', ({ edge, event }) => {
-          const edgeData = dataRef.current.edges.find((e) => e.id === edge)
+          const edgeData = (dataRef.current?.edges ?? []).find((e) => e.id === edge)
           if (edgeData) {
             const content = `<b>${edgeData.label}</b><br>${
               edgeData.sentiment ? `Sentiment: ${edgeData.sentiment}` : ''
@@ -185,11 +185,11 @@ const GraphVisualization = forwardRef(
 
     // Update data
     useEffect(() => {
-    if (networkInstance.current) {
+      if (networkInstance.current) {
         onGraphReadyRef.current(false)
         const highlightColor = '#8b5cf6' // Use theme's primary button color for consistency
 
-        const nodesWithStyling = data.nodes.map((node) => {
+        const nodesWithStyling = (data?.nodes ?? []).map((node) => {
           const shape = styleOptions.nodeShapes[node.type] || 'dot'
           const color = getNodeColor(node.type, theme)
 
@@ -215,7 +215,7 @@ const GraphVisualization = forwardRef(
           }
         })
 
-        const visEdges = data.edges.map((edge) => ({
+        const visEdges = (data?.edges ?? []).map((edge) => ({
           id: edge.id,
           from: edge.source,
           to: edge.target,
@@ -285,7 +285,7 @@ const GraphVisualization = forwardRef(
       downloadNodesCSV: () => {
         const headers = ['id', 'label', 'type', 'sentiment']
         let csvContent = headers.join(',') + '\r\n'
-        data.nodes.forEach((node) => {
+        (data?.nodes ?? []).forEach((node) => {
           const row = headers.map((header) => `"${node[header] || ''}"`)
           csvContent += row.join(',') + '\r\n'
         })
@@ -295,7 +295,7 @@ const GraphVisualization = forwardRef(
       downloadEdgesCSV: () => {
         const headers = ['source', 'target', 'label', 'sentiment']
         let csvContent = headers.join(',') + '\r\n'
-        data.edges.forEach((edge) => {
+        (data?.edges ?? []).forEach((edge) => {
           const row = headers.map((header) => `"${edge[header] || ''}"`)
           csvContent += row.join(',') + '\r\n'
         })
@@ -304,17 +304,17 @@ const GraphVisualization = forwardRef(
       },
     }))
 
-  return (
+    return (
       <div className="h-full w-full relative">
-      {isLoading && (
+        {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
             <div className="text-white text-lg font-semibold">Generating...</div>
-        </div>
-      )}
+          </div>
+        )}
         <div ref={containerRef} className="h-full w-full" />
-    </div>
-  )
-}
+      </div>
+    )
+  }
 )
 
 export default GraphVisualization
