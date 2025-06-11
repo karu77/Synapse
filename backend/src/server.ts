@@ -32,10 +32,12 @@ const storage = multer.memoryStorage()
 const upload = multer({ storage })
 
 // More secure and flexible CORS configuration
-const productionOrigins = [
-  process.env.FRONTEND_URL, // Main Vercel production URL, e.g. https://synapse-lac.vercel.app
+const productionOrigins: (string | RegExp)[] = [
   /^https:\/\/synapse-.*-karu77s-projects\.vercel\.app$/, // Regex for Vercel preview URLs
-].filter(Boolean) // This cleanly removes any empty or undefined values from the list
+]
+if (process.env.FRONTEND_URL) {
+  productionOrigins.push(process.env.FRONTEND_URL) // Main Vercel production URL
+}
 
 const developmentOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173']
 
