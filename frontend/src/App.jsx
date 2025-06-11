@@ -92,11 +92,10 @@ function App() {
     setAnswer('')
     setIsSidebarOpen(false)
     try {
-      // Always treat the input as both a question (for answer) and as content for a knowledge graph
-      // If the user only provides text, we still want both an answer and a graph
+      // Always send the user's input as a question to force both answer and graph
       const { answer, graphData } = await generateGraph(
-        text,
-        question || text, // If no question, use the text as the question to force answer+graph
+        '', // Always leave text blank
+        text || question, // Always send the user's input as the question
         imageFile,
         audioFile
       )
