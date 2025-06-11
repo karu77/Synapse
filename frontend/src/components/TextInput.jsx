@@ -53,6 +53,8 @@ const TextInput = ({ onSubmit, isProcessing }) => {
   const [question, setQuestion] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [audioFile, setAudioFile] = useState(null)
+  const [imageUrl, setImageUrl] = useState('')
+  const [audioUrl, setAudioUrl] = useState('')
   const [error, setError] = useState(null)
 
   const handleFileChange = (file) => {
@@ -86,7 +88,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
 
   const handleSubmit = async () => {
     if (!hasInput) return
-    await onSubmit(text, question, imageFile, audioFile)
+    await onSubmit(text, question, imageFile, audioFile, imageUrl, audioUrl)
   }
 
   return (
@@ -128,20 +130,38 @@ const TextInput = ({ onSubmit, isProcessing }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FileInput
-          id="image-upload"
-          label="Image File"
-          accept="image/*"
-          onFileChange={setImageFile}
-          disabled={isProcessing || question !== ''}
-        />
-        <FileInput
-          id="audio-upload"
-          label="Audio/Video File"
-          accept="audio/*,video/*"
-          onFileChange={handleFileChange}
-          disabled={isProcessing || question !== ''}
-        />
+        <div className={isProcessing || question !== '' ? 'file-input-disabled' : ''}>
+          <FileInput
+            id="image-upload"
+            label="Image File"
+            accept="image/*"
+            onFileChange={setImageFile}
+            disabled={isProcessing || question !== ''}
+          />
+          <input
+            type="url"
+            placeholder="Paste image URL..."
+            className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text"
+            onChange={e => setImageUrl(e.target.value)}
+            disabled={isProcessing || question !== ''}
+          />
+        </div>
+        <div className={isProcessing || question !== '' ? 'file-input-disabled' : ''}>
+          <FileInput
+            id="audio-upload"
+            label="Audio/Video File"
+            accept="audio/*,video/*"
+            onFileChange={handleFileChange}
+            disabled={isProcessing || question !== ''}
+          />
+          <input
+            type="url"
+            placeholder="Paste audio/video URL..."
+            className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text"
+            onChange={e => setAudioUrl(e.target.value)}
+            disabled={isProcessing || question !== ''}
+          />
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
@@ -160,8 +180,16 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           {isProcessing ? 'Generating...' : 'Generate Graph'}
         </button>
       </div>
+
+      {/* PATCH: Add overlay to make file inputs visually unclickable when disabled */}
+      <style>{`
+        .file-input-disabled {
+          pointer-events: none;
+          opacity: 0.6;
+        }
+      `}</style>
     </div>
   )
 }
 
-export default TextInput 
+export default TextInput

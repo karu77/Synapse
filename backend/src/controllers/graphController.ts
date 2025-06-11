@@ -1,6 +1,8 @@
 import { Request, Response } from 'express'
 import History from '../models/History'
 import { GoogleGenerativeAI, Part } from '@google/generative-ai'
+import axios from 'axios'
+import path from 'path'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -153,17 +155,57 @@ const isValidHttpUrl = (string: string) => {
   return url.protocol === 'http:' || url.protocol === 'https:'
 }
 
+async function downloadFileFromUrl(url: string): Promise<{ buffer: Buffer, mimeType: string, fileName: string }> {
+  const response = await axios.get(url, { responseType: 'arraybuffer' })
+  const contentType = response.headers['content-type'] || 'application/octet-stream'
+  const fileName = path.basename(new URL(url).pathname)
+  return { buffer: Buffer.from(response.data), mimeType: contentType, fileName }
+}
+
 export const generateGraphAndSave = async (req: Request, res: Response) => {
   try {
-    const { textInput, question } = req.body
+    const { textInput, question, imageUrl, audioUrl } = req.body
     const files = req.files as { [fieldname: string]: Express.Multer.File[] }
 
     let audioPart: Part | null = null
-    const hasImage = files.imageFile && files.imageFile.length > 0
-    const hasAudio = files.audioFile && files.audioFile.length > 0
+    let imagePart: Part | null = null
+    const hasImage = (files.imageFile && files.imageFile.length > 0) || imageUrl
+    const hasAudio = (files.audioFile && files.audioFile.length > 0) || audioUrl
 
-    if (hasAudio) {
+    // Handle image file or image URL
+    if (files.imageFile && files.imageFile.length > 0) {
+      imagePart = fileToGenerativePart(files.imageFile[0])
+    } else if (imageUrl) {
+      try {
+        const { buffer, mimeType } = await downloadFileFromUrl(imageUrl)
+        imagePart = {
+          inlineData: {
+            data: buffer.toString('base64'),
+            mimeType,
+          },
+        }
+      } catch (err) {
+        console.error('Failed to download image from URL:', err)
+        return res.status(400).json({ error: 'Failed to download image from URL.' })
+      }
+    }
+
+    // Handle audio/video file or audio URL
+    if (files.audioFile && files.audioFile.length > 0) {
       audioPart = fileToGenerativePart(files.audioFile[0])
+    } else if (audioUrl) {
+      try {
+        const { buffer, mimeType } = await downloadFileFromUrl(audioUrl)
+        audioPart = {
+          inlineData: {
+            data: buffer.toString('base64'),
+            mimeType,
+          },
+        }
+      } catch (err) {
+        console.error('Failed to download audio/video from URL:', err)
+        return res.status(400).json({ error: 'Failed to download audio/video from URL.' })
+      }
     }
 
     if (!textInput && !question && !hasImage && !audioPart) {
@@ -233,7 +275,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     `
 
     const promptParts: Part[] = [{ text: fullPrompt }]
-    if (hasImage) promptParts.push(fileToGenerativePart(files.imageFile[0]))
+    if (imagePart) promptParts.push(imagePart)
     if (audioPart) promptParts.push(audioPart)
 
     const result = await genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }).generateContent({
@@ -249,8 +291,17 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     }
 
     // The AI response could be { graph: { ... } } OR { answer: '...', graph: { ... } }
-    const graphData = aiResponse.graph || (aiResponse.graphData ? aiResponse.graphData : null)
-    const answer = aiResponse.answer || ''
+    // PATCH: If only answer is present, try to generate a graph from the answer text
+    let graphData = aiResponse.graph || (aiResponse.graphData ? aiResponse.graphData : null)
+    let answer = aiResponse.answer || ''
+
+    if (!graphData && answer) {
+      // Try to extract a graph from the answer text (call extractGraphData)
+      const extracted = extractGraphData(answer)
+      if (extracted.nodes.length > 0 || extracted.edges.length > 0) {
+        graphData = { entities: extracted.nodes, relationships: extracted.edges }
+      }
+    }
 
     if (!graphData || !graphData.entities || !graphData.relationships) {
       return res.status(500).json({ error: 'The AI response did not contain valid graph data.' })

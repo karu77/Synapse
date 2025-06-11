@@ -85,19 +85,20 @@ function App() {
     }
   }, [user, fetchHistory])
 
-  const handleTextSubmit = async (text, question, imageFile, audioFile) => {
+  const handleTextSubmit = async (text, question, imageFile, audioFile, imageUrl, audioUrl) => {
     setIsProcessing(true)
     setSelectedNode(null)
     setSelectedEdge(null)
     setAnswer('')
     setIsSidebarOpen(false)
     try {
-      // Always send the user's input as a question to force both answer and graph
       const { answer, graphData } = await generateGraph(
         '', // Always leave text blank
         text || question, // Always send the user's input as the question
         imageFile,
-        audioFile
+        audioFile,
+        imageUrl,
+        audioUrl
       )
       setAnswer(answer)
       setGraphData({

@@ -28,19 +28,27 @@ api.interceptors.request.use(
  * @param {File | null} audioFile Optional audio/video file.
  * @returns {Promise<import('../types/index').GraphData>} The graph data.
  */
-export const generateGraph = async (text, question, imageFile, audioFile) => {
+export const generateGraph = async (text, question, imageFile, audioFile, imageUrl, audioUrl) => {
   try {
     const formData = new FormData()
     formData.append('textInput', text)
     formData.append('question', question)
-
-    if (imageFile) {
+    if (imageFile && typeof imageFile !== 'string') {
       formData.append('imageFile', imageFile)
     }
-    if (audioFile) {
+    if (audioFile && typeof audioFile !== 'string') {
       formData.append('audioFile', audioFile)
     }
-
+    if (typeof imageFile === 'string') {
+      formData.append('imageUrl', imageFile)
+    } else if (imageUrl) {
+      formData.append('imageUrl', imageUrl)
+    }
+    if (typeof audioFile === 'string') {
+      formData.append('audioUrl', audioFile)
+    } else if (audioUrl) {
+      formData.append('audioUrl', audioUrl)
+    }
     const token = JSON.parse(localStorage.getItem('userInfo'))?.token
     const config = {
       headers: {
@@ -48,7 +56,6 @@ export const generateGraph = async (text, question, imageFile, audioFile) => {
         Authorization: `Bearer ${token}`,
       },
     }
-
     const { data } = await axios.post(`${API_BASE_URL}/api/graph/generate`, formData, config)
     return data // Now returns an object: { answer: '...', graphData: { ... } }
   } catch (error) {
@@ -93,4 +100,4 @@ export const clearAllHistory = async () => {
     console.error('Error clearing history:', error)
     throw error
   }
-} 
+}
