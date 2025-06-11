@@ -1,8 +1,6 @@
 import { Request, Response } from 'express'
 import History from '../models/History'
 import { GoogleGenerativeAI, Part } from '@google/generative-ai'
-import axios from 'axios'
-import youtubedl from 'youtube-dl-exec'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -96,107 +94,15 @@ const fileToGenerativePart = (file: Express.Multer.File): Part => {
   }
 }
 
-const isYouTubeUrl = (url: string): boolean => {
-  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/
-  return youtubeRegex.test(url)
-}
-
-const cleanYouTubeUrl = (url: string): string => {
-  try {
-    const urlObject = new URL(url)
-    if (urlObject.hostname === 'youtu.be') {
-      const videoId = urlObject.pathname.slice(1)
-      return `https://www.youtube.com/watch?v=${videoId}`
-    }
-    if (urlObject.hostname.includes('youtube.com')) {
-      const videoId = urlObject.searchParams.get('v')
-      if (videoId) {
-        return `https://www.youtube.com/watch?v=${videoId}`
-      }
-    }
-    return url
-  } catch (error) {
-    console.error('Error parsing or cleaning YouTube URL, returning original:', error)
-    return url
-  }
-}
-
-const isValidHttpUrl = (string: string) => {
-  let url
-  try {
-    url = new URL(string)
-  } catch (_) {
-    return false
-  }
-  return url.protocol === 'http:' || url.protocol === 'https:'
-}
-
 export const generateGraphAndSave = async (req: Request, res: Response) => {
   try {
-    const { textInput, audioVideoURL } = req.body
+    const { textInput } = req.body
     const files = req.files as { [fieldname: string]: Express.Multer.File[] }
 
-    let audioPart: Part | null = null
     const hasImage = files.imageFile && files.imageFile.length > 0
+    const hasAudio = files.audioFile && files.audioFile.length > 0
 
-    if (files.audioFile && files.audioFile.length > 0) {
-      audioPart = fileToGenerativePart(files.audioFile[0])
-    } else if (audioVideoURL) {
-      if (!isValidHttpUrl(audioVideoURL)) {
-        return res.status(400).json({ error: 'Invalid URL format provided.' })
-      }
-      try {
-        let buffer: Buffer
-        let mimeType: string
-
-        if (isYouTubeUrl(audioVideoURL)) {
-          const cleanUrl = cleanYouTubeUrl(audioVideoURL)
-          console.log(`Downloading audio from cleaned YouTube URL: ${cleanUrl}`)
-          
-          const options: any = {
-            format: 'bestaudio',
-            output: '-',
-          }
-
-          if (process.env.PROXY_URL) {
-            console.log('Using proxy for youtube download.')
-            options.proxy = process.env.PROXY_URL
-          }
-          
-          const child = youtubedl.exec(
-            cleanUrl,
-            options,
-            { stdio: ['ignore', 'pipe', 'pipe'] }
-          )
-
-          if (!child.stdout || !child.stderr) {
-            throw new Error('Could not get stdout/stderr stream from child process.')
-          }
-
-          let errorLog = ''
-          child.stderr.on('data', (data: any) => (errorLog += data.toString()))
-          child.stderr.on('end', () => {
-            if (errorLog) console.error('[yt-dlp stderr]:', errorLog)
-          })
-
-          buffer = await streamToBuffer(child.stdout)
-          mimeType = 'audio/webm'
-        } else {
-          // Restrict to only YouTube URLs for now to prevent misuse
-          console.warn(`Attempt to use non-YouTube URL blocked: ${audioVideoURL}`)
-          return res
-            .status(400)
-            .json({ error: 'URL input is currently limited to YouTube links only.' })
-        }
-
-        const data = buffer.toString('base64')
-        audioPart = { inlineData: { data, mimeType } }
-      } catch (urlError) {
-        console.error(`Failed to download or process from URL: ${audioVideoURL}`, urlError)
-      }
-    }
-
-    if (!textInput && !hasImage && !audioPart) {
+    if (!textInput && !hasImage && !hasAudio) {
       return res.status(400).json({ error: 'At least one input is required.' })
     }
 
@@ -205,7 +111,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       The user provided:
       ${textInput ? `Text: "${textInput}"` : ''}
       ${hasImage ? 'An image file.' : ''}
-      ${audioPart ? 'An audio/video file.' : ''}
+      ${hasAudio ? 'An audio/video file.' : ''}
 
       **Instructions:**
       1.  **Be Exhaustive:** Find every possible entity and relationship. It's better to include a minor relationship than to omit one. Aim for a dense, well-connected graph.
@@ -233,7 +139,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
 
     const promptParts: Part[] = [{ text: textPrompt }]
     if (hasImage) promptParts.push(fileToGenerativePart(files.imageFile[0]))
-    if (audioPart) promptParts.push(audioPart)
+    if (hasAudio) promptParts.push(fileToGenerativePart(files.audioFile[0]))
 
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
     const result = await model.generateContent(promptParts)
@@ -251,7 +157,6 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       graphData,
       inputs: {
         textInput: textInput || '',
-        audioVideoURL: audioVideoURL || '',
         imageFileName: files.imageFile ? files.imageFile[0].originalname : '',
         audioFileName: files.audioFile ? files.audioFile[0].originalname : '',
       },

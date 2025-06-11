@@ -81,13 +81,13 @@ function App() {
     }
   }, [user, fetchHistory])
 
-  const handleTextSubmit = async (text, imageFile, audioFile, audioVideoURL) => {
+  const handleTextSubmit = async (text, imageFile, audioFile) => {
     setIsProcessing(true)
     setSelectedNode(null) // Clear selection on new graph
     setSelectedEdge(null) // Clear selection on new graph
     setIsSidebarOpen(false) // Close sidebar on submission
     try {
-      const data = await generateGraph(text, imageFile, audioFile, audioVideoURL)
+      const data = await generateGraph(text, imageFile, audioFile)
       setGraphData(data)
       setGraphKey((prevKey) => prevKey + 1)
       fetchHistory() // Refresh history after generating a new graph

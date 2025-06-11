@@ -25,10 +25,9 @@ api.interceptors.request.use(
  * @param {string} text The main text input.
  * @param {File | null} imageFile Optional image file.
  * @param {File | null} audioFile Optional audio/video file.
- * @param {string} [audioVideoURL] Optional audio/video URL.
  * @returns {Promise<import('../types/index').GraphData>} The graph data.
  */
-export const generateGraph = async (text, imageFile, audioFile, audioVideoURL) => {
+export const generateGraph = async (text, imageFile, audioFile) => {
   try {
     const formData = new FormData()
     formData.append('textInput', text)
@@ -38,9 +37,6 @@ export const generateGraph = async (text, imageFile, audioFile, audioVideoURL) =
     }
     if (audioFile) {
       formData.append('audioFile', audioFile)
-    }
-    if (audioVideoURL) {
-      formData.append('audioVideoURL', audioVideoURL)
     }
 
     const { data } = await api.post('/api/generate-graph', formData, {
