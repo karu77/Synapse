@@ -121,12 +121,6 @@ function App() {
   }
 
   // Download handlers with useCallback for performance
-  const handleDownloadPNG = useCallback(() => {
-    if (graphRef.current) graphRef.current.downloadPNG()
-  }, [])
-  const handleDownloadWebP = useCallback(() => {
-    if (graphRef.current) graphRef.current.downloadWebP()
-  }, [])
   const handleDownloadSVG = useCallback(() => {
     if (graphRef.current) graphRef.current.downloadSVG()
   }, [])
@@ -260,28 +254,6 @@ function App() {
                 </div>
                 <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-skin-border rounded-md bg-skin-bg-accent shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div className="px-1 py-1 ">
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          onClick={handleDownloadPNG}
-                          className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                        >
-                          <ArrowDownTrayIcon className="mr-2 h-5 w-5" />
-                          PNG (High-Res, Raster)
-                        </button>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          onClick={handleDownloadWebP}
-                          className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                        >
-                          <DocumentArrowDownIcon className="mr-2 h-5 w-5" />
-                          WebP (High-Quality)
-                        </button>
-                      )}
-                    </Menu.Item>
                     <Menu.Item>
                       {({ active }) => (
                         <button
