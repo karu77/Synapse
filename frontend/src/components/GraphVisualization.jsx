@@ -448,7 +448,7 @@ const GraphVisualization = forwardRef(
         const blob = new Blob([jsonString], { type: 'application/json' })
         triggerDownload(blob, 'synapse-graph.json')
       },
-      downloadNodesCSV: function downloadNodesCSV() {
+      downloadNodesCSV: () => {
         const headers = ['id', 'label', 'type', 'sentiment']
         let csvContent = headers.join(',') + '\r\n'
         (data?.nodes ?? []).forEach((node) => {
@@ -458,7 +458,7 @@ const GraphVisualization = forwardRef(
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
         triggerDownload(blob, 'synapse-nodes.csv')
       },
-      downloadEdgesCSV: function downloadEdgesCSV() {
+      downloadEdgesCSV: () => {
         const headers = ['source', 'target', 'label', 'sentiment']
         let csvContent = headers.join(',') + '\r\n'
         (data?.edges ?? []).forEach((edge) => {
