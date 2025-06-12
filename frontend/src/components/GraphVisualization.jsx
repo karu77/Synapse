@@ -442,13 +442,13 @@ const GraphVisualization = forwardRef(
     useImperativeHandle(ref, () => ({
       downloadPNG: () => downloadHighResImage('png'),
       downloadWebP: () => downloadHighResImage('webp', 0.9),
-      downloadSVG, // <-- SVG export
+      downloadSVG,
       downloadJSON: () => {
         const jsonString = JSON.stringify(data, null, 2)
         const blob = new Blob([jsonString], { type: 'application/json' })
         triggerDownload(blob, 'synapse-graph.json')
       },
-      downloadNodesCSV: () => {
+      downloadNodesCSV: function downloadNodesCSV() {
         const headers = ['id', 'label', 'type', 'sentiment']
         let csvContent = headers.join(',') + '\r\n'
         (data?.nodes ?? []).forEach((node) => {
@@ -458,7 +458,7 @@ const GraphVisualization = forwardRef(
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
         triggerDownload(blob, 'synapse-nodes.csv')
       },
-      downloadEdgesCSV: () => {
+      downloadEdgesCSV: function downloadEdgesCSV() {
         const headers = ['source', 'target', 'label', 'sentiment']
         let csvContent = headers.join(',') + '\r\n'
         (data?.edges ?? []).forEach((edge) => {
