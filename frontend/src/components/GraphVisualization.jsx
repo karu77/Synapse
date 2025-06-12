@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useRef, forwardRef, useImperativeHandle, useState } from 'react'
 import { Network } from 'vis-network'
 import { getNodeColor, getEdgeColor } from '../utils/colors'
 import { useTheme } from '../contexts/ThemeContext'
@@ -31,6 +31,7 @@ const GraphVisualization = forwardRef(
     const containerRef = useRef(null)
     const networkInstance = useRef(null)
     const { theme } = useTheme()
+    const [isExporting, setIsExporting] = useState(false)
 
     // Use refs for callbacks to prevent re-triggering useEffect
     const onGraphReadyRef = useRef(onGraphReady)
@@ -346,7 +347,8 @@ const GraphVisualization = forwardRef(
 
     // High-res PNG/WebP export utility (SVG-to-canvas for best quality)
     const downloadHighResImage = async (format, quality) => {
-      if (!networkInstance.current) return;
+      if (!networkInstance.current || isExporting) return;
+      setIsExporting(true);
       // Use the same bounding box as SVG export
       const network = networkInstance.current;
       const positions = network.getPositions();
@@ -407,7 +409,10 @@ const GraphVisualization = forwardRef(
       const img = new window.Image();
       const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(svgBlob);
+      let didFinish = false;
       img.onload = () => {
+        if (didFinish) return;
+        didFinish = true;
         ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(url);
@@ -416,12 +421,17 @@ const GraphVisualization = forwardRef(
         const fileExtension = format === 'webp' ? 'webp' : 'png';
         const fileName = `synapse-graph-high-resolution.${fileExtension}`;
         canvas.toBlob((blob) => {
+          setIsExporting(false);
           if (blob) triggerDownload(blob, fileName);
+          else alert('Failed to generate image blob.');
         }, mimeType, quality);
       };
       img.onerror = () => {
+        if (didFinish) return;
+        didFinish = true;
+        setIsExporting(false);
         URL.revokeObjectURL(url);
-        alert('Failed to render SVG for export.');
+        alert('Failed to render SVG for export. Try reloading the page or using a different browser.');
       };
       img.src = url;
     }
