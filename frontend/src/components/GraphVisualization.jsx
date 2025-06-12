@@ -285,12 +285,36 @@ const GraphVisualization = forwardRef(
     const downloadSVG = () => {
       if (!networkInstance.current) return;
       const network = networkInstance.current;
+      // Defensive: Ensure network, body, and canvas are available
+      let width, height;
+      if (
+        network.body &&
+        network.body.view &&
+        network.body.view.canvas &&
+        typeof network.body.view.canvas.clientWidth === 'number' &&
+        typeof network.body.view.canvas.clientHeight === 'number'
+      ) {
+        width = network.body.view.canvas.clientWidth;
+        height = network.body.view.canvas.clientHeight;
+      } else if (containerRef.current) {
+        // Fallback to container dimensions
+        width = containerRef.current.offsetWidth || 1200;
+        height = containerRef.current.offsetHeight || 800;
+        if (!width || !height) {
+          width = 1200;
+          height = 800;
+        }
+        console.warn('SVG export: Falling back to container dimensions.');
+      } else {
+        // Final fallback
+        width = 1200;
+        height = 800;
+        console.warn('SVG export: Using default dimensions.');
+      }
       // Get node and edge positions from vis-network
       const positions = network.getPositions();
       const nodes = normalizedData?.nodes ?? [];
       const edges = normalizedData?.edges ?? [];
-      const width = network.body.view.canvas.clientWidth || 1200;
-      const height = network.body.view.canvas.clientHeight || 800;
       // SVG header
       let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="background:${theme === 'light' ? '#fff' : '#18181b'}">\n`;
