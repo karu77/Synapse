@@ -301,7 +301,7 @@ const GraphVisualization = forwardRef(
         if (pos.y > maxY) maxY = pos.y;
       });
       // Add padding
-      const padding = 40;
+      const padding = 60;
       minX -= padding;
       minY -= padding;
       maxX += padding;
@@ -312,11 +312,17 @@ const GraphVisualization = forwardRef(
       }
       const width = maxX - minX;
       const height = maxY - minY;
-      // SVG header
+      // SVG header with embedded style for better font rendering and drop shadow
       let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" style="background:${theme === 'light' ? '#fff' : '#18181b'}">\n`;
+      svg += `<style>\n` +
+        `.node-label { font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; filter: drop-shadow(0 1px 2px #0008); }\n` +
+        `.edge-label { font-family: Arial, sans-serif; font-size: 13px; fill: #64748b; font-weight: 500; filter: drop-shadow(0 1px 2px #0004); }\n` +
+        `.node-circle { stroke: #fff; stroke-width: 2; filter: drop-shadow(0 2px 6px #0002); }\n` +
+        `.background { fill: ${theme === 'light' ? '#fff' : '#18181b'}; }\n` +
+        `</style>\n`;
       // Add background rect for consistent color
-      svg += `<rect x="${minX}" y="${minY}" width="${width}" height="${height}" fill="${theme === 'light' ? '#fff' : '#18181b'}"/>\n`;
+      svg += `<rect class="background" x="${minX}" y="${minY}" width="${width}" height="${height}"/>\n`;
       // Draw edges
       edges.forEach((edge) => {
         const from = positions[edge.source];
@@ -327,7 +333,7 @@ const GraphVisualization = forwardRef(
         if (edge.label) {
           const mx = (from.x + to.x) / 2;
           const my = (from.y + to.y) / 2;
-          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Arial, sans-serif">${escapeXml(edge.label)}</text>\n`;
+          svg += `<text x="${mx}" y="${my - 6}" class="edge-label" text-anchor="middle">${escapeXml(edge.label)}</text>\n`;
         }
       });
       // Arrowhead marker
@@ -337,136 +343,52 @@ const GraphVisualization = forwardRef(
         const pos = positions[node.id];
         if (!pos) return;
         const color = getNodeColor(node.type, theme);
-        svg += `<circle cx="${pos.x}" cy="${pos.y}" r="18" fill="${color}" stroke="#fff" stroke-width="2" />\n`;
-        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Arial, sans-serif">${escapeXml(node.label)}</text>\n`;
+        svg += `<circle class="node-circle" cx="${pos.x}" cy="${pos.y}" r="18" fill="${color}" />\n`;
+        svg += `<text x="${pos.x}" y="${pos.y + 5}" class="node-label" text-anchor="middle">${escapeXml(node.label)}</text>\n`;
       });
       svg += `</svg>`;
       const blob = new Blob([svg], { type: 'image/svg+xml' });
       triggerDownload(blob, 'synapse-graph.svg');
     }
 
-    // High-res PNG/WebP export utility (SVG-to-canvas for best quality)
-    const downloadHighResImage = async (format, quality) => {
-      if (!networkInstance.current || isExporting) return;
-      setIsExporting(true);
-      // Use the same bounding box as SVG export
-      const network = networkInstance.current;
-      const positions = network.getPositions();
-      const nodes = normalizedData?.nodes ?? [];
-      const edges = normalizedData?.edges ?? [];
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      nodes.forEach((node) => {
-        const pos = positions[node.id];
-        if (!pos) return;
-        if (pos.x < minX) minX = pos.x;
-        if (pos.y < minY) minY = pos.y;
-        if (pos.x > maxX) maxX = pos.x;
-        if (pos.y > maxY) maxY = pos.y;
-      });
-      const padding = 40;
-      minX -= padding;
-      minY -= padding;
-      maxX += padding;
-      maxY += padding;
-      if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
-        minX = 0; minY = 0; maxX = 1200; maxY = 800;
-      }
-      const width = maxX - minX;
-      const height = maxY - minY;
-      // Generate SVG string (same as SVG export)
-      let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-      svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" style="background:${theme === 'light' ? '#fff' : '#18181b'}">\n`;
-      edges.forEach((edge) => {
-        const from = positions[edge.source];
-        const to = positions[edge.target];
-        if (!from || !to) return;
-        svg += `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${getEdgeColor(edge.sentiment)}" stroke-width="2" marker-end="url(#arrowhead)" />\n`;
-        if (edge.label) {
-          const mx = (from.x + to.x) / 2;
-          const my = (from.y + to.y) / 2;
-          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Arial, sans-serif">${escapeXml(edge.label)}</text>\n`;
-        }
-      });
-      svg += `<defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#64748b" /></marker></defs>\n`;
-      nodes.forEach((node) => {
-        const pos = positions[node.id];
-        if (!pos) return;
-        const color = getNodeColor(node.type, theme);
-        svg += `<circle cx="${pos.x}" cy="${pos.y}" r="18" fill="${color}" stroke="#fff" stroke-width="2" />\n`;
-        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Arial, sans-serif">${escapeXml(node.label)}</text>\n`;
-      });
-      svg += `</svg>`;
-      // Render SVG to canvas at high scale for best raster quality
-      const scaleFactor = 16; // Ultra high-res
-      const canvas = document.createElement('canvas');
-      canvas.width = width * scaleFactor;
-      canvas.height = height * scaleFactor;
-      const ctx = canvas.getContext('2d');
-      // Fill background
-      ctx.fillStyle = theme === 'light' ? '#fff' : '#18181b';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // Draw SVG to canvas
-      const img = new window.Image();
-      img.crossOrigin = 'anonymous'; // Fix CORS for SVG-to-canvas
-      const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(svgBlob);
-      let didFinish = false;
-      img.onload = () => {
-        if (didFinish) return;
-        didFinish = true;
-        ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
-        ctx.drawImage(img, 0, 0);
-        URL.revokeObjectURL(url);
-        // Wait for the browser to finish drawing before exporting
-        setTimeout(() => {
-          const mimeType = format === 'webp' ? 'image/webp' : 'image/png';
-          const fileExtension = format === 'webp' ? 'webp' : 'png';
-          const fileName = `synapse-graph-high-resolution.${fileExtension}`;
-          canvas.toBlob((blob) => {
-            setIsExporting(false);
-            if (blob) triggerDownload(blob, fileName);
-            else alert('Failed to generate image blob.');
-          }, mimeType, quality);
-        }, 100);
-      };
-      img.onerror = () => {
-        if (didFinish) return;
-        didFinish = true;
-        setIsExporting(false);
-        URL.revokeObjectURL(url);
-        alert('Failed to render SVG for export. Try reloading the page or using a different browser.');
-      };
-      img.src = url;
-    }
-
     useImperativeHandle(ref, () => ({
-      downloadPNG: () => downloadHighResImage('png'),
-      downloadWebP: () => downloadHighResImage('webp', 0.9),
       downloadSVG,
       downloadJSON: () => {
-        const jsonString = JSON.stringify(data, null, 2)
-        const blob = new Blob([jsonString], { type: 'application/json' })
-        triggerDownload(blob, 'synapse-graph.json')
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        triggerDownload(blob, 'synapse-graph.json');
       },
       downloadNodesCSV: () => {
-        const headers = ['id', 'label', 'type', 'sentiment']
-        let csvContent = headers.join(',') + '\r\n'
-        (data?.nodes ?? []).forEach((node) => {
-          const row = headers.map((header) => `"${node[header] || ''}"`)
-          csvContent += row.join(',') + '\r\n'
-        })
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        triggerDownload(blob, 'synapse-nodes.csv')
+        const headers = ['id', 'label', 'type', 'sentiment'];
+        let csvContent = headers.join(',') + '\r\n';
+        // Defensive: ensure normalizedData.nodes is an array
+        const nodes = Array.isArray(normalizedData?.nodes) ? normalizedData.nodes : [];
+        nodes.forEach((node) => {
+          const row = headers.map((header) => `"${(node && node[header] !== undefined && node[header] !== null) ? String(node[header]).replace(/"/g, '""') : ''}"`);
+          csvContent += row.join(',') + '\r\n';
+        });
+        if (nodes.length === 0) {
+          alert('No node data to export.');
+          return;
+        }
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        triggerDownload(blob, 'synapse-nodes.csv');
       },
       downloadEdgesCSV: () => {
-        const headers = ['source', 'target', 'label', 'sentiment']
-        let csvContent = headers.join(',') + '\r\n'
-        (data?.edges ?? []).forEach((edge) => {
-          const row = headers.map((header) => `"${edge[header] || ''}"`)
-          csvContent += row.join(',') + '\r\n'
-        })
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        triggerDownload(blob, 'synapse-edges.csv')
+        const headers = ['source', 'target', 'label', 'sentiment'];
+        let csvContent = headers.join(',') + '\r\n';
+        // Defensive: ensure normalizedData.edges is an array
+        const edges = Array.isArray(normalizedData?.edges) ? normalizedData.edges : [];
+        edges.forEach((edge) => {
+          const row = headers.map((header) => `"${(edge && edge[header] !== undefined && edge[header] !== null) ? String(edge[header]).replace(/"/g, '""') : ''}"`);
+          csvContent += row.join(',') + '\r\n';
+        });
+        if (edges.length === 0) {
+          alert('No edge data to export.');
+          return;
+        }
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        triggerDownload(blob, 'synapse-edges.csv');
       },
     }))
 
