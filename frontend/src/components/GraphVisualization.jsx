@@ -285,39 +285,35 @@ const GraphVisualization = forwardRef(
     const downloadSVG = () => {
       if (!networkInstance.current) return;
       const network = networkInstance.current;
-      // Defensive: Ensure network, body, and canvas are available
-      let width, height;
-      if (
-        network.body &&
-        network.body.view &&
-        network.body.view.canvas &&
-        typeof network.body.view.canvas.clientWidth === 'number' &&
-        typeof network.body.view.canvas.clientHeight === 'number'
-      ) {
-        width = network.body.view.canvas.clientWidth;
-        height = network.body.view.canvas.clientHeight;
-      } else if (containerRef.current) {
-        // Fallback to container dimensions
-        width = containerRef.current.offsetWidth || 1200;
-        height = containerRef.current.offsetHeight || 800;
-        if (!width || !height) {
-          width = 1200;
-          height = 800;
-        }
-        console.warn('SVG export: Falling back to container dimensions.');
-      } else {
-        // Final fallback
-        width = 1200;
-        height = 800;
-        console.warn('SVG export: Using default dimensions.');
-      }
       // Get node and edge positions from vis-network
       const positions = network.getPositions();
       const nodes = normalizedData?.nodes ?? [];
       const edges = normalizedData?.edges ?? [];
+      // Compute bounding box of all node positions
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      nodes.forEach((node) => {
+        const pos = positions[node.id];
+        if (!pos) return;
+        if (pos.x < minX) minX = pos.x;
+        if (pos.y < minY) minY = pos.y;
+        if (pos.x > maxX) maxX = pos.x;
+        if (pos.y > maxY) maxY = pos.y;
+      });
+      // Add padding
+      const padding = 40;
+      minX -= padding;
+      minY -= padding;
+      maxX += padding;
+      maxY += padding;
+      // Fallback if no nodes
+      if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+        minX = 0; minY = 0; maxX = 1200; maxY = 800;
+      }
+      const width = maxX - minX;
+      const height = maxY - minY;
       // SVG header
       let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-      svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="background:${theme === 'light' ? '#fff' : '#18181b'}">\n`;
+      svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" style="background:${theme === 'light' ? '#fff' : '#18181b'}">\n`;
       // Draw edges
       edges.forEach((edge) => {
         const from = positions[edge.source];
