@@ -313,7 +313,9 @@ const GraphVisualization = forwardRef(
       const height = maxY - minY;
       // SVG header
       let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-      svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" style="background:${theme === 'light' ? '#fff' : '#18181b'}">\n`;
+      svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" style="background:${theme === 'light' ? '#fff' : '#18181b'}">\n`;
+      // Add background rect for consistent color
+      svg += `<rect x="${minX}" y="${minY}" width="${width}" height="${height}" fill="${theme === 'light' ? '#fff' : '#18181b'}"/>\n`;
       // Draw edges
       edges.forEach((edge) => {
         const from = positions[edge.source];
@@ -324,7 +326,7 @@ const GraphVisualization = forwardRef(
         if (edge.label) {
           const mx = (from.x + to.x) / 2;
           const my = (from.y + to.y) / 2;
-          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Inter,Arial,sans-serif">${escapeXml(edge.label)}</text>\n`;
+          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Inter,Arial,sans-serif,Segoe UI,Arial,sans-serif" font-smooth="always">${escapeXml(edge.label)}</text>\n`;
         }
       });
       // Arrowhead marker
@@ -335,47 +337,93 @@ const GraphVisualization = forwardRef(
         if (!pos) return;
         const color = getNodeColor(node.type, theme);
         svg += `<circle cx="${pos.x}" cy="${pos.y}" r="18" fill="${color}" stroke="#fff" stroke-width="2" />\n`;
-        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Inter,Arial,sans-serif">${escapeXml(node.label)}</text>\n`;
+        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Inter,Arial,sans-serif,Segoe UI,Arial,sans-serif" font-smooth="always">${escapeXml(node.label)}</text>\n`;
       });
       svg += `</svg>`;
       const blob = new Blob([svg], { type: 'image/svg+xml' });
       triggerDownload(blob, 'synapse-graph.svg');
     }
 
-    // High-res PNG/WebP export utility
-    const downloadHighResImage = (format, quality) => {
-      if (networkInstance.current) {
-        const mimeType = `image/${format}`
-        const fileExtension = format
-        const fileName = `synapse-graph-high-resolution.${fileExtension}`
-
-        const rootStyle = getComputedStyle(document.documentElement)
-        const bgColor = rootStyle.getPropertyValue('--color-bg').trim() || '#ffffff'
-
-        const originalCanvas = networkInstance.current.canvas.getContext('2d').canvas
-        const scaleFactor = 8 // Increased scale factor for higher resolution
-        const newCanvas = document.createElement('canvas')
-        const ctx = newCanvas.getContext('2d')
-
-        newCanvas.width = originalCanvas.width * scaleFactor
-        newCanvas.height = originalCanvas.height * scaleFactor
-
-        ctx.fillStyle = bgColor
-        ctx.fillRect(0, 0, newCanvas.width, newCanvas.height)
-
-        ctx.save()
-        ctx.scale(scaleFactor, scaleFactor)
-        ctx.drawImage(originalCanvas, 0, 0)
-        ctx.restore()
-
-        const dataURL = newCanvas.toDataURL(mimeType, quality)
-        const link = document.createElement('a')
-        link.href = dataURL
-        link.download = fileName
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+    // High-res PNG/WebP export utility (SVG-to-canvas for best quality)
+    const downloadHighResImage = async (format, quality) => {
+      if (!networkInstance.current) return;
+      // Use the same bounding box as SVG export
+      const network = networkInstance.current;
+      const positions = network.getPositions();
+      const nodes = normalizedData?.nodes ?? [];
+      const edges = normalizedData?.edges ?? [];
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      nodes.forEach((node) => {
+        const pos = positions[node.id];
+        if (!pos) return;
+        if (pos.x < minX) minX = pos.x;
+        if (pos.y < minY) minY = pos.y;
+        if (pos.x > maxX) maxX = pos.x;
+        if (pos.y > maxY) maxY = pos.y;
+      });
+      const padding = 40;
+      minX -= padding;
+      minY -= padding;
+      maxX += padding;
+      maxY += padding;
+      if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+        minX = 0; minY = 0; maxX = 1200; maxY = 800;
       }
+      const width = maxX - minX;
+      const height = maxY - minY;
+      // Generate SVG string (same as SVG export)
+      let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" style="background:${theme === 'light' ? '#fff' : '#18181b'}">\n`;
+      edges.forEach((edge) => {
+        const from = positions[edge.source];
+        const to = positions[edge.target];
+        if (!from || !to) return;
+        svg += `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${getEdgeColor(edge.sentiment)}" stroke-width="2" marker-end="url(#arrowhead)" />\n`;
+        if (edge.label) {
+          const mx = (from.x + to.x) / 2;
+          const my = (from.y + to.y) / 2;
+          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Inter,Arial,sans-serif">${escapeXml(edge.label)}</text>\n`;
+        }
+      });
+      svg += `<defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#64748b" /></marker></defs>\n`;
+      nodes.forEach((node) => {
+        const pos = positions[node.id];
+        if (!pos) return;
+        const color = getNodeColor(node.type, theme);
+        svg += `<circle cx="${pos.x}" cy="${pos.y}" r="18" fill="${color}" stroke="#fff" stroke-width="2" />\n`;
+        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Inter,Arial,sans-serif">${escapeXml(node.label)}</text>\n`;
+      });
+      svg += `</svg>`;
+      // Render SVG to canvas at high scale for best raster quality
+      const scaleFactor = 16; // Ultra high-res
+      const canvas = document.createElement('canvas');
+      canvas.width = width * scaleFactor;
+      canvas.height = height * scaleFactor;
+      const ctx = canvas.getContext('2d');
+      // Fill background
+      ctx.fillStyle = theme === 'light' ? '#fff' : '#18181b';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Draw SVG to canvas
+      const img = new window.Image();
+      const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(svgBlob);
+      img.onload = () => {
+        ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        // Download as PNG or WebP
+        const mimeType = format === 'webp' ? 'image/webp' : 'image/png';
+        const fileExtension = format === 'webp' ? 'webp' : 'png';
+        const fileName = `synapse-graph-high-resolution.${fileExtension}`;
+        canvas.toBlob((blob) => {
+          if (blob) triggerDownload(blob, fileName);
+        }, mimeType, quality);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        alert('Failed to render SVG for export.');
+      };
+      img.src = url;
     }
 
     useImperativeHandle(ref, () => ({

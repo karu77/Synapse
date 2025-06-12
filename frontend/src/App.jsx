@@ -267,7 +267,7 @@ function App() {
                           className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <ArrowDownTrayIcon className="mr-2 h-5 w-5" />
-                          PNG (High-Res)
+                          PNG (High-Res, Raster)
                         </button>
                       )}
                     </Menu.Item>
@@ -289,7 +289,7 @@ function App() {
                           className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <ArrowDownOnSquareIcon className="mr-2 h-5 w-5" />
-                          SVG (Vector)
+                          SVG (Infinite Zoom, Vector)
                         </button>
                       )}
                     </Menu.Item>
