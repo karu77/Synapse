@@ -407,6 +407,7 @@ const GraphVisualization = forwardRef(
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       // Draw SVG to canvas
       const img = new window.Image();
+      img.crossOrigin = 'anonymous'; // Fix CORS for SVG-to-canvas
       const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(svgBlob);
       let didFinish = false;
@@ -416,15 +417,17 @@ const GraphVisualization = forwardRef(
         ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(url);
-        // Download as PNG or WebP
-        const mimeType = format === 'webp' ? 'image/webp' : 'image/png';
-        const fileExtension = format === 'webp' ? 'webp' : 'png';
-        const fileName = `synapse-graph-high-resolution.${fileExtension}`;
-        canvas.toBlob((blob) => {
-          setIsExporting(false);
-          if (blob) triggerDownload(blob, fileName);
-          else alert('Failed to generate image blob.');
-        }, mimeType, quality);
+        // Wait for the browser to finish drawing before exporting
+        setTimeout(() => {
+          const mimeType = format === 'webp' ? 'image/webp' : 'image/png';
+          const fileExtension = format === 'webp' ? 'webp' : 'png';
+          const fileName = `synapse-graph-high-resolution.${fileExtension}`;
+          canvas.toBlob((blob) => {
+            setIsExporting(false);
+            if (blob) triggerDownload(blob, fileName);
+            else alert('Failed to generate image blob.');
+          }, mimeType, quality);
+        }, 100);
       };
       img.onerror = () => {
         if (didFinish) return;
