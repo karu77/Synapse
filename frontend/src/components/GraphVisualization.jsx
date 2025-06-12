@@ -281,6 +281,48 @@ const GraphVisualization = forwardRef(
       URL.revokeObjectURL(url)
     }
 
+    // SVG export utility
+    const downloadSVG = () => {
+      if (!networkInstance.current) return;
+      const network = networkInstance.current;
+      // Get node and edge positions from vis-network
+      const positions = network.getPositions();
+      const nodes = normalizedData?.nodes ?? [];
+      const edges = normalizedData?.edges ?? [];
+      const width = network.body.view.canvas.clientWidth || 1200;
+      const height = network.body.view.canvas.clientHeight || 800;
+      // SVG header
+      let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="background:${theme === 'light' ? '#fff' : '#18181b'}">\n`;
+      // Draw edges
+      edges.forEach((edge) => {
+        const from = positions[edge.source];
+        const to = positions[edge.target];
+        if (!from || !to) return;
+        svg += `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${getEdgeColor(edge.sentiment)}" stroke-width="2" marker-end="url(#arrowhead)" />\n`;
+        // Edge label (midpoint)
+        if (edge.label) {
+          const mx = (from.x + to.x) / 2;
+          const my = (from.y + to.y) / 2;
+          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Inter,Arial,sans-serif">${escapeXml(edge.label)}</text>\n`;
+        }
+      });
+      // Arrowhead marker
+      svg += `<defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#64748b" /></marker></defs>\n`;
+      // Draw nodes
+      nodes.forEach((node) => {
+        const pos = positions[node.id];
+        if (!pos) return;
+        const color = getNodeColor(node.type, theme);
+        svg += `<circle cx="${pos.x}" cy="${pos.y}" r="18" fill="${color}" stroke="#fff" stroke-width="2" />\n`;
+        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Inter,Arial,sans-serif">${escapeXml(node.label)}</text>\n`;
+      });
+      svg += `</svg>`;
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      triggerDownload(blob, 'synapse-graph.svg');
+    }
+
+    // High-res PNG/WebP export utility
     const downloadHighResImage = (format, quality) => {
       if (networkInstance.current) {
         const mimeType = `image/${format}`
@@ -319,6 +361,7 @@ const GraphVisualization = forwardRef(
     useImperativeHandle(ref, () => ({
       downloadPNG: () => downloadHighResImage('png'),
       downloadWebP: () => downloadHighResImage('webp', 0.9),
+      downloadSVG, // <-- SVG export
       downloadJSON: () => {
         const jsonString = JSON.stringify(data, null, 2)
         const blob = new Blob([jsonString], { type: 'application/json' })
