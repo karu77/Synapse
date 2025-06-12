@@ -120,35 +120,25 @@ function App() {
     }
   }
 
-  const handleDownloadPNG = () => {
-    if (graphRef.current) {
-      graphRef.current.downloadPNG()
-    }
-  }
-
-  const handleDownloadWebP = () => {
-    if (graphRef.current) {
-      graphRef.current.downloadWebP()
-    }
-  }
-
-  const handleDownloadNodesCSV = () => {
-    if (graphRef.current) {
-      graphRef.current.downloadNodesCSV()
-    }
-  }
-
-  const handleDownloadEdgesCSV = () => {
-    if (graphRef.current) {
-      graphRef.current.downloadEdgesCSV()
-    }
-  }
-
-  const handleDownloadJSON = () => {
-    if (graphRef.current) {
-      graphRef.current.downloadJSON()
-    }
-  }
+  // Download handlers with useCallback for performance
+  const handleDownloadPNG = useCallback(() => {
+    if (graphRef.current) graphRef.current.downloadPNG()
+  }, [])
+  const handleDownloadWebP = useCallback(() => {
+    if (graphRef.current) graphRef.current.downloadWebP()
+  }, [])
+  const handleDownloadSVG = useCallback(() => {
+    if (graphRef.current) graphRef.current.downloadSVG()
+  }, [])
+  const handleDownloadJSON = useCallback(() => {
+    if (graphRef.current) graphRef.current.downloadJSON()
+  }, [])
+  const handleDownloadNodesCSV = useCallback(() => {
+    if (graphRef.current) graphRef.current.downloadNodesCSV()
+  }, [])
+  const handleDownloadEdgesCSV = useCallback(() => {
+    if (graphRef.current) graphRef.current.downloadEdgesCSV()
+  }, [])
 
   const loadFromHistory = (historyItem) => {
     setSelectedNode(null)
@@ -289,6 +279,17 @@ function App() {
                         >
                           <DocumentArrowDownIcon className="mr-2 h-5 w-5" />
                           WebP (High-Quality)
+                        </button>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={handleDownloadSVG}
+                          className={`${active ? 'bg-skin-border text-skin-text' : 'text-skin-text'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          <ArrowDownOnSquareIcon className="mr-2 h-5 w-5" />
+                          SVG (Vector)
                         </button>
                       )}
                     </Menu.Item>
