@@ -70,8 +70,8 @@ const ControlSidebar = ({
   isProcessing,
   history,
   loadFromHistory,
-  handleDeleteFromHistory,
-  clearHistory,
+  onDelete, // renamed from handleDeleteFromHistory for consistency
+  onClear,  // renamed from clearHistory for consistency
   styleOptions,
   setStyleOptions,
   resetStyles,
@@ -121,8 +121,8 @@ const ControlSidebar = ({
             <HistoryPanel
               history={history}
               onSelect={loadFromHistory}
-              onDelete={handleDeleteFromHistory}
-              onClear={clearHistory}
+              onDelete={onDelete}
+              onClear={onClear}
             />
           </Section>
 
