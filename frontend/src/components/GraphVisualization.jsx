@@ -327,7 +327,7 @@ const GraphVisualization = forwardRef(
         if (edge.label) {
           const mx = (from.x + to.x) / 2;
           const my = (from.y + to.y) / 2;
-          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Inter,Arial,sans-serif,Segoe UI,Arial,sans-serif" font-smooth="always">${escapeXml(edge.label)}</text>\n`;
+          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Arial, sans-serif">${escapeXml(edge.label)}</text>\n`;
         }
       });
       // Arrowhead marker
@@ -338,7 +338,7 @@ const GraphVisualization = forwardRef(
         if (!pos) return;
         const color = getNodeColor(node.type, theme);
         svg += `<circle cx="${pos.x}" cy="${pos.y}" r="18" fill="${color}" stroke="#fff" stroke-width="2" />\n`;
-        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Inter,Arial,sans-serif,Segoe UI,Arial,sans-serif" font-smooth="always">${escapeXml(node.label)}</text>\n`;
+        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Arial, sans-serif">${escapeXml(node.label)}</text>\n`;
       });
       svg += `</svg>`;
       const blob = new Blob([svg], { type: 'image/svg+xml' });
@@ -384,7 +384,7 @@ const GraphVisualization = forwardRef(
         if (edge.label) {
           const mx = (from.x + to.x) / 2;
           const my = (from.y + to.y) / 2;
-          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Inter,Arial,sans-serif">${escapeXml(edge.label)}</text>\n`;
+          svg += `<text x="${mx}" y="${my - 6}" font-size="13" fill="#64748b" text-anchor="middle" font-family="Arial, sans-serif">${escapeXml(edge.label)}</text>\n`;
         }
       });
       svg += `<defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#64748b" /></marker></defs>\n`;
@@ -393,7 +393,7 @@ const GraphVisualization = forwardRef(
         if (!pos) return;
         const color = getNodeColor(node.type, theme);
         svg += `<circle cx="${pos.x}" cy="${pos.y}" r="18" fill="${color}" stroke="#fff" stroke-width="2" />\n`;
-        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Inter,Arial,sans-serif">${escapeXml(node.label)}</text>\n`;
+        svg += `<text x="${pos.x}" y="${pos.y + 5}" font-size="15" fill="#fff" text-anchor="middle" font-family="Arial, sans-serif">${escapeXml(node.label)}</text>\n`;
       });
       svg += `</svg>`;
       // Render SVG to canvas at high scale for best raster quality
