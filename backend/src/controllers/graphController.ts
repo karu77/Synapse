@@ -282,7 +282,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
     if (imagePart) promptParts.push(imagePart)
     if (audioPart) promptParts.push(audioPart)
 
-    const result = await genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }).generateContent({
+    const result = await genAI.getGenerativeModel({ model: 'gemini-2.0-flash' }).generateContent({
       contents: [{ role: 'user', parts: promptParts }],
     })
 
