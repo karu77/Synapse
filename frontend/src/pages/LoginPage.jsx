@@ -6,25 +6,25 @@ import PasswordInput from '../components/PasswordInput'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('workhekarunesh@gmail.com')
+  const [password, setPassword] = useState('password123')
   const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const { theme } = useTheme()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setLoading(true)
     setError('')
-    setIsLoading(true)
     try {
       await login(email, password)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to log in. Please try again.')
+      setError(err.response?.data?.message || err.message || 'Failed to log in. Please try again.')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
@@ -113,26 +113,27 @@ const LoginPage = () => {
           )}
 
           {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
               <label className={`block text-sm font-medium mb-2 ${
                 theme === 'light' ? 'text-gray-700' : 'text-gray-200'
               }`}>
                 Email Address
               </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-skin-accent focus:border-transparent backdrop-blur-sm transition-all duration-200 ${
                   theme === 'light'
                     ? 'bg-white/80 border-skin-accent/30 text-gray-800 placeholder-gray-500'
                     : 'bg-white/10 border-white/20 text-white placeholder-gray-400'
                 }`}
                 placeholder="Enter your email"
-            />
-          </div>
+              />
+            </div>
 
             <div>
               <label className={`block text-sm font-medium mb-2 ${
@@ -143,25 +144,26 @@ const LoginPage = () => {
               <div className="relative">
                 <input
                   type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-skin-accent focus:border-transparent backdrop-blur-sm transition-all duration-200 ${
                     theme === 'light'
                       ? 'bg-white/80 border-skin-accent/30 text-gray-800 placeholder-gray-500'
                       : 'bg-white/10 border-white/20 text-white placeholder-gray-400'
                   }`}
                   placeholder="Enter your password"
-          />
+                />
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="w-full py-3 px-4 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-skin-accent focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-r from-skin-accent to-skin-accent-dark hover:from-skin-accent-dark hover:to-skin-accent text-white"
             >
-              {isLoading ? (
+              {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   Signing In...
@@ -170,22 +172,22 @@ const LoginPage = () => {
                 'Sign In'
               )}
             </button>
-        </form>
+          </form>
 
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className={`text-sm ${
               theme === 'light' ? 'text-gray-600' : 'text-gray-300'
             }`}>
-          Don't have an account?{' '}
+              Don't have an account?{' '}
               <Link 
                 to="/register" 
                 className="font-semibold transition-colors duration-200 text-skin-accent hover:text-skin-accent-dark"
               >
                 Create one here
-          </Link>
-        </p>
-      </div>
+              </Link>
+            </p>
+          </div>
         </div>
 
         {/* Bottom Text */}

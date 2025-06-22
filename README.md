@@ -83,7 +83,7 @@ You will need to set up environment variables for both the backend and frontend.
 2.  Create a `.env` file by copying the example: `cp frontend/example.env frontend/.env`.
 3.  The `.env` file contains the base URL for the backend API. The default value should work for local development.
     ```env
-    VITE_API_BASE_URL=http://localhost:3000
+    VITE_API_URL=http://localhost:3002/api
     ```
 
 ### Running the Application
@@ -122,7 +122,7 @@ To make this application accessible to anyone on the web, you need to deploy the
         1.  Connect your Git repository to the provider.
         2.  Configure the build command: `npm run build` (within the `frontend` directory).
         3.  Set the publish directory: `frontend/dist`.
-        4.  Add your `VITE_API_BASE_URL` environment variable, pointing to your deployed backend's URL.
+        4.  Add your `VITE_API_URL` environment variable, pointing to your deployed backend's URL.
 
 -   **Backend (Node.js/Express App)**:
     -   **Provider**: Services like [Render](https://render.com/), [Heroku](https://www.heroku.com/), or a traditional VPS (e.g., DigitalOcean, AWS EC2) are suitable.

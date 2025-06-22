@@ -28,7 +28,7 @@ const RegisterPage = () => {
       await register(name, email, password)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to register. Please try again.')
+      setError(err.response?.data?.message || err.message || 'Failed to register. Please try again.')
     } finally {
       setIsLoading(false)
     }
