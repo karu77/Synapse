@@ -17,16 +17,16 @@ const PasswordInput = ({ label, value, onChange, required = false, id, name }) =
         <input
           type={isPasswordVisible ? 'text' : 'password'}
           id={id || name}
-          name={name || id}
+          name={name}
           value={value}
           onChange={onChange}
           required={required}
-          className="w-full px-4 py-2 border border-skin-border rounded-lg bg-skin-bg-accent focus:ring-2 focus:ring-skin-accent focus:border-skin-accent transition-colors duration-200"
+          className="w-full p-3 rounded-lg bg-skin-fill-input border border-skin-border-input focus:ring-2 focus:ring-skin-accent focus:border-skin-accent transition pr-10"
         />
         <button
           type="button"
           onClick={togglePasswordVisibility}
-          className="absolute inset-y-0 right-0 flex items-center px-3 text-skin-text-muted hover:text-skin-text"
+          className="absolute inset-y-0 right-0 flex items-center pr-3 text-skin-text-muted hover:text-skin-text"
           aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
         >
           {isPasswordVisible ? (
@@ -40,4 +40,4 @@ const PasswordInput = ({ label, value, onChange, required = false, id, name }) =
   )
 }
 
-export default PasswordInput 
+export default PasswordInput

@@ -135,28 +135,14 @@ const LoginPage = () => {
               />
             </div>
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                theme === 'light' ? 'text-gray-700' : 'text-gray-200'
-              }`}>
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-skin-accent focus:border-transparent backdrop-blur-sm transition-all duration-200 ${
-                    theme === 'light'
-                      ? 'bg-white/80 border-skin-accent/30 text-gray-800 placeholder-gray-500'
-                      : 'bg-white/10 border-white/20 text-white placeholder-gray-400'
-                  }`}
-                  placeholder="Enter your password"
-                />
-              </div>
-            </div>
+            <PasswordInput
+              label="Password"
+              id="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
             <button
               type="submit"

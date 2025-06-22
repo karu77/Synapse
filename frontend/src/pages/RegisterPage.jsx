@@ -160,60 +160,40 @@ const RegisterPage = () => {
             />
           </div>
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                theme === 'light' ? 'text-gray-700' : 'text-gray-200'
-              }`}>
-                Password
-              </label>
-              <input
-                type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-skin-accent focus:border-transparent backdrop-blur-sm transition-all duration-200 ${
-                  theme === 'light'
-                    ? 'bg-white/80 border-skin-accent/30 text-gray-800 placeholder-gray-500'
-                    : 'bg-white/10 border-white/20 text-white placeholder-gray-400'
-                }`}
-                placeholder="Create a password"
-              />
-            </div>
+            <PasswordInput
+              label="Password"
+              id="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                theme === 'light' ? 'text-gray-700' : 'text-gray-200'
-              }`}>
-                Confirm Password
-              </label>
-              <input
-                type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-skin-accent focus:border-transparent backdrop-blur-sm transition-all duration-200 ${
-                  theme === 'light'
-                    ? 'bg-white/80 border-skin-accent/30 text-gray-800 placeholder-gray-500'
-                    : 'bg-white/10 border-white/20 text-white placeholder-gray-400'
-                }`}
-                placeholder="Confirm your password"
-          />
-            </div>
+            <PasswordInput
+              label="Confirm Password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 px-4 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-skin-accent focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-r from-skin-accent to-skin-accent-dark hover:from-skin-accent-dark hover:to-skin-accent text-white"
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Creating Account...
-                </span>
-              ) : (
-                'Create Account'
-              )}
-            </button>
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 px-4 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-skin-accent focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-r from-skin-accent to-skin-accent-dark hover:from-skin-accent-dark hover:to-skin-accent text-white"
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Creating Account...
+                  </span>
+                ) : (
+                  'Create Account'
+                )}
+              </button>
+            </div>
         </form>
 
           {/* Footer */}
