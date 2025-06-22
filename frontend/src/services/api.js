@@ -113,3 +113,5 @@ export const deleteAccount = async () => {
     throw error.response?.data?.error || 'Failed to delete account.'
   }
 }
+
+export default api
