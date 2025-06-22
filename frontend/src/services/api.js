@@ -1,18 +1,19 @@
 import axios from 'axios'
 
-// Configure a base URL for all API requests
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api'
-
+// Create an Axios instance
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3002/api',
 })
 
-// Add a request interceptor to include the token in headers
+// Add a request interceptor to include the token in the headers
 api.interceptors.request.use(
   (config) => {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+    const userInfo = localStorage.getItem('userInfo')
+      ? JSON.parse(localStorage.getItem('userInfo'))
+      : null
+
     if (userInfo && userInfo.token) {
-      config.headers.Authorization = `Bearer ${userInfo.token}`
+      config.headers['Authorization'] = `Bearer ${userInfo.token}`
     }
     return config
   },
@@ -54,15 +55,15 @@ export const generateGraph = async (text, question, imageFile, audioFile, imageU
     } else if (audioUrl) {
       formData.append('audioUrl', audioUrl)
     }
-    const token = JSON.parse(localStorage.getItem('userInfo'))?.token
-    const config = {
+
+    // Use the 'api' instance which has the interceptor
+    const { data } = await api.post('/graph/generate', formData, {
       headers: {
+        // The interceptor will add Authorization, but we still need multipart
         'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`,
       },
-    }
-    const { data } = await axios.post(`${API_URL}/graph/generate`, formData, config)
-    return data // Now returns an object: { answer: '...', graphData: { ... } }
+    })
+    return data
   } catch (error) {
     console.error('Error generating graph:', error)
     throw error.response?.data?.error || 'Failed to generate graph. Please try again.'
@@ -93,16 +94,22 @@ export const deleteHistoryItem = async (id) => {
  */
 export const clearAllHistory = async () => {
   try {
-    const token = JSON.parse(localStorage.getItem('userInfo'))?.token
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-
-    await api.delete('/history', config)
+    // The interceptor handles the token, so no need for manual config
+    await api.delete('/history')
   } catch (error) {
     console.error('Error clearing history:', error)
     throw error
+  }
+}
+
+/**
+ * Deletes the logged-in user's account and all associated data.
+ */
+export const deleteAccount = async () => {
+  try {
+    await api.delete('/users/profile')
+  } catch (error) {
+    console.error('Error deleting account:', error)
+    throw error.response?.data?.error || 'Failed to delete account.'
   }
 }

@@ -1,9 +1,12 @@
-import { XMarkIcon, InformationCircleIcon, ArrowRightIcon, HeartIcon, LinkIcon, ChartBarIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, InformationCircleIcon, ArrowRightIcon, HeartIcon, LinkIcon, ChartBarIcon, HashtagIcon } from '@heroicons/react/24/outline'
 
 const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
   if (!edge) return null
   
   console.log('EdgeInfoPanel rendering with edge:', edge)
+  
+  // Detect theme
+  const isDarkMode = document.documentElement.classList.contains('dark')
   
   const fromNode = nodes.find((n) => n.id === edge.from || n.id === edge.source)
   const toNode = nodes.find((n) => n.id === edge.to || n.id === edge.target)
@@ -98,167 +101,250 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
     }
   }
 
+  // Theme-based styling
+  const getThemeStyles = () => {
+    if (isDarkMode) {
+      return {
+        panelBg: 'rgba(17, 24, 39, 0.85)',
+        panelBorder: '1px solid rgba(59, 130, 246, 0.3)',
+        headerBg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(29, 78, 216, 0.1))',
+        headerBorder: 'rgba(59, 130, 246, 0.3)',
+        accentColor: 'text-blue-300',
+        textPrimary: 'text-white',
+        textSecondary: 'text-gray-300',
+        textMuted: 'text-gray-400',
+        aboutBg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(29, 78, 216, 0.05))',
+        aboutBorder: '1px solid rgba(59, 130, 246, 0.2)',
+        aboutAccent: 'text-blue-400',
+        flowBg: 'rgba(255, 255, 255, 0.05)',
+        flowBorder: 'rgba(59, 130, 246, 0.6)',
+        flowText: 'text-blue-300',
+        propertyBg: 'linear-gradient(135deg, rgba(75, 85, 99, 0.3), rgba(55, 65, 81, 0.3))',
+        propertyBorder: '1px solid rgba(75, 85, 99, 0.4)',
+        propertyValueBg: 'rgba(75, 85, 99, 0.4)',
+        typeAccentBg: 'rgba(59, 130, 246, 0.2)',
+        levelAccentBg: 'rgba(59, 130, 246, 0.6)',
+        hoverBg: 'hover:bg-white/10'
+      }
+    } else {
+      return {
+        panelBg: 'rgba(255, 255, 255, 0.85)',
+        panelBorder: '1px solid rgba(234, 179, 8, 0.3)',
+        headerBg: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(202, 138, 4, 0.1))',
+        headerBorder: 'rgba(234, 179, 8, 0.3)',
+        accentColor: 'text-yellow-600',
+        textPrimary: 'text-gray-900',
+        textSecondary: 'text-gray-700',
+        textMuted: 'text-gray-600',
+        aboutBg: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(202, 138, 4, 0.05))',
+        aboutBorder: '1px solid rgba(234, 179, 8, 0.2)',
+        aboutAccent: 'text-yellow-600',
+        flowBg: 'rgba(0, 0, 0, 0.05)',
+        flowBorder: 'rgba(234, 179, 8, 0.6)',
+        flowText: 'text-yellow-700',
+        propertyBg: 'linear-gradient(135deg, rgba(229, 231, 235, 0.3), rgba(209, 213, 219, 0.3))',
+        propertyBorder: '1px solid rgba(209, 213, 219, 0.4)',
+        propertyValueBg: 'rgba(209, 213, 219, 0.4)',
+        typeAccentBg: 'rgba(234, 179, 8, 0.2)',
+        levelAccentBg: 'rgba(234, 179, 8, 0.6)',
+        hoverBg: 'hover:bg-black/10'
+      }
+    }
+  }
+
+  const themeStyles = getThemeStyles()
+
   return (
     <div
-      className={`fixed top-1/2 right-4 transform -translate-y-1/2 z-[90] w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl ${
+      className={`fixed top-1/2 right-4 transform -translate-y-1/2 z-[90] w-64 max-w-[calc(100vw-2rem)] rounded-xl shadow-2xl transition-all duration-300 ease-out liquid-glass-panel ${
         panelClassName || ''
       }`}
       style={{
-        maxHeight: 'calc(100vh - 2rem)',
-        overflowY: 'auto'
+        maxHeight: 'calc(100vh - 4rem)',
+        overflowY: 'auto',
       }}
     >
-      {/* Enhanced Header */}
-      <div className="p-4 pb-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50 to-blue-50 dark:from-gray-750 dark:to-gray-700 rounded-t-xl">
+      {/* Header */}
+      <div 
+        className="p-2 border-b rounded-t-xl"
+        style={{
+          borderColor: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+          background: isDarkMode ? 'rgba(59, 130, 246, 0.08)' : 'rgba(234, 179, 8, 0.08)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-blue-500 shadow-sm border-2 border-white dark:border-gray-600"></div>
-              <span className="text-xl">{getRelationshipIcon(edge.label)}</span>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm">{getRelationshipIcon(edge.label)}</span>
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-200">
+              <span className={`text-xs font-semibold uppercase tracking-wide ${isDarkMode ? 'text-blue-300' : 'text-yellow-600'}`}>
                 Connection
               </span>
-              <div className="text-sm text-gray-600 dark:text-gray-300 mt-0.5 flex items-center gap-1">
-                <LinkIcon className="h-3 w-3" />
-                Selected Relationship
-              </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full w-8 h-8 flex items-center justify-center transition-all duration-200 hover:scale-110"
+            className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'} hover:bg-white/10 rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200`}
           >
-            <XMarkIcon className="h-5 w-5" />
+            <XMarkIcon className="h-4 w-4" />
           </button>
         </div>
       </div>
       
       {/* Content */}
-      <div className="p-4">
-        <div className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100 break-words flex items-center gap-2">
-          <span className="text-2xl">{getRelationshipIcon(edge.label)}</span>
+      <div className="p-2">
+        <div className={`text-sm font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} break-words flex items-center gap-2`}>
+          <span className="text-base">{getRelationshipIcon(edge.label)}</span>
           {edge.label || 'Connection'}
         </div>
         
-        {/* Enhanced About Section */}
-        <div className="mb-6 p-4 rounded-lg bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-green-900/20 dark:via-blue-900/20 dark:to-purple-900/20 border border-green-200 dark:border-green-700/50 text-gray-700 dark:text-gray-200 text-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <InformationCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-            <span className="font-semibold text-gray-800 dark:text-gray-100">About this relationship:</span>
+        {/* About Section */}
+        <div className={`mb-3 p-2 rounded-lg ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-xs`} style={{
+          background: isDarkMode ? 'rgba(59, 130, 246, 0.12)' : 'rgba(234, 179, 8, 0.12)',
+          border: isDarkMode ? '1px solid rgba(59, 130, 246, 0.25)' : '1px solid rgba(234, 179, 8, 0.25)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        }}>
+          <div className="flex items-center gap-1 mb-1">
+            <InformationCircleIcon className={`h-3 w-3 ${isDarkMode ? 'text-blue-400' : 'text-yellow-600'}`} />
+            <span className={`font-semibold text-xs ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>About</span>
           </div>
-          <div className="space-y-3">
-            <p className="leading-relaxed whitespace-pre-wrap">
-              {getEnhancedDescription(edge)}
-            </p>
-            
-            {/* Connection Flow Visualization */}
-            {fromNode && toNode && (
-              <div className="mt-4 p-3 bg-white/50 dark:bg-gray-800/50 rounded border-l-4 border-green-400">
-                <div className="flex items-center justify-between text-xs font-medium text-green-700 dark:text-green-300">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="truncate font-semibold">{fromNode.label}</span>
-                  </div>
-                  <div className="flex items-center gap-1 px-2">
-                    <ArrowRightIcon className="h-3 w-3" />
-                    <span className="text-xs whitespace-nowrap">{edge.label || 'connects to'}</span>
-                    <ArrowRightIcon className="h-3 w-3" />
-                  </div>
-                  <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-                    <span className="truncate font-semibold">{toNode.label}</span>
-                  </div>
+          <p className="leading-relaxed text-xs line-clamp-3">
+            {edge.description || `This connection represents a ${edge.label?.toLowerCase() || 'relationship'} between two entities in the graph.`}
+          </p>
+          
+          {/* Connection Flow Visualization */}
+          {fromNode && toNode && (
+            <div className="mt-2 p-1.5 rounded border-l-2" style={{
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+              borderColor: isDarkMode ? 'rgba(59, 130, 246, 0.6)' : 'rgba(234, 179, 8, 0.6)'
+            }}>
+              <div className={`flex items-center justify-between text-xs font-medium ${isDarkMode ? 'text-blue-300' : 'text-yellow-700'}`}>
+                <div className="flex items-center gap-1 flex-1 min-w-0">
+                  <span className="truncate font-semibold text-xs">{fromNode.label}</span>
+                </div>
+                <div className="flex items-center gap-1 px-1">
+                  <ArrowRightIcon className="h-3 w-3" />
+                </div>
+                <div className="flex items-center gap-1 flex-1 min-w-0 justify-end">
+                  <span className="truncate font-semibold text-xs">{toNode.label}</span>
                 </div>
               </div>
-            )}
-            
-            {/* Additional context based on edge properties */}
-            {edge.sentiment && (
-              <div className="mt-3 p-2 bg-white/50 dark:bg-gray-800/50 rounded border-l-4 border-purple-400">
-                <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
-                  Emotional Context: This relationship carries a {edge.sentiment} sentiment, indicating the nature of the connection.
-                </span>
-              </div>
-            )}
-            
-            {edge.condition && (
-              <div className="mt-3 p-2 bg-white/50 dark:bg-gray-800/50 rounded border-l-4 border-yellow-400">
-                <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300">
-                  Conditional Flow: This connection is activated when the condition "{edge.condition}" is met.
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         
-        {/* Enhanced Connection Details */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wide mb-3">
-            <ChartBarIcon className="h-4 w-4" />
-            Connection Properties
+        {/* Connection Details */}
+        <div className="space-y-1">
+          <div className={`flex items-center gap-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs font-semibold uppercase tracking-wide mb-1`}>
+            <ChartBarIcon className="h-3 w-3" />
+            Properties
           </div>
           
-          <div className="grid gap-3">
-            <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-3 text-sm border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="font-semibold text-gray-800 dark:text-gray-100">From:</span>
-              </div>
-              <span className="text-gray-600 dark:text-gray-300 text-right flex-1 ml-2 truncate font-medium bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded" title={fromNode ? fromNode.label : (edge.from || edge.source)}>
+          <div className="grid gap-1">
+            <div className="flex items-center justify-between rounded-lg p-1.5 text-xs" style={{
+              background: isDarkMode ? 'rgba(75, 85, 99, 0.15)' : 'rgba(229, 231, 235, 0.15)',
+              border: isDarkMode ? '1px solid rgba(75, 85, 99, 0.25)' : '1px solid rgba(209, 213, 219, 0.25)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+            }}>
+              <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>From:</span>
+              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium px-1.5 py-0.5 rounded text-xs truncate max-w-[120px]`} style={{
+                backgroundColor: isDarkMode ? 'rgba(75, 85, 99, 0.25)' : 'rgba(209, 213, 219, 0.25)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+              }} title={fromNode ? fromNode.label : (edge.from || edge.source)}>
                 {fromNode ? fromNode.label : (edge.from || edge.source)}
               </span>
             </div>
             
-            <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-3 text-sm border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="font-semibold text-gray-800 dark:text-gray-100">To:</span>
-              </div>
-              <span className="text-gray-600 dark:text-gray-300 text-right flex-1 ml-2 truncate font-medium bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded" title={toNode ? toNode.label : (edge.to || edge.target)}>
+            <div className="flex items-center justify-between rounded-lg p-1.5 text-xs" style={{
+              background: isDarkMode ? 'rgba(75, 85, 99, 0.15)' : 'rgba(229, 231, 235, 0.15)',
+              border: isDarkMode ? '1px solid rgba(75, 85, 99, 0.25)' : '1px solid rgba(209, 213, 219, 0.25)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+            }}>
+              <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>To:</span>
+              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium px-1.5 py-0.5 rounded text-xs truncate max-w-[120px]`} style={{
+                backgroundColor: isDarkMode ? 'rgba(75, 85, 99, 0.25)' : 'rgba(209, 213, 219, 0.25)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+              }} title={toNode ? toNode.label : (edge.to || edge.target)}>
                 {toNode ? toNode.label : (edge.to || edge.target)}
               </span>
             </div>
             
-            <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-3 text-sm border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center gap-2">
-                <LinkIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <span className="font-semibold text-gray-800 dark:text-gray-100">Relationship:</span>
+            <div className="flex items-center justify-between rounded-lg p-1.5 text-xs" style={{
+              background: isDarkMode ? 'rgba(75, 85, 99, 0.15)' : 'rgba(229, 231, 235, 0.15)',
+              border: isDarkMode ? '1px solid rgba(75, 85, 99, 0.25)' : '1px solid rgba(209, 213, 219, 0.25)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+            }}>
+              <div className="flex items-center gap-1">
+                <LinkIcon className={`h-3 w-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Type:</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{getRelationshipIcon(edge.label)}</span>
-                <span className="text-gray-600 dark:text-gray-300 font-medium bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded" title={edge.label || 'Connected'}>
+              <div className="flex items-center gap-1">
+                <span className="text-xs">{getRelationshipIcon(edge.label)}</span>
+                <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium px-1.5 py-0.5 rounded text-xs`} style={{
+                  backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.25)' : 'rgba(234, 179, 8, 0.25)',
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)',
+                }} title={edge.label || 'Connected'}>
                   {edge.label || 'Connected'}
                 </span>
               </div>
             </div>
             
-            <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-3 text-sm border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center gap-2">
-                <HeartIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <span className="font-semibold text-gray-800 dark:text-gray-100">Sentiment:</span>
+            <div className="flex items-center justify-between rounded-lg p-1.5 text-xs" style={{
+              background: isDarkMode ? 'rgba(75, 85, 99, 0.15)' : 'rgba(229, 231, 235, 0.15)',
+              border: isDarkMode ? '1px solid rgba(75, 85, 99, 0.25)' : '1px solid rgba(209, 213, 219, 0.25)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+            }}>
+              <div className="flex items-center gap-1">
+                <HeartIcon className={`h-3 w-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Sentiment:</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{getSentimentIcon(edge.sentiment)}</span>
-                <span 
-                  className={`text-sm font-medium px-3 py-1 rounded-full ${
+              <div className="flex items-center gap-1">
+                <span className="text-xs">{getSentimentIcon(edge.sentiment)}</span>
+                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
+                  edge.sentiment === 'positive' 
+                    ? 'text-green-300' :
+                  edge.sentiment === 'negative' 
+                    ? 'text-red-300' :
+                    (isDarkMode ? 'text-gray-300' : 'text-gray-700')
+                }`} style={{
+                  backgroundColor: edge.sentiment === 'positive' 
+                    ? 'rgba(34, 197, 94, 0.2)' :
+                  edge.sentiment === 'negative' 
+                    ? 'rgba(239, 68, 68, 0.2)' :
+                    (isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(209, 213, 219, 0.3)'),
+                  border: `1px solid ${
                     edge.sentiment === 'positive' 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border border-green-200 dark:border-green-700/50' :
+                      ? 'rgba(34, 197, 94, 0.3)' :
                     edge.sentiment === 'negative' 
-                      ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-700/50' :
-                      'bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300 border border-gray-200 dark:border-gray-600/50'
-                  }`}
-                >
+                      ? 'rgba(239, 68, 68, 0.3)' :
+                      (isDarkMode ? 'rgba(75, 85, 99, 0.4)' : 'rgba(209, 213, 219, 0.4)')
+                  }`
+                }}>
                   {edge.sentiment || 'neutral'}
                 </span>
               </div>
             </div>
 
             {edge.condition && (
-              <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-3 text-sm border border-gray-200 dark:border-gray-600">
-                <span className="font-semibold text-gray-800 dark:text-gray-100">Condition:</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{getConditionIcon(edge.condition)}</span>
-                  <span className="text-gray-600 dark:text-gray-300 font-medium bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded">
+              <div className="flex items-center justify-between rounded-md p-2 text-xs" style={{
+                background: themeStyles.propertyBg,
+                border: themeStyles.propertyBorder
+              }}>
+                <span className={`font-semibold ${themeStyles.textPrimary}`}>Condition:</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm">{getConditionIcon(edge.condition)}</span>
+                  <span className={`${themeStyles.textSecondary} font-medium px-2 py-0.5 rounded text-xs`} style={{
+                    backgroundColor: themeStyles.propertyValueBg
+                  }}>
                     {edge.condition}
                   </span>
                 </div>
@@ -266,37 +352,52 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
             )}
 
             {edge.order !== undefined && (
-              <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-3 text-sm border border-gray-200 dark:border-gray-600">
-                <span className="font-semibold text-gray-800 dark:text-gray-100">Execution Order:</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center">
+              <div className="flex items-center justify-between rounded-md p-2 text-xs" style={{
+                background: themeStyles.propertyBg,
+                border: themeStyles.propertyBorder
+              }}>
+                <span className={`font-semibold ${themeStyles.textPrimary}`}>Order:</span>
+                <div className="flex items-center gap-1">
+                  <div className={`w-5 h-5 rounded-full ${isDarkMode ? 'text-white' : 'text-white'} text-xs font-bold flex items-center justify-center`} style={{
+                    backgroundColor: themeStyles.levelAccentBg
+                  }}>
                     {edge.order}
                   </div>
-                  <span className="text-gray-600 dark:text-gray-300 font-medium">
-                    Step {edge.order}
-                  </span>
                 </div>
               </div>
             )}
 
             {edge.id && (
-              <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-3 text-sm border border-gray-200 dark:border-gray-600">
-                <span className="font-semibold text-gray-800 dark:text-gray-100">Identifier:</span>
-                <span className="text-gray-600 dark:text-gray-300 text-right flex-1 ml-2 truncate font-mono text-xs bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded" title={edge.id}>
+              <div className="flex items-center justify-between rounded-md p-2 text-xs" style={{
+                background: themeStyles.propertyBg,
+                border: themeStyles.propertyBorder
+              }}>
+                <div className="flex items-center gap-2">
+                  <HashtagIcon className={`h-3 w-3 ${themeStyles.textMuted}`} />
+                  <span className={`font-semibold ${themeStyles.textPrimary}`}>ID:</span>
+                </div>
+                <span className={`${themeStyles.textSecondary} font-mono text-xs px-2 py-0.5 rounded truncate max-w-[120px]`} style={{
+                  backgroundColor: themeStyles.propertyValueBg
+                }} title={edge.id}>
                   {edge.id}
                 </span>
               </div>
             )}
 
-            {/* Additional properties with enhanced styling */}
+            {/* Additional properties */}
             {Object.entries(edge).filter(([key]) => 
               !['id', 'from', 'to', 'source', 'target', 'label', 'description', 'sentiment', 'condition', 'order', 'color', 'width', 'dashes', 'arrows', 'smooth', 'font', 'chosen', 'selectionWidth', 'hoverWidth'].includes(key)
             ).map(([key, value]) => (
-              <div key={key} className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-3 text-sm border border-gray-200 dark:border-gray-600">
-                <span className="font-semibold text-gray-800 dark:text-gray-100 capitalize">
+              <div key={key} className="flex items-center justify-between rounded-md p-2 text-xs" style={{
+                background: themeStyles.propertyBg,
+                border: themeStyles.propertyBorder
+              }}>
+                <span className={`font-semibold ${themeStyles.textPrimary} capitalize`}>
                   {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
                 </span>
-                <span className="text-gray-600 dark:text-gray-300 text-right flex-1 ml-2 truncate bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded font-mono text-xs" title={String(value)}>
+                <span className={`${themeStyles.textSecondary} font-mono text-xs px-2 py-0.5 rounded truncate max-w-[120px]`} style={{
+                  backgroundColor: themeStyles.propertyValueBg
+                }} title={String(value)}>
                   {String(value)}
                 </span>
               </div>

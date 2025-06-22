@@ -899,42 +899,29 @@ const GraphVisualization = forwardRef(
         }
 
         // For hierarchical layouts (flowchart and mindmap), ensure ALL nodes have a level property
-        if (diagramType === 'flowchart' || diagramType === 'mindmap') {
+        if (diagramType === 'mindmap') {
           // Ensure level is properly set - if missing, try to infer from node type or default to 0
           let nodeLevel = node.level
           if (nodeLevel === undefined || nodeLevel === null) {
             // For mind maps, try to infer level from node type or position in hierarchy
-      if (diagramType === 'mindmap') {
-              if (node.type === 'TOPIC' && (node.label?.toLowerCase().includes('central') || node.id === 'center')) {
-                nodeLevel = 0 // Central topic
-              } else if (node.type === 'TOPIC') {
-                nodeLevel = 1 // Main branch
-              } else if (node.type === 'SUBTOPIC') {
-                nodeLevel = 2 // Secondary branch
-              } else if (node.type === 'CONCEPT') {
-                nodeLevel = 3 // Detail level
-              } else {
-                nodeLevel = 1 // Default to main branch
-              }
+            if (node.type === 'TOPIC' && (node.label?.toLowerCase().includes('central') || node.id === 'center')) {
+              nodeLevel = 0 // Central topic
+            } else if (node.type === 'TOPIC') {
+              nodeLevel = 1 // Main branch
+            } else if (node.type === 'SUBTOPIC') {
+              nodeLevel = 2 // Secondary branch
+            } else if (node.type === 'CONCEPT') {
+              nodeLevel = 3 // Detail level
             } else {
-              nodeLevel = 0 // Default for flowcharts
+              nodeLevel = 1 // Default to main branch
             }
           }
           baseNode.level = nodeLevel
-          
-          // Enhanced styling for mind map rectangles
-          if (diagramType === 'mindmap') {
-            baseNode.margin = {
-              top: 8,
-              right: 12,
-              bottom: 8,
-              left: 12,
-            }
-            baseNode.borderWidth = 2
-            baseNode.borderWidthSelected = 3
-            baseNode.shapeProperties = {
-              borderRadius: 8, // Rounded corners for modern look
-            }
+        } else if (diagramType === 'flowchart') {
+          // For flowcharts, if a level is provided, use it.
+          // Otherwise, do NOT assign a level, so vis.js can determine it automatically.
+          if (node.level !== undefined && node.level !== null) {
+            baseNode.level = node.level;
           }
         } else {
           // For knowledge graphs, ensure NO nodes have level property to avoid conflicts

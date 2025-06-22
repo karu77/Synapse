@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import User from '../models/User'
+import History from '../models/History'
 import generateToken from '../utils/generateToken'
 
 // @desc    Register a new user
@@ -53,4 +54,19 @@ const authUser = async (req: Request, res: Response) => {
   }
 }
 
-export { registerUser, authUser } 
+// @desc    Delete user profile
+// @route   DELETE /api/users/profile
+// @access  Private
+const deleteUser = async (req: Request, res: Response) => {
+  const user = await User.findById(req.user._id)
+
+  if (user) {
+    await History.deleteMany({ user: user._id })
+    await user.deleteOne()
+    res.json({ message: 'User removed' })
+  } else {
+    res.status(404).json({ message: 'User not found' })
+  }
+}
+
+export { registerUser, authUser, deleteUser } 

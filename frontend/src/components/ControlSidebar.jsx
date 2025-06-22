@@ -6,12 +6,15 @@ import {
   AdjustmentsHorizontalIcon,
   Cog6ToothIcon,
   CursorArrowRaysIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline'
 import { motion, AnimatePresence } from 'framer-motion'
 import CustomizationPanel from './CustomizationPanel'
 import HistoryPanel from './HistoryPanel'
 import StyleCustomizationPanel from './StyleCustomizationPanel'
 import TextInput from './TextInput'
+import { deleteAccount } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 // Simplified sidebar animation variants
 const sidebarVariants = {
@@ -105,6 +108,24 @@ const ControlSidebar = ({
   currentDiagramType,
   onDiagramTypeChange,
 }) => {
+  const { logout: authLogout } = useAuth()
+
+  const handleDeleteAccount = async () => {
+    if (
+      window.confirm(
+        'Are you sure you want to delete your account? This action is irreversible and will remove all your data.'
+      )
+    ) {
+      try {
+        await deleteAccount()
+        alert('Your account has been successfully deleted.')
+        authLogout() // This will redirect to login page
+      } catch (error) {
+        alert(error.message || 'Failed to delete account. Please try again.')
+      }
+    }
+  }
+
   return (
     <AnimatePresence mode="wait">
       {isOpen && (
@@ -207,7 +228,7 @@ const ControlSidebar = ({
               variants={itemVariants}
               className="p-6 md:p-8 border-t-2 border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800/60"
             >
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-4">
                 <span className="text-sm text-gray-600 dark:text-skin-text-muted truncate">
               Welcome, {user?.name || 'Guest'}
             </span>
@@ -220,6 +241,14 @@ const ControlSidebar = ({
               <span>Logout</span>
             </button>
           </div>
+          <button
+            onClick={handleDeleteAccount}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/60 transition-all duration-200 pointer-events-auto"
+            aria-label="Delete Account"
+          >
+            <TrashIcon className="h-5 w-5" />
+            <span>Delete Account</span>
+          </button>
             </motion.div>
       </motion.div>
     </>
