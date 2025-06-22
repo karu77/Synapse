@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
       if (userInfo) {
         setUser(userInfo)
       }
-    } catch (error) {
+    } catch {
       // If parsing fails, remove the invalid item
       localStorage.removeItem('userInfo')
     } finally {

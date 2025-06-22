@@ -16,6 +16,7 @@ const FileInput = ({ label, accept, onFileChange, disabled }) => {
   }
 
   const handleButtonClick = () => {
+    console.log('File input button clicked!')
     inputRef.current.click()
   }
 
@@ -36,10 +37,10 @@ const FileInput = ({ label, accept, onFileChange, disabled }) => {
         type="button"
         onClick={handleButtonClick}
         disabled={disabled}
-        className={`mt-1 block w-full text-left rounded-lg border shadow-sm text-sm p-2 truncate ${
+        className={`mt-1 block w-full text-left rounded-lg border shadow-sm text-sm p-2 truncate pointer-events-auto ${
           disabled
             ? 'bg-skin-bg border-skin-border text-skin-text-muted cursor-not-allowed'
-            : 'bg-skin-bg-accent border-skin-border focus:border-skin-btn-primary focus:ring-skin-btn-primary text-skin-text'
+            : 'bg-skin-bg-accent border-skin-border focus:border-skin-accent focus:ring-skin-accent text-skin-text'
         }`}
       >
         {fileName || 'Choose a file...'}
@@ -48,13 +49,15 @@ const FileInput = ({ label, accept, onFileChange, disabled }) => {
   )
 }
 
-const TextInput = ({ onSubmit, isProcessing }) => {
+const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange }) => {
   const [text, setText] = useState('')
   const [question, setQuestion] = useState('')
+  const [code, setCode] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [audioFile, setAudioFile] = useState(null)
   const [imageUrl, setImageUrl] = useState('')
   const [audioUrl, setAudioUrl] = useState('')
+  const [diagramType, setDiagramType] = useState('knowledge-graph')
   const [error, setError] = useState(null)
 
   // Add separate handlers for image and audio/video
@@ -79,6 +82,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
     setText(e.target.value)
     if (e.target.value !== '') {
       setQuestion('')
+      setCode('')
     }
   }
 
@@ -86,6 +90,28 @@ const TextInput = ({ onSubmit, isProcessing }) => {
     setQuestion(e.target.value)
     if (e.target.value !== '') {
       setText('')
+      setCode('')
+    }
+  }
+
+  const handleCodeChange = (e) => {
+    setCode(e.target.value)
+    if (e.target.value !== '') {
+      setText('')
+      setQuestion('')
+    }
+  }
+
+  const handleDiagramTypeChange = (newDiagramType) => {
+    console.log('Diagram type changed to:', newDiagramType)
+    setDiagramType(newDiagramType)
+    // Clear code input when switching away from flowchart
+    if (newDiagramType !== 'flowchart') {
+      setCode('')
+    }
+    // Immediately notify parent component about the change
+    if (onDiagramTypeChange) {
+      onDiagramTypeChange(newDiagramType)
     }
   }
 
@@ -93,18 +119,123 @@ const TextInput = ({ onSubmit, isProcessing }) => {
   const hasInput =
     !!text?.trim() ||
     !!question?.trim() ||
+    !!code?.trim() ||
     !!imageFile ||
     !!audioFile ||
     (typeof imageUrl === 'string' && imageUrl.trim().length > 0) ||
     (typeof audioUrl === 'string' && audioUrl.trim().length > 0)
 
   const handleSubmit = async () => {
+    console.log('Button clicked! hasInput:', hasInput, 'isProcessing:', isProcessing)
     if (!hasInput) return
-    await onSubmit(text, question, imageFile, audioFile, imageUrl, audioUrl)
+    // For flowcharts, prioritize code if provided, otherwise use text
+    const mainText = code || text
+    await onSubmit(mainText, question, imageFile, audioFile, imageUrl, audioUrl, diagramType)
+  }
+
+  const getDiagramDescription = (type) => {
+    switch (type) {
+      case 'knowledge-graph':
+        return 'Explore entities and their relationships in an interconnected network'
+      case 'flowchart':
+        return 'Visualize processes, code logic, decisions, and workflows step-by-step'
+      case 'mindmap':
+        return 'Organize ideas hierarchically around a central topic'
+      default:
+        return ''
+    }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pointer-events-auto">
+      <div>
+        <label className="block text-base font-semibold text-skin-text mb-3">
+          Diagram Type
+        </label>
+        <div className="grid grid-cols-1 gap-2">
+          {[
+            { value: 'knowledge-graph', label: 'Knowledge Graph', icon: '🕸️' },
+            { value: 'flowchart', label: 'Flowchart', icon: '📊' },
+            { value: 'mindmap', label: 'Mind Map', icon: '🧠' },
+          ].map((option) => (
+            <div key={option.value} className="relative">
+              <input
+                type="radio"
+                id={option.value}
+                name="diagramType"
+                value={option.value}
+                checked={diagramType === option.value}
+                onChange={(e) => handleDiagramTypeChange(e.target.value)}
+                disabled={isProcessing}
+                className="sr-only"
+              />
+              <label
+                htmlFor={option.value}
+                className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all pointer-events-auto ${
+                  diagramType === option.value
+                    ? 'border-skin-accent bg-skin-accent/10'
+                    : 'border-skin-border bg-skin-bg-accent hover:border-skin-accent/50'
+                } ${isProcessing ? 'cursor-not-allowed opacity-50' : ''}`}
+              >
+                <span className="text-2xl mr-3">{option.icon}</span>
+                <div className="flex-grow">
+                  <div className="text-sm font-semibold text-skin-text">
+                    {option.label}
+                  </div>
+                  <div className="text-xs text-skin-text-muted">
+                    {getDiagramDescription(option.value)}
+                  </div>
+                </div>
+                {diagramType === option.value && (
+                  <div className="w-4 h-4 rounded-full bg-skin-accent flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-white"></div>
+                  </div>
+                )}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {diagramType === 'flowchart' ? (
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="text" className="block text-base font-semibold text-skin-text mb-1">
+              Describe a Process or Workflow
+            </label>
+            <textarea
+              id="text"
+              rows={4}
+              className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical pointer-events-auto"
+              placeholder="Describe a process, workflow, or procedure (e.g., 'How to make coffee', 'User registration process', etc.)..."
+              value={text}
+              onChange={handleTextChange}
+              disabled={isProcessing || question !== '' || code !== ''}
+            />
+          </div>
+          
+          <div className="relative flex items-center">
+            <div className="flex-grow border-t border-skin-border"></div>
+            <span className="flex-shrink mx-4 text-skin-text-muted font-semibold text-sm">OR</span>
+            <div className="flex-grow border-t border-skin-border"></div>
+          </div>
+
+          <div>
+            <label htmlFor="code" className="block text-base font-semibold text-skin-text mb-1">
+              Paste Your Code
+            </label>
+            <textarea
+              id="code"
+              rows={6}
+              className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical font-mono pointer-events-auto"
+              placeholder="Paste your code here to generate a flowchart (supports Python, JavaScript, Java, C++, etc.)..."
+              value={code}
+              onChange={handleCodeChange}
+              disabled={isProcessing || question !== '' || text !== ''}
+            />
+          </div>
+        </div>
+      ) : (
       <div>
         <label htmlFor="text" className="block text-base font-semibold text-skin-text mb-1">
           Analyze Text & Files
@@ -112,13 +243,14 @@ const TextInput = ({ onSubmit, isProcessing }) => {
         <textarea
           id="text"
           rows={6}
-          className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-btn-primary focus:ring-skin-btn-primary text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical"
+            className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical pointer-events-auto"
           placeholder="Paste text here, or provide an image/audio file below..."
           value={text}
           onChange={handleTextChange}
           disabled={isProcessing || question !== ''}
         />
       </div>
+      )}
 
       <div className="relative flex items-center">
         <div className="flex-grow border-t border-skin-border"></div>
@@ -133,11 +265,11 @@ const TextInput = ({ onSubmit, isProcessing }) => {
         <textarea
           id="question"
           rows={3}
-          className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-btn-primary focus:ring-skin-btn-primary text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical"
+          className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical pointer-events-auto"
           placeholder="e.g., What is the powerhouse of the cell?"
           value={question}
           onChange={handleQuestionChange}
-          disabled={isProcessing || text !== '' || imageFile !== null || audioFile !== null}
+          disabled={isProcessing || text !== '' || code !== '' || imageFile !== null || audioFile !== null}
         />
       </div>
 
@@ -153,7 +285,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           <input
             type="url"
             placeholder="Paste image URL..."
-            className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text"
+            className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text pointer-events-auto"
             onChange={e => {
               const url = e.target.value;
               setImageUrl(url);
@@ -178,7 +310,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           <input
             type="url"
             placeholder="Paste audio/video URL..."
-            className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text"
+            className="mt-2 block w-full rounded-lg border border-skin-border shadow-sm text-sm p-2 bg-skin-bg-accent text-skin-text pointer-events-auto"
             onChange={e => {
               const url = e.target.value;
               setAudioUrl(url);
@@ -201,7 +333,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           type="button"
           onClick={handleSubmit}
           disabled={isProcessing || !hasInput}
-          className={`inline-flex justify-center rounded-lg border border-transparent px-6 py-2 text-base font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
+          className={`inline-flex justify-center rounded-lg border border-transparent px-6 py-2 text-base font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform pointer-events-auto
             ${isProcessing || !hasInput
               ? 'bg-skin-border text-skin-text-muted cursor-not-allowed scale-100'
               : 'bg-skin-btn-primary text-skin-btn-primary-text hover:opacity-90 hover:scale-105 focus:ring-skin-btn-primary'}
@@ -212,7 +344,7 @@ const TextInput = ({ onSubmit, isProcessing }) => {
               <span className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></span>
               Generating...
             </span>
-          ) : 'Generate Graph'}
+          ) : `Generate ${diagramType === 'knowledge-graph' ? 'Graph' : diagramType === 'flowchart' ? 'Flowchart' : 'Mind Map'}`}
         </button>
       </div>
 
@@ -223,8 +355,8 @@ const TextInput = ({ onSubmit, isProcessing }) => {
           opacity: 0.6;
         }
         textarea:focus, input[type='url']:focus {
-          border-color: #6366f1;
-          box-shadow: 0 0 0 2px #6366f1;
+          border-color: var(--color-accent);
+          box-shadow: 0 0 0 2px var(--color-accent);
           transition: border-color 0.2s, box-shadow 0.2s;
         }
         .animate-fade-in {

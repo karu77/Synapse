@@ -10,6 +10,7 @@ const historySchema = new mongoose.Schema(
     graphData: {
       nodes: { type: Array, required: true },
       edges: { type: Array, required: true },
+      diagramType: { type: String, default: 'knowledge-graph' },
     },
     inputs: {
       textInput: { type: String },
@@ -17,6 +18,7 @@ const historySchema = new mongoose.Schema(
       answer: { type: String },
       imageFileName: { type: String },
       audioFileName: { type: String },
+      diagramType: { type: String, default: 'knowledge-graph' },
     },
     createdAt: {
       type: Date,

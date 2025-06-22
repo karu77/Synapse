@@ -26,7 +26,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
 connectDB()
 
 const app = express()
-const port = process.env.PORT || 3000
+const port = 3002
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage()
@@ -40,7 +40,20 @@ if (process.env.FRONTEND_URL) {
   productionOrigins.push(process.env.FRONTEND_URL) // Main Vercel production URL
 }
 
-const developmentOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173']
+const developmentOrigins = [
+  'http://localhost:5173', 
+  'http://127.0.0.1:5173',
+  'http://localhost:5174', 
+  'http://127.0.0.1:5174',
+  'http://localhost:5175', 
+  'http://127.0.0.1:5175',
+  'http://localhost:5176', 
+  'http://127.0.0.1:5176',
+  'http://localhost:3000', 
+  'http://127.0.0.1:3000',
+  'http://localhost:3002', 
+  'http://127.0.0.1:3002'
+]
 
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' ? productionOrigins : developmentOrigins,

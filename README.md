@@ -95,6 +95,7 @@ From the **root directory** of the project, run:
 npm start
 ```
 
+
 This single command uses `concurrently` to:
 -   Start the backend server on `http://localhost:3000` (by default).
 -   Start the frontend Vite development server on `http://localhost:5173` (by default).

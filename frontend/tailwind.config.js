@@ -13,6 +13,9 @@ export default {
           border: 'var(--color-border)',
           'btn-primary': 'var(--color-btn-primary)',
           'btn-primary-text': 'var(--color-btn-primary-text)',
+          accent: 'var(--color-accent)',
+          'accent-light': 'var(--color-accent-light)',
+          'accent-dark': 'var(--color-accent-dark)',
         },
       },
       fontFamily: {

@@ -32,6 +32,30 @@ const HistoryPanel = ({ history = [], onSelect, onDelete, onClear }) => {
     return 'Graph'
   }
 
+  const getDiagramTypeIcon = (diagramType) => {
+    switch (diagramType) {
+      case 'flowchart':
+        return '📊'
+      case 'mindmap':
+        return '🧠'
+      case 'knowledge-graph':
+      default:
+        return '🕸️'
+    }
+  }
+
+  const getDiagramTypeLabel = (diagramType) => {
+    switch (diagramType) {
+      case 'flowchart':
+        return 'Flowchart'
+      case 'mindmap':
+        return 'Mind Map'
+      case 'knowledge-graph':
+      default:
+        return 'Knowledge Graph'
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -45,27 +69,40 @@ const HistoryPanel = ({ history = [], onSelect, onDelete, onClear }) => {
         </button>
       </div>
       <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-        {history.map((item) => (
-          <div
-            key={item._id}
-            className="p-3 rounded-lg bg-skin-bg flex justify-between items-center group cursor-pointer hover:bg-skin-border transition-colors duration-200"
-            onClick={() => onSelect(item)}
-          >
-            <span className="text-sm font-medium text-skin-text truncate">
-              {getHistoryItemLabel(item)}
-            </span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation() // Prevent onSelect from firing
-                onDelete(item._id)
-              }}
-              className="text-skin-text-muted hover:text-red-500 ml-4 transition-colors opacity-0 group-hover:opacity-100"
-              aria-label="Delete history item"
+        {history.map((item) => {
+          const diagramType = item.inputs?.diagramType || item.graphData?.diagramType || 'knowledge-graph'
+          return (
+            <div
+              key={item._id}
+              className="p-3 rounded-lg bg-skin-bg flex justify-between items-center group cursor-pointer hover:bg-skin-border transition-colors duration-200"
+              onClick={() => onSelect(item)}
             >
-              <XMarkIcon className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
+              <div className="flex items-center space-x-3 flex-grow">
+                <div className="flex-shrink-0 text-lg">
+                  {getDiagramTypeIcon(diagramType)}
+                </div>
+                <div className="flex-grow min-w-0">
+                  <div className="text-sm font-medium text-skin-text truncate">
+                    {getHistoryItemLabel(item)}
+                  </div>
+                  <div className="text-xs text-skin-text-muted">
+                    {getDiagramTypeLabel(diagramType)}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation() // Prevent onSelect from firing
+                  onDelete(item._id)
+                }}
+                className="text-skin-text-muted hover:text-red-500 ml-4 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
+                aria-label="Delete history item"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

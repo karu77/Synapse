@@ -12,6 +12,22 @@ const darkThemeColors = {
   FIELD_OF_STUDY: '#a3e635', // Lime 400
   THEORY: '#e879f9', // Fuchsia 400
   ART_WORK: '#fb923c', // Orange 400
+  // Flowchart node types
+  START_END: '#10b981', // Emerald 500 - Start/End (oval)
+  PROCESS: '#60a5fa', // Blue 400 - Process (rectangle)
+  DECISION: '#f59e0b', // Amber 500 - Decision (diamond)
+  INPUT_OUTPUT: '#8b5cf6', // Violet 500 - Input/Output (parallelogram)
+  CONNECTOR: '#6b7280', // Gray 500 - Connector (circle)
+  DOCUMENT: '#f472b6', // Pink 400 - Document (rectangle with wavy bottom)
+  DELAY: '#fb923c', // Orange 400 - Delay (D-shape)
+  MERGE: '#22d3ee', // Cyan 400 - Merge (inverted triangle)
+  SUBROUTINE: '#34d399', // Emerald 400 - Subroutine (double rectangle)
+  MANUAL_LOOP: '#c084fc', // Purple 400 - Manual Loop (trapezoid)
+  DATABASE: '#a78bfa', // Violet 400 - Database (cylinder)
+  DISPLAY: '#38bdf8', // Sky 400 - Display (rounded rectangle)
+  // Mindmap node types
+  TOPIC: '#8b5cf6', // Violet 500
+  SUBTOPIC: '#06b6d4', // Cyan 500
   DEFAULT: '#94a3b8', // Slate 400
 }
 
@@ -27,6 +43,22 @@ const lightThemeColors = {
   FIELD_OF_STUDY: '#84cc16', // Lime 500
   THEORY: '#d946ef', // Fuchsia 500
   ART_WORK: '#f97316', // Orange 500
+  // Flowchart node types
+  START_END: '#059669', // Emerald 600 - Start/End (oval)
+  PROCESS: '#3b82f6', // Blue 500 - Process (rectangle)
+  DECISION: '#d97706', // Amber 600 - Decision (diamond)
+  INPUT_OUTPUT: '#7c3aed', // Violet 600 - Input/Output (parallelogram)
+  CONNECTOR: '#4b5563', // Gray 600 - Connector (circle)
+  DOCUMENT: '#db2777', // Pink 600 - Document (rectangle with wavy bottom)
+  DELAY: '#ea580c', // Orange 600 - Delay (D-shape)
+  MERGE: '#0891b2', // Cyan 600 - Merge (inverted triangle)
+  SUBROUTINE: '#047857', // Emerald 700 - Subroutine (double rectangle)
+  MANUAL_LOOP: '#9333ea', // Purple 600 - Manual Loop (trapezoid)
+  DATABASE: '#6d28d9', // Violet 700 - Database (cylinder)
+  DISPLAY: '#0284c7', // Sky 600 - Display (rounded rectangle)
+  // Mindmap node types
+  TOPIC: '#7c3aed', // Violet 600
+  SUBTOPIC: '#0891b2', // Cyan 600
   DEFAULT: '#64748b', // Slate 500
 }
 

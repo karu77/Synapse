@@ -1,4 +1,4 @@
-import { useState } from 'react'
+
 
 const CustomizationPanel = ({ options, onUpdate, onReset }) => {
   const handleChange = (e) => {

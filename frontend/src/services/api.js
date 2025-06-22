@@ -1,9 +1,10 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+// Configure a base URL for all API requests
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api'
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_URL,
 })
 
 // Add a request interceptor to include the token in headers
@@ -26,13 +27,17 @@ api.interceptors.request.use(
  * @param {string} question A question to be answered.
  * @param {File | null} imageFile Optional image file.
  * @param {File | null} audioFile Optional audio/video file.
+ * @param {string} imageUrl Optional image URL.
+ * @param {string} audioUrl Optional audio/video URL.
+ * @param {string} diagramType The type of diagram to generate.
  * @returns {Promise<import('../types/index').GraphData>} The graph data.
  */
-export const generateGraph = async (text, question, imageFile, audioFile, imageUrl, audioUrl) => {
+export const generateGraph = async (text, question, imageFile, audioFile, imageUrl, audioUrl, diagramType = 'knowledge-graph') => {
   try {
     const formData = new FormData()
     formData.append('textInput', text)
     formData.append('question', question)
+    formData.append('diagramType', diagramType)
     if (imageFile && typeof imageFile !== 'string') {
       formData.append('imageFile', imageFile)
     }
@@ -56,7 +61,7 @@ export const generateGraph = async (text, question, imageFile, audioFile, imageU
         Authorization: `Bearer ${token}`,
       },
     }
-    const { data } = await axios.post(`${API_BASE_URL}/api/graph/generate`, formData, config)
+    const { data } = await axios.post(`${API_URL}/graph/generate`, formData, config)
     return data // Now returns an object: { answer: '...', graphData: { ... } }
   } catch (error) {
     console.error('Error generating graph:', error)
@@ -66,7 +71,7 @@ export const generateGraph = async (text, question, imageFile, audioFile, imageU
 
 export const getHistory = async () => {
   try {
-    const { data } = await api.get('/api/history')
+    const { data } = await api.get('/history')
     return data
   } catch (error) {
     console.error('Error fetching history:', error)
@@ -76,7 +81,7 @@ export const getHistory = async () => {
 
 export const deleteHistoryItem = async (id) => {
   try {
-    await api.delete(`/api/history/${id}`)
+    await api.delete(`/history/${id}`)
   } catch (error) {
     console.error('Error deleting history item:', error)
     throw error.response?.data?.error || 'Failed to delete history item.'
@@ -95,7 +100,7 @@ export const clearAllHistory = async () => {
       },
     }
 
-    await api.delete('/api/history', config)
+    await api.delete('/history', config)
   } catch (error) {
     console.error('Error clearing history:', error)
     throw error
