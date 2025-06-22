@@ -1,7 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react'
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+import api from '../services/api'
 
 const AuthContext = createContext()
 
@@ -25,13 +23,13 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = async (email, password) => {
-    const { data } = await axios.post(`${API_BASE_URL}/api/users/login`, { email, password })
+    const { data } = await api.post('/users/login', { email, password })
     localStorage.setItem('userInfo', JSON.stringify(data))
     setUser(data)
   }
 
   const register = async (name, email, password) => {
-    const { data } = await axios.post(`${API_BASE_URL}/api/users`, { name, email, password })
+    const { data } = await api.post('/users', { name, email, password })
     localStorage.setItem('userInfo', JSON.stringify(data))
     setUser(data)
   }
