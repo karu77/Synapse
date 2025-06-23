@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import PasswordInput from '../components/PasswordInput'
 import ThemeToggleButton from '../components/ThemeToggleButton'
+import { resetPassword as resetPasswordAPI } from '../services/api'
 
 const LoginPage = () => {
   const [email, setEmail] = useState('workhekarunesh@gmail.com')
@@ -13,6 +14,12 @@ const LoginPage = () => {
   const { login } = useAuth()
   const { theme } = useTheme()
   const navigate = useNavigate()
+  const [showReset, setShowReset] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetNewPassword, setResetNewPassword] = useState('')
+  const [resetMessage, setResetMessage] = useState('')
+  const [resetError, setResetError] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -25,6 +32,27 @@ const LoginPage = () => {
       setError(err.response?.data?.message || err.message || 'Failed to log in. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault()
+    setResetMessage('')
+    setResetError('')
+    setResetLoading(true)
+    try {
+      const msg = await resetPasswordAPI(resetEmail, resetNewPassword)
+      setResetMessage(msg)
+      setResetEmail('')
+      setResetNewPassword('')
+      setTimeout(() => {
+        setShowReset(false)
+        setResetMessage('')
+      }, 2000)
+    } catch (err) {
+      setResetError(err)
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -113,36 +141,90 @@ const LoginPage = () => {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
               <label className={`block text-sm font-medium mb-2 ${
                 theme === 'light' ? 'text-gray-700' : 'text-gray-200'
               }`}>
                 Email Address
               </label>
-              <input
-                type="email"
+            <input
+              type="email"
                 id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
                 className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-skin-accent focus:border-transparent backdrop-blur-sm transition-all duration-200 ${
                   theme === 'light'
                     ? 'bg-white/80 border-skin-accent/30 text-gray-800 placeholder-gray-500'
                     : 'bg-white/10 border-white/20 text-white placeholder-gray-400'
                 }`}
                 placeholder="Enter your email"
-              />
-            </div>
+            />
+          </div>
 
             <PasswordInput
               label="Password"
               id="password"
               name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
             />
+
+            {/* Forgot Password Link */}
+            <div className="text-right mb-4">
+              <button
+                type="button"
+                className="text-skin-accent hover:underline text-sm font-semibold focus:outline-none"
+                onClick={() => setShowReset(true)}
+              >
+                Forgot Password?
+              </button>
+            </div>
+
+            {/* Reset Password Modal/Section */}
+            {showReset && (
+              <div className="mb-6 p-4 border rounded-xl text-sm backdrop-blur-sm bg-skin-bg-accent border-skin-border animate-fade-in-panel">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-semibold text-skin-accent">Reset Password</span>
+                  <button onClick={() => setShowReset(false)} className="text-skin-text-muted hover:text-skin-accent text-lg font-bold">&times;</button>
+                </div>
+                <form onSubmit={handleResetPassword} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-skin-text-muted">Email</label>
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={e => setResetEmail(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-skin-accent focus:border-transparent bg-white/80 dark:bg-white/10 border-skin-border text-skin-text"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-skin-text-muted">New Password</label>
+                    <input
+                      type="password"
+                      value={resetNewPassword}
+                      onChange={e => setResetNewPassword(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-skin-accent focus:border-transparent bg-white/80 dark:bg-white/10 border-skin-border text-skin-text"
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full py-2 px-4 font-semibold rounded-lg bg-skin-accent text-white hover:bg-skin-accent-dark transition-all"
+                    disabled={resetLoading}
+                  >
+                    {resetLoading ? 'Resetting...' : 'Reset Password'}
+                  </button>
+                  {resetMessage && <div className="mt-2 text-xs text-green-600 dark:text-green-400">{resetMessage}</div>}
+                  {resetError && <div className="mt-2 text-xs text-red-500">{resetError}</div>}
+                </form>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -158,22 +240,22 @@ const LoginPage = () => {
                 'Sign In'
               )}
             </button>
-          </form>
+        </form>
 
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className={`text-sm ${
               theme === 'light' ? 'text-gray-600' : 'text-gray-300'
             }`}>
-              Don't have an account?{' '}
+          Don't have an account?{' '}
               <Link 
                 to="/register" 
                 className="font-semibold transition-colors duration-200 text-skin-accent hover:text-skin-accent-dark"
               >
                 Create one here
-              </Link>
-            </p>
-          </div>
+          </Link>
+        </p>
+      </div>
         </div>
 
         {/* Bottom Text */}

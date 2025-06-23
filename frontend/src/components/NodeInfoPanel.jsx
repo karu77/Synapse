@@ -2,9 +2,9 @@ import { XMarkIcon, InformationCircleIcon, TagIcon, HeartIcon, HashtagIcon, Char
 
 const NodeInfoPanel = ({ node, onClose, panelClassName }) => {
   if (!node) return null
-  
-  console.log('NodeInfoPanel rendering with node:', node)
 
+  console.log('NodeInfoPanel rendering with node:', node)
+  
   // Detect theme
   const isDarkMode = document.documentElement.classList.contains('dark')
 
@@ -156,11 +156,11 @@ const NodeInfoPanel = ({ node, onClose, panelClassName }) => {
   const themeStyles = getThemeStyles()
 
   return (
-    <div
+    <div 
       className={`fixed top-1/2 right-4 transform -translate-y-1/2 z-[90] w-64 max-w-[calc(100vw-2rem)] rounded-xl shadow-2xl transition-all duration-300 ease-out liquid-glass-panel ${
         panelClassName || ''
       }`}
-      style={{
+      style={{ 
         maxHeight: 'calc(100vh - 4rem)',
         overflowY: 'auto',
       }}
@@ -184,12 +184,12 @@ const NodeInfoPanel = ({ node, onClose, panelClassName }) => {
               </span>
             </div>
           </div>
-          <button
-            onClick={onClose}
+        <button
+          onClick={onClose}
             className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'} hover:bg-white/10 rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200`}
-          >
+        >
             <XMarkIcon className="h-4 w-4" />
-          </button>
+        </button>
         </div>
       </div>
       
@@ -210,7 +210,7 @@ const NodeInfoPanel = ({ node, onClose, panelClassName }) => {
           <div className="flex items-center gap-1 mb-1">
             <InformationCircleIcon className={`h-3 w-3 ${isDarkMode ? 'text-blue-400' : 'text-yellow-600'}`} />
             <span className={`font-semibold text-xs ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>About</span>
-          </div>
+        </div>
           <p className="leading-relaxed text-xs line-clamp-3">
             {node.description || `This is a ${node.type?.toLowerCase() || 'node'} entity in the graph with various properties and connections.`}
           </p>
@@ -283,7 +283,7 @@ const NodeInfoPanel = ({ node, onClose, panelClassName }) => {
               </div>
             </div>
 
-            {node.level !== undefined && (
+        {node.level !== undefined && (
               <div className="flex items-center justify-between rounded-md p-2 text-xs" style={{
                 background: themeStyles.propertyBg,
                 border: themeStyles.propertyBorder
@@ -296,8 +296,8 @@ const NodeInfoPanel = ({ node, onClose, panelClassName }) => {
                     {node.level}
                   </div>
                 </div>
-              </div>
-            )}
+          </div>
+        )}
 
             {node.id && (
               <div className="flex items-center justify-between rounded-md p-2 text-xs" style={{
@@ -313,8 +313,8 @@ const NodeInfoPanel = ({ node, onClose, panelClassName }) => {
                 }} title={node.id}>
                   {node.id}
                 </span>
-              </div>
-            )}
+          </div>
+        )}
 
             {/* Additional properties */}
             {Object.entries(node).filter(([key]) => 

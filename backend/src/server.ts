@@ -35,6 +35,8 @@ const upload = multer({ storage })
 // More secure and flexible CORS configuration
 const productionOrigins: (string | RegExp)[] = [
   /^https:\/\/synapse-.*-karu77s-projects\.vercel\.app$/, // Regex for Vercel preview URLs
+  'https://synapse-lac.vercel.app', // Production frontend URL
+  'https://synapse-lac-karu77s-projects.vercel.app' // Vercel preview URL pattern
 ]
 if (process.env.FRONTEND_URL) {
   productionOrigins.push(process.env.FRONTEND_URL) // Main Vercel production URL

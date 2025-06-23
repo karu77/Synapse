@@ -69,4 +69,21 @@ const deleteUser = async (req: Request, res: Response) => {
   }
 }
 
-export { registerUser, authUser, deleteUser } 
+// @desc    Dev-only: Reset user password by email
+// @route   POST /api/users/reset-password
+// @access  Public (for dev only)
+const resetPassword = async (req: Request, res: Response) => {
+  const { email, newPassword } = req.body
+  if (!email || !newPassword) {
+    return res.status(400).json({ message: 'Email and new password are required.' })
+  }
+  const user = await User.findOne({ email })
+  if (!user) {
+    return res.status(404).json({ message: 'User not found.' })
+  }
+  user.password = newPassword
+  await user.save()
+  res.json({ message: 'Password has been reset successfully.' })
+}
+
+export { registerUser, authUser, deleteUser, resetPassword } 

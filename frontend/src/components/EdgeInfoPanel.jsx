@@ -179,8 +179,8 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
             <span className="text-sm">{getRelationshipIcon(edge.label)}</span>
             <div>
               <span className={`text-xs font-semibold uppercase tracking-wide ${isDarkMode ? 'text-blue-300' : 'text-yellow-600'}`}>
-                Connection
-              </span>
+              Connection
+            </span>
             </div>
           </div>
           <button
@@ -231,8 +231,8 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
                   <span className="truncate font-semibold text-xs">{toNode.label}</span>
                 </div>
               </div>
-            </div>
-          )}
+          </div>
+        )}
         </div>
         
         {/* Connection Details */}
@@ -255,10 +255,10 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
                 backdropFilter: 'blur(4px)',
                 WebkitBackdropFilter: 'blur(4px)',
               }} title={fromNode ? fromNode.label : (edge.from || edge.source)}>
-                {fromNode ? fromNode.label : (edge.from || edge.source)}
-              </span>
-            </div>
-            
+              {fromNode ? fromNode.label : (edge.from || edge.source)}
+            </span>
+          </div>
+          
             <div className="flex items-center justify-between rounded-lg p-1.5 text-xs" style={{
               background: isDarkMode ? 'rgba(75, 85, 99, 0.15)' : 'rgba(229, 231, 235, 0.15)',
               border: isDarkMode ? '1px solid rgba(75, 85, 99, 0.25)' : '1px solid rgba(209, 213, 219, 0.25)',
@@ -271,10 +271,10 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
                 backdropFilter: 'blur(4px)',
                 WebkitBackdropFilter: 'blur(4px)',
               }} title={toNode ? toNode.label : (edge.to || edge.target)}>
-                {toNode ? toNode.label : (edge.to || edge.target)}
-              </span>
-            </div>
-            
+              {toNode ? toNode.label : (edge.to || edge.target)}
+            </span>
+          </div>
+          
             <div className="flex items-center justify-between rounded-lg p-1.5 text-xs" style={{
               background: isDarkMode ? 'rgba(75, 85, 99, 0.15)' : 'rgba(229, 231, 235, 0.15)',
               border: isDarkMode ? '1px solid rgba(75, 85, 99, 0.25)' : '1px solid rgba(209, 213, 219, 0.25)',
@@ -292,11 +292,11 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
                   backdropFilter: 'blur(4px)',
                   WebkitBackdropFilter: 'blur(4px)',
                 }} title={edge.label || 'Connected'}>
-                  {edge.label || 'Connected'}
-                </span>
+              {edge.label || 'Connected'}
+            </span>
               </div>
-            </div>
-            
+          </div>
+          
             <div className="flex items-center justify-between rounded-lg p-1.5 text-xs" style={{
               background: isDarkMode ? 'rgba(75, 85, 99, 0.15)' : 'rgba(229, 231, 235, 0.15)',
               border: isDarkMode ? '1px solid rgba(75, 85, 99, 0.25)' : '1px solid rgba(209, 213, 219, 0.25)',
@@ -322,19 +322,19 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
                     ? 'rgba(239, 68, 68, 0.2)' :
                     (isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(209, 213, 219, 0.3)'),
                   border: `1px solid ${
-                    edge.sentiment === 'positive' 
+                edge.sentiment === 'positive' 
                       ? 'rgba(34, 197, 94, 0.3)' :
-                    edge.sentiment === 'negative' 
+                edge.sentiment === 'negative' 
                       ? 'rgba(239, 68, 68, 0.3)' :
                       (isDarkMode ? 'rgba(75, 85, 99, 0.4)' : 'rgba(209, 213, 219, 0.4)')
                   }`
                 }}>
-                  {edge.sentiment || 'neutral'}
-                </span>
-              </div>
+              {edge.sentiment || 'neutral'}
+            </span>
+          </div>
             </div>
 
-            {edge.condition && (
+          {edge.condition && (
               <div className="flex items-center justify-between rounded-md p-2 text-xs" style={{
                 background: themeStyles.propertyBg,
                 border: themeStyles.propertyBorder
@@ -348,10 +348,10 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
                     {edge.condition}
                   </span>
                 </div>
-              </div>
-            )}
+            </div>
+          )}
 
-            {edge.order !== undefined && (
+          {edge.order !== undefined && (
               <div className="flex items-center justify-between rounded-md p-2 text-xs" style={{
                 background: themeStyles.propertyBg,
                 border: themeStyles.propertyBorder
@@ -381,8 +381,8 @@ const EdgeInfoPanel = ({ edge, nodes, onClose, panelClassName }) => {
                 }} title={edge.id}>
                   {edge.id}
                 </span>
-              </div>
-            )}
+            </div>
+          )}
 
             {/* Additional properties */}
             {Object.entries(edge).filter(([key]) => 

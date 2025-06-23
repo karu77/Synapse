@@ -107,8 +107,8 @@ const GraphVisualization = forwardRef(
           console.log('Found node:', node)
           if (node) {
             console.log('Setting selectedNode to:', node)
-            setSelectedNode(node)
-            setSelectedEdge(null)
+          setSelectedNode(node)
+          setSelectedEdge(null)
           } else {
             console.log('Node not found in normalizedDataRef, checking original dataRef')
             const originalNode = (dataRef.current?.nodes ?? []).find((n) => n.id === nodeId)
@@ -133,7 +133,7 @@ const GraphVisualization = forwardRef(
             console.log('Found in original dataRef:', originalEdge)
             if (originalEdge) {
               setSelectedEdge(originalEdge)
-              setSelectedNode(null)
+            setSelectedNode(null)
             }
           }
         } else {
@@ -336,13 +336,22 @@ const GraphVisualization = forwardRef(
           return {
             hierarchical: {
               enabled: true,
-              levelSeparation: styleOptions.flowchartSpacing?.levelSeparation || 200,
-              nodeSpacing: styleOptions.flowchartSpacing?.nodeSpacing || 150,
-              treeSpacing: 250,
+              levelSeparation: styleOptions.flowchartSpacing?.levelSeparation || 120, // Reduced for tighter vertical flow
+              nodeSpacing: styleOptions.flowchartSpacing?.nodeSpacing || 100, // Reduced for better density
+              treeSpacing: 150, // Reduced for more compact layout
               blockShifting: true,
               edgeMinimization: true,
               parentCentralization: true,
               direction: 'UD', // Up-Down for clear process flow
+              sortMethod: 'directed',
+              shakeTowards: 'leaves',
+              levelDistribution: {
+                min: 1,
+                max: 1
+              },
+              nodeSpacing: 150, // Increased spacing between nodes
+              edgeMinimization: false, // Disable to prevent odd node placements
+              parentCentralization: false, // Disable to keep root at top
               sortMethod: 'directed',
               shakeTowards: 'leaves',
             },
@@ -375,18 +384,57 @@ const GraphVisualization = forwardRef(
       switch (type) {
         case 'flowchart':
           return {
-            enabled: false, // Completely static for clean flowcharts
-            stabilization: {
-              enabled: false, // No stabilization needed for static layouts
+            enabled: true,
+            hierarchicalRepulsion: {
+              centralGravity: 0.0,
+              springLength: 100,  // Shorter springs for tighter layout
+              springConstant: 0.02,  // Stronger springs
+              nodeDistance: 120,
+              damping: 0.2,  // Increased damping for less oscillation
             },
-          }
+            minVelocity: 0.3,  // Lower velocity for smoother settling
+            solver: 'hierarchicalRepulsion',
+            stabilization: {
+              enabled: true,
+              iterations: 1000,
+              updateInterval: 25,
+              onlyDynamicEdges: false,
+              fit: true,
+            },
+            timestep: 0.35,  // Smaller timestep for smoother animation
+            adaptiveTimestep: true,
+            hierarchical: {
+              direction: 'UD',  // Force top-to-bottom direction
+              levelSeparation: 120,
+              nodeSpacing: 100,
+              treeSpacing: 150,
+              blockShifting: true,
+              edgeMinimization: false,
+              parentCentralization: false,
+            },
+          };
         case 'mindmap':
           return {
-            enabled: false, // Disable physics for clean hierarchical mind map
-            stabilization: {
-              enabled: false, // No stabilization needed for static layouts
+            enabled: true,
+            hierarchicalRepulsion: {
+              centralGravity: 0.0,
+              springLength: 200,
+              springConstant: 0.01,
+              nodeDistance: 150,
+              damping: 0.09,
             },
-          }
+            minVelocity: 0.75,
+            solver: 'hierarchicalRepulsion',
+            stabilization: {
+              enabled: true,
+              iterations: 1000,
+              updateInterval: 25,
+              onlyDynamicEdges: false,
+              fit: true,
+            },
+            timestep: 0.5,
+            adaptiveTimestep: true,
+          };
         default: // knowledge-graph
           return {
             enabled: true,
@@ -405,52 +453,8 @@ const GraphVisualization = forwardRef(
               updateInterval: 50,
               fit: true,
             },
-          }
+          };
       }
-    }
-
-    // Get node shape based on node type and diagram type
-    const getNodeShape = (node, diagramType) => {
-      if (diagramType === 'flowchart') {
-        // Use the shape property from the node data if available, otherwise fall back to type-based mapping
-        if (node.shape) {
-          switch (node.shape) {
-            case 'ellipse': return 'ellipse'
-            case 'box': return 'box'
-            case 'diamond': return 'diamond'
-            case 'parallelogram': return 'box' // vis-network doesn't have parallelogram, use box with custom styling
-            case 'circle': return 'circle'
-            case 'document': return 'box' // Custom styling needed for wavy bottom
-            case 'display': return 'box' // Custom styling for rounded rectangle
-            default: return 'box'
-          }
-        }
-        
-        // Fallback to type-based mapping
-        switch (node.type) {
-          case 'START_END': return 'ellipse'
-          case 'PROCESS': return 'box'
-          case 'DECISION': return 'diamond'
-          case 'INPUT_OUTPUT': return 'box' // Will style as parallelogram with CSS
-          case 'CONNECTOR': return 'circle'
-          case 'DOCUMENT': return 'box' // Will style with wavy bottom
-          case 'DELAY': return 'box' // Will style as D-shape
-          case 'MERGE': return 'triangle'
-          case 'SUBROUTINE': return 'box' // Will style with double border
-          case 'MANUAL_LOOP': return 'box' // Will style as trapezoid
-          case 'DATABASE': return 'database'
-          case 'DISPLAY': return 'box' // Will style as rounded rectangle
-          default: return 'box'
-        }
-      }
-      
-      if (diagramType === 'mindmap') {
-        // All mind map nodes are rectangular for a clean, modern look
-        return 'box'
-      }
-
-      // Knowledge graph with varied shapes
-      return styleOptions.nodeShapes[node.type] || 'sphere'
     }
 
     // Get node size based on diagram type and node properties
@@ -466,21 +470,21 @@ const GraphVisualization = forwardRef(
       }
       
       if (diagramType === 'flowchart') {
-        // Minimalistic flowchart sizes - smaller and more uniform
+        // Standard flowchart sizes based on node type
         switch (node.type) {
-          case 'START_END': return 55 // Slightly smaller
-          case 'PROCESS': return 50 // Smaller and more uniform
-          case 'DECISION': return 50 // Uniform with process
-          case 'INPUT_OUTPUT': return 50 // Uniform size
-          case 'CONNECTOR': return 25 // Smaller connectors
-          case 'DOCUMENT': return 50 // Uniform
-          case 'DELAY': return 50 // Uniform
-          case 'MERGE': return 40 // Smaller
-          case 'SUBROUTINE': return 50 // Uniform
-          case 'MANUAL_LOOP': return 50 // Uniform
-          case 'DATABASE': return 50 // Uniform
-          case 'DISPLAY': return 50 // Uniform
-          default: return 50 // Default uniform size
+          case 'START_END': return { width: 150, height: 60 }  // Oval shape
+          case 'PROCESS': return { width: 160, height: 70 }    // Rectangle
+          case 'DECISION': return { width: 100, height: 100 }  // Diamond (width and height should be equal)
+          case 'INPUT_OUTPUT': return { width: 160, height: 70, shape: 'box', shapeProperties: { borderRadius: 10 } } // Parallelogram
+          case 'CONNECTOR': return { width: 30, height: 30 }   // Circle
+          case 'DOCUMENT': return { width: 140, height: 80, shape: 'box', shapeProperties: { borderRadius: [10, 10, 0, 0] } } // Document shape
+          case 'DELAY': return { width: 140, height: 70, shape: 'box', shapeProperties: { borderRadius: [0, 0, 0, 0] } } // Delay shape
+          case 'MERGE': return { width: 100, height: 100 }     // Diamond for merge
+          case 'SUBROUTINE': return { width: 160, height: 70, shape: 'box', shapeProperties: { borderDashes: [5, 5] } } // Double border
+          case 'MANUAL_LOOP': return { width: 160, height: 70 } // Regular rectangle
+          case 'DATABASE': return { width: 120, height: 70 }    // Cylinder shape
+          case 'DISPLAY': return { width: 160, height: 70, shape: 'box', shapeProperties: { borderRadius: 10 } } // Rounded rectangle
+          default: return { width: 160, height: 70 }            // Default rectangle
         }
       }
 
@@ -490,6 +494,36 @@ const GraphVisualization = forwardRef(
       if (node.type === 'LOCATION') return 35
       return 32
     }
+
+    // Get node shape based on diagram type and node properties
+    const getNodeShape = (node, diagramType) => {
+      if (diagramType === 'flowchart') {
+        // Standard flowchart shapes based on node type
+        const shapeMap = {
+          'START_END': 'ellipse',
+          'PROCESS': 'box',
+          'DECISION': 'diamond',
+          'INPUT_OUTPUT': 'box',
+          'CONNECTOR': 'circle',
+          'DOCUMENT': 'box',
+          'DELAY': 'box',
+          'MERGE': 'triangle',
+          'SUBROUTINE': 'box',
+          'MANUAL_LOOP': 'box',
+          'DATABASE': 'database',
+          'DISPLAY': 'box'
+        };
+        return shapeMap[node.type] || 'box';
+      }
+
+      if (diagramType === 'mindmap') {
+        // Mind map nodes are boxes with rounded corners
+        return 'box';
+      }
+
+      // Default to box for knowledge graphs and other diagram types
+      return 'box';
+    };
 
     // Get node colors based on diagram type
     const getNodeColors = (node, diagramType, theme) => {
@@ -525,20 +559,20 @@ const GraphVisualization = forwardRef(
       }
       
       if (diagramType === 'flowchart') {
-        // Minimalistic flowchart colors - clean and functional
+        // Standard flowchart colors based on node type
         const flowchartColors = {
-          'START_END': theme === 'dark' ? '#10b981' : '#059669',    // Clean green
-          'PROCESS': theme === 'dark' ? '#3b82f6' : '#2563eb',      // Clean blue
-          'DECISION': theme === 'dark' ? '#f59e0b' : '#d97706',     // Clean amber
-          'INPUT_OUTPUT': theme === 'dark' ? '#8b5cf6' : '#7c3aed', // Clean purple
-          'CONNECTOR': theme === 'dark' ? '#6b7280' : '#4b5563',    // Clean gray
-          'DOCUMENT': theme === 'dark' ? '#ec4899' : '#db2777',     // Clean pink
-          'DELAY': theme === 'dark' ? '#f97316' : '#ea580c',        // Clean orange
-          'MERGE': theme === 'dark' ? '#06b6d4' : '#0891b2',        // Clean cyan
-          'SUBROUTINE': theme === 'dark' ? '#10b981' : '#059669',   // Same as start/end
-          'MANUAL_LOOP': theme === 'dark' ? '#a855f7' : '#9333ea', // Clean violet
-          'DATABASE': theme === 'dark' ? '#6366f1' : '#4f46e5',     // Clean indigo
-          'DISPLAY': theme === 'dark' ? '#0ea5e9' : '#0284c7',      // Clean sky blue
+          'START_END': theme === 'dark' ? '#10b981' : '#059669',    // Green for start/end
+          'PROCESS': theme === 'dark' ? '#3b82f6' : '#2563eb',      // Blue for process
+          'DECISION': theme === 'dark' ? '#f59e0b' : '#d97706',     // Yellow for decision
+          'INPUT_OUTPUT': theme === 'dark' ? '#8b5cf6' : '#7c3aed', // Purple for input/output
+          'CONNECTOR': theme === 'dark' ? '#6b7280' : '#4b5563',    // Gray for connector
+          'DOCUMENT': theme === 'dark' ? '#ec4899' : '#db2777',     // Pink for document
+          'DELAY': theme === 'dark' ? '#f97316' : '#ea580c',        // Orange for delay
+          'MERGE': theme === 'dark' ? '#06b6d4' : '#0891b2',        // Cyan for merge
+          'SUBROUTINE': theme === 'dark' ? '#10b981' : '#059669',   // Green for subroutine
+          'MANUAL_LOOP': theme === 'dark' ? '#a855f7' : '#9333ea',  // Purple for manual loop
+          'DATABASE': theme === 'dark' ? '#6366f1' : '#4f46e5',     // Indigo for database
+          'DISPLAY': theme === 'dark' ? '#0ea5e9' : '#0284c7',      // Sky blue for display
         }
         
         const color = flowchartColors[node.type] || flowchartColors['PROCESS']
@@ -898,30 +932,29 @@ const GraphVisualization = forwardRef(
           }
         }
 
-        // For hierarchical layouts (flowchart and mindmap), ensure ALL nodes have a level property
+        // For mind maps, ensure level is properly set or inferred
         if (diagramType === 'mindmap') {
-          // Ensure level is properly set - if missing, try to infer from node type or default to 0
           let nodeLevel = node.level
           if (nodeLevel === undefined || nodeLevel === null) {
-            // For mind maps, try to infer level from node type or position in hierarchy
-            if (node.type === 'TOPIC' && (node.label?.toLowerCase().includes('central') || node.id === 'center')) {
-              nodeLevel = 0 // Central topic
-            } else if (node.type === 'TOPIC') {
-              nodeLevel = 1 // Main branch
-            } else if (node.type === 'SUBTOPIC') {
-              nodeLevel = 2 // Secondary branch
-            } else if (node.type === 'CONCEPT') {
-              nodeLevel = 3 // Detail level
-            } else {
-              nodeLevel = 1 // Default to main branch
+              if (node.type === 'TOPIC' && (node.label?.toLowerCase().includes('central') || node.id === 'center')) {
+                nodeLevel = 0 // Central topic
+              } else if (node.type === 'TOPIC') {
+                nodeLevel = 1 // Main branch
+              } else if (node.type === 'SUBTOPIC') {
+                nodeLevel = 2 // Secondary branch
+              } else if (node.type === 'CONCEPT') {
+                nodeLevel = 3 // Detail level
+              } else {
+                nodeLevel = 1 // Default to main branch
             }
           }
           baseNode.level = nodeLevel
         } else if (diagramType === 'flowchart') {
-          // For flowcharts, if a level is provided, use it.
-          // Otherwise, do NOT assign a level, so vis.js can determine it automatically.
+          // For flowcharts, only assign level if it is present in the node data
           if (node.level !== undefined && node.level !== null) {
             baseNode.level = node.level;
+          } else {
+            delete baseNode.level;
           }
         } else {
           // For knowledge graphs, ensure NO nodes have level property to avoid conflicts
