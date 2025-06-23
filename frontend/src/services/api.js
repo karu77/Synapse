@@ -1,9 +1,18 @@
-import axios from 'axios'
+import axios from 'axios';
+
+// Determine the base URL based on the environment
+const isDevelopment = import.meta.env.MODE === 'development';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002';
+const apiPath = import.meta.env.VITE_API_URL || '/api';
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3002/api',
-})
+  baseURL: isDevelopment ? apiPath : `${apiBaseUrl}${apiPath}`,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 // Add a request interceptor to include the token in the headers
 api.interceptors.request.use(
