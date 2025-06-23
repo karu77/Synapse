@@ -337,23 +337,18 @@ const GraphVisualization = forwardRef(
             hierarchical: {
               enabled: true,
               levelSeparation: styleOptions.flowchartSpacing?.levelSeparation || 120, // Reduced for tighter vertical flow
-              nodeSpacing: styleOptions.flowchartSpacing?.nodeSpacing || 100, // Reduced for better density
+              nodeSpacing: 150, // Increased spacing between nodes
               treeSpacing: 150, // Reduced for more compact layout
               blockShifting: true,
-              edgeMinimization: true,
-              parentCentralization: true,
+              edgeMinimization: false, // Disable to prevent odd node placements
+              parentCentralization: false, // Disable to keep root at top
               direction: 'UD', // Up-Down for clear process flow
               sortMethod: 'directed',
               shakeTowards: 'leaves',
               levelDistribution: {
                 min: 1,
                 max: 1
-              },
-              nodeSpacing: 150, // Increased spacing between nodes
-              edgeMinimization: false, // Disable to prevent odd node placements
-              parentCentralization: false, // Disable to keep root at top
-              sortMethod: 'directed',
-              shakeTowards: 'leaves',
+              }
             },
           }
         case 'mindmap':
