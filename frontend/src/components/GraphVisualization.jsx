@@ -497,8 +497,13 @@ const GraphVisualization = forwardRef(
 
     // Get node shape based on diagram type and node properties
     const getNodeShape = (node, diagramType) => {
+      // If node has a specific shape defined, use it
+      if (node.shape) {
+        return node.shape;
+      }
+
+      // For flowcharts, use type-based shapes
       if (diagramType === 'flowchart') {
-        // Standard flowchart shapes based on node type
         const shapeMap = {
           'START_END': 'ellipse',
           'PROCESS': 'box',
@@ -516,12 +521,25 @@ const GraphVisualization = forwardRef(
         return shapeMap[node.type] || 'box';
       }
 
+      // For mindmaps, always use box
       if (diagramType === 'mindmap') {
-        // Mind map nodes are boxes with rounded corners
         return 'box';
       }
 
-      // Default to box for knowledge graphs and other diagram types
+      // For knowledge graph, default to circle but allow override via node.type
+      if (diagramType === 'knowledge-graph' || !diagramType) {
+        const knowledgeGraphShapes = {
+          'PERSON': 'ellipse',
+          'ORG': 'box',
+          'LOCATION': 'diamond',
+          'EVENT': 'star',
+          'CONCEPT': 'circle',
+          'OBJECT': 'box'
+        };
+        return knowledgeGraphShapes[node.type] || 'circle';
+      }
+
+      // Default to box for other diagram types
       return 'box';
     };
 

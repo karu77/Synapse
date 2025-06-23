@@ -86,4 +86,23 @@ const resetPassword = async (req: Request, res: Response) => {
   res.json({ message: 'Password has been reset successfully.' })
 }
 
-export { registerUser, authUser, deleteUser, resetPassword } 
+// @desc    Clear all users (DEV ONLY)
+// @route   DELETE /api/users/clear-all
+// @access  Private/Admin
+const clearAllUsers = async (req: Request, res: Response) => {
+  if (process.env.NODE_ENV !== 'development') {
+    return res.status(403).json({ message: 'This action is only available in development mode' });
+  }
+
+  try {
+    await User.deleteMany({});
+    await History.deleteMany({});
+    res.json({ message: 'All users and their data have been cleared' });
+  } catch (error: unknown) {
+    console.error('Error clearing users:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    res.status(500).json({ message: 'Error clearing users', error: errorMessage });
+  }
+};
+
+export { registerUser, authUser, deleteUser, resetPassword, clearAllUsers } 
