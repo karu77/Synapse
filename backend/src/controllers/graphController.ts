@@ -365,29 +365,51 @@ ${input}
       
       // General handling for other diagram types
       const basePrompt = hasQuestion
-        ? `Answer the following question: ${input}\n\n`
-        : `Analyze the following text: ${input}\n\n`;
+        ? `Answer the following question in detail: ${input}\n\n`
+        : `Analyze the following text comprehensively: ${input}\n\n`;
       
       const visualContext = [];
       if (hasImage) visualContext.push('image data');
       if (hasAudio) visualContext.push('audio data');
       
       const contextPrompt = visualContext.length > 0
-        ? `Consider the provided ${visualContext.join(' and ')} as additional context.\n\n`
+        ? `Carefully analyze and incorporate the provided ${visualContext.join(' and ')} as additional context.\n\n`
         : '';
       
       const diagramSpecificPrompt = {
-        'knowledge-graph': 'Generate a knowledge graph with entities and relationships. ',
-        'flowchart': 'Create a flowchart with nodes and edges. ',
-        'sequence': 'Generate a sequence diagram showing interactions. ',
-        'mindmap': 'Create a mind map with a central concept and related ideas. ',
-        'er-diagram': 'Generate an entity-relationship diagram. ',
-        'timeline': 'Create a timeline of events. ',
-        'swimlane': 'Generate a swimlane diagram showing processes across different departments. ',
-        'state': 'Create a state diagram showing different states and transitions. ',
-        'gantt': 'Generate a Gantt chart showing project timeline and tasks. ',
-        'venn': 'Create a Venn diagram showing overlapping concepts. ',
-      }[type] || 'Generate a diagram with the following structure: ';
+        'knowledge-graph': `Generate a comprehensive knowledge graph with detailed entities and meaningful relationships. For each entity, include:
+- type: One of PERSON, GROUP, ROLE, ORG, COMPANY, GOVERNMENT, NONPROFIT, LOCATION, CITY, COUNTRY, REGION, EVENT, MEETING, CONFERENCE, MILESTONE, CONCEPT, IDEA, PRINCIPLE, THEORY, OBJECT, PRODUCT, DOCUMENT, TOOL, DATE, PERIOD, METRIC, GOAL, PROBLEM, or SOLUTION
+- label: A clear, descriptive name
+- description: A detailed explanation (2-3 sentences)
+- properties: Key attributes relevant to the entity
+- importance: A number from 1-5 indicating significance
+
+For relationships, include:
+- label: The type of relationship
+- description: How the entities are connected
+- strength: A number from 0-1 indicating relationship strength`,
+
+        'mindmap': `Create a detailed mind map with a central concept and well-structured branches. Include:
+- MAIN_TOPIC: The central concept (most important)
+- TOPIC: Main branches (key themes)
+- SUBPOINT: Supporting details
+- NOTE: Additional information or examples
+- TASK: Action items or to-dos
+- QUESTION: Open questions or areas needing clarification
+- IDEA: Creative suggestions or possibilities
+- DECISION: Important choices or conclusions
+- PRO/CON: Advantages and disadvantages
+- SUMMARY: Key takeaways or synthesis`,
+
+        'flowchart': 'Create a detailed flowchart with clear nodes and logical flows. ',
+        'sequence': 'Generate a sequence diagram showing detailed interactions between components. ',
+        'er-diagram': 'Generate a comprehensive entity-relationship diagram with detailed attributes and relationships. ',
+        'timeline': 'Create a detailed timeline of events with dates, descriptions, and significance. ',
+        'swimlane': 'Generate a swimlane diagram showing detailed processes across different departments. ',
+        'state': 'Create a state diagram showing detailed states and transitions. ',
+        'gantt': 'Generate a Gantt chart showing project timeline, tasks, dependencies, and resources. ',
+        'venn': 'Create a Venn diagram showing detailed overlapping concepts and relationships. ',
+      }[type] || 'Generate a detailed diagram with the following structure: ';
       
       return basePrompt + contextPrompt + diagramSpecificPrompt;
     }

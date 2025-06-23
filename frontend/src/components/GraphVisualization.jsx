@@ -455,39 +455,86 @@ const GraphVisualization = forwardRef(
     // Get node size based on diagram type and node properties
     const getNodeSize = (node, diagramType) => {
       if (diagramType === 'mindmap') {
-        // Enhanced mind map sizes - more appealing hierarchy
-        if (node.level === 0) return 65 // Central topic - prominent and commanding
-        if (node.level === 1) return 45 // Main branches - substantial
-        if (node.level === 2) return 35 // Secondary branches - medium
-        if (node.level === 3) return 28 // Tertiary branches - balanced
-        if (node.level === 4) return 22 // Fourth level - compact
-        return 18 // Deeper levels - minimal but readable
+        // Enhanced mind map sizes with more granularity
+        const sizeMap = {
+          0: 70,  // Central topic - most prominent
+          1: 50,  // Main branches - substantial
+          2: 40,  // Secondary branches - medium
+          3: 32,  // Tertiary branches - balanced
+          4: 26,  // Fourth level - compact
+          5: 22   // Fifth level - minimal
+        };
+        return sizeMap[node.level] || 18; // Default for deeper levels
       }
       
       if (diagramType === 'flowchart') {
         // Standard flowchart sizes based on node type
-        switch (node.type) {
-          case 'START_END': return { width: 150, height: 60 }  // Oval shape
-          case 'PROCESS': return { width: 160, height: 70 }    // Rectangle
-          case 'DECISION': return { width: 100, height: 100 }  // Diamond (width and height should be equal)
-          case 'INPUT_OUTPUT': return { width: 160, height: 70, shape: 'box', shapeProperties: { borderRadius: 10 } } // Parallelogram
-          case 'CONNECTOR': return { width: 30, height: 30 }   // Circle
-          case 'DOCUMENT': return { width: 140, height: 80, shape: 'box', shapeProperties: { borderRadius: [10, 10, 0, 0] } } // Document shape
-          case 'DELAY': return { width: 140, height: 70, shape: 'box', shapeProperties: { borderRadius: [0, 0, 0, 0] } } // Delay shape
-          case 'MERGE': return { width: 100, height: 100 }     // Diamond for merge
-          case 'SUBROUTINE': return { width: 160, height: 70, shape: 'box', shapeProperties: { borderDashes: [5, 5] } } // Double border
-          case 'MANUAL_LOOP': return { width: 160, height: 70 } // Regular rectangle
-          case 'DATABASE': return { width: 120, height: 70 }    // Cylinder shape
-          case 'DISPLAY': return { width: 160, height: 70, shape: 'box', shapeProperties: { borderRadius: 10 } } // Rounded rectangle
-          default: return { width: 160, height: 70 }            // Default rectangle
-        }
+        const sizeMap = {
+          'START_END': { width: 150, height: 60 },
+          'PROCESS': { width: 160, height: 70 },
+          'DECISION': { width: 100, height: 100 },
+          'INPUT_OUTPUT': { width: 160, height: 70 },
+          'CONNECTOR': { width: 30, height: 30 },
+          'DOCUMENT': { width: 140, height: 80 },
+          'DELAY': { width: 140, height: 70 },
+          'MERGE': { width: 100, height: 100 },
+          'SUBROUTINE': { width: 160, height: 70 },
+          'MANUAL_LOOP': { width: 160, height: 70 },
+          'DATABASE': { width: 120, height: 70 },
+          'DISPLAY': { width: 160, height: 70 }
+        };
+        return sizeMap[node.type] || { width: 160, height: 70 };
       }
 
-      // Knowledge graph - keep as is (varied but larger for better visibility)
-      if (node.type === 'PERSON') return 40
-      if (node.type === 'ORG') return 38
-      if (node.type === 'LOCATION') return 35
-      return 32
+      // Enhanced knowledge graph sizes based on node type
+      if (diagramType === 'knowledge-graph' || !diagramType) {
+        const sizeMap = {
+          // People
+          'PERSON': 45,
+          'GROUP': 40,
+          'ROLE': 38,
+          
+          // Organizations
+          'ORG': 42,
+          'COMPANY': 42,
+          'GOVERNMENT': 45,
+          'NONPROFIT': 42,
+          
+          // Locations
+          'LOCATION': 44,
+          'CITY': 42,
+          'COUNTRY': 46,
+          'REGION': 44,
+          
+          // Events
+          'EVENT': 48,
+          'MEETING': 42,
+          'CONFERENCE': 46,
+          'MILESTONE': 44,
+          
+          // Concepts
+          'CONCEPT': 40,
+          'IDEA': 38,
+          'PRINCIPLE': 42,
+          'THEORY': 44,
+          
+          // Default sizes for other types
+          'OBJECT': 36,
+          'PRODUCT': 38,
+          'DOCUMENT': 40,
+          'TOOL': 36,
+          'DATE': 35,
+          'PERIOD': 35,
+          'METRIC': 38,
+          'GOAL': 42,
+          'PROBLEM': 40,
+          'SOLUTION': 42
+        };
+        
+        return sizeMap[node.type] || 36; // Default size for unspecified types
+      }
+      
+      return 32; // Fallback default size
     }
 
     // Get node shape based on diagram type and node properties
@@ -516,22 +563,81 @@ const GraphVisualization = forwardRef(
         return shapeMap[node.type] || 'box';
       }
 
-      // For mindmaps, always use box
+      // Enhanced mindmap node types with shapes
       if (diagramType === 'mindmap') {
-        return 'box';
+        const mindmapShapes = {
+          'MAIN_TOPIC': { shape: 'ellipse', borderWidth: 3 },
+          'TOPIC': { shape: 'box', borderRadius: 5 },
+          'SUBPOINT': { shape: 'box', borderRadius: 3, borderDashes: [3, 3] },
+          'NOTE': { shape: 'box', borderDashes: [5, 5] },
+          'TASK': { shape: 'box', borderWidth: 2 },
+          'QUESTION': { shape: 'diamond' },
+          'IDEA': { shape: 'ellipse', borderDashes: [5, 3] },
+          'DECISION': { shape: 'diamond', borderWidth: 2 },
+          'PRO': { shape: 'triangle', direction: 'up' },
+          'CON': { shape: 'triangle', direction: 'down' },
+          'SUMMARY': { shape: 'box', borderRadius: 10 }
+        };
+        
+        const shapeInfo = mindmapShapes[node.type] || { shape: 'box' };
+        // Store additional shape properties on the node for later use
+        Object.assign(node, shapeInfo);
+        return shapeInfo.shape;
       }
 
-      // For knowledge graph, default to circle but allow override via node.type
+      // Enhanced knowledge graph node types with shapes
       if (diagramType === 'knowledge-graph' || !diagramType) {
         const knowledgeGraphShapes = {
-          'PERSON': 'ellipse',
-          'ORG': 'box',
-          'LOCATION': 'diamond',
-          'EVENT': 'star',
-          'CONCEPT': 'circle',
-          'OBJECT': 'box'
+          // People
+          'PERSON': { shape: 'ellipse', borderWidth: 2 },
+          'GROUP': { shape: 'ellipse', borderDashes: [5, 5] },
+          'ROLE': { shape: 'ellipse', borderDashes: [3, 3] },
+          
+          // Organizations
+          'ORG': { shape: 'box', borderRadius: 5 },
+          'COMPANY': { shape: 'box', borderRadius: 5 },
+          'GOVERNMENT': { shape: 'box', borderWidth: 3 },
+          'NONPROFIT': { shape: 'box', borderDashes: [5, 5] },
+          
+          // Locations
+          'LOCATION': { shape: 'diamond' },
+          'CITY': { shape: 'diamond' },
+          'COUNTRY': { shape: 'diamond', borderWidth: 2 },
+          'REGION': { shape: 'diamond', borderDashes: [5, 5] },
+          
+          // Events
+          'EVENT': { shape: 'star' },
+          'MEETING': { shape: 'star', borderDashes: [3, 3] },
+          'CONFERENCE': { shape: 'star', borderWidth: 2 },
+          'MILESTONE': { shape: 'star', borderDashes: [5, 5] },
+          
+          // Concepts
+          'CONCEPT': { shape: 'circle' },
+          'IDEA': { shape: 'circle', borderDashes: [5, 3] },
+          'PRINCIPLE': { shape: 'circle', borderWidth: 2 },
+          'THEORY': { shape: 'circle', borderDashes: [3, 3] },
+          
+          // Objects
+          'OBJECT': { shape: 'box' },
+          'PRODUCT': { shape: 'box', borderRadius: 3 },
+          'DOCUMENT': { shape: 'box', borderDashes: [5, 5] },
+          'TOOL': { shape: 'box', borderWidth: 2 },
+          
+          // Time
+          'DATE': { shape: 'triangle', direction: 'right' },
+          'PERIOD': { shape: 'triangle', direction: 'down' },
+          
+          // Other
+          'METRIC': { shape: 'hexagon' },
+          'GOAL': { shape: 'triangle', direction: 'up' },
+          'PROBLEM': { shape: 'triangle', direction: 'down', borderDashes: [3, 3] },
+          'SOLUTION': { shape: 'triangle', direction: 'up', borderDashes: [3, 3] }
         };
-        return knowledgeGraphShapes[node.type] || 'circle';
+        
+        const shapeInfo = knowledgeGraphShapes[node.type] || { shape: 'circle' };
+        // Store additional shape properties on the node for later use
+        Object.assign(node, shapeInfo);
+        return shapeInfo.shape;
       }
 
       // Default to box for other diagram types
