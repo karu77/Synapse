@@ -329,6 +329,7 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
   - id: unique string
   - label: short description
   - type: one of the above types
+  - level: REQUIRED integer indicating vertical order (0 = top, higher numbers = lower)
   - (optional) description: longer explanation
 
 - For each edge, specify:
@@ -336,18 +337,19 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
   - target: id of the target node
   - label: (optional) label for the edge (e.g., "Yes", "No" for decisions)
 
-- The flow should be vertical (top to bottom). Use a 'level' property if needed to indicate vertical order.
+- CRITICAL: The flow should be vertical (top to bottom). ALWAYS include a 'level' property for each node to ensure proper vertical ordering.
+- **Critically analyze the process and use the most specific and appropriate shape for each step from the list provided. Avoid defaulting to the 'PROCESS' type for every step unless it is truly just a process step.**
 
 **Return ONLY a JSON object with arrays "nodes" and "edges". Do NOT include markdown, code blocks, or explanations.**
 
 **Example:**
 {
   "nodes": [
-    { "id": "start", "label": "Start", "type": "START_END" },
-    { "id": "input", "label": "Get User Input", "type": "INPUT_OUTPUT" },
-    { "id": "decision", "label": "Is Input Valid?", "type": "DECISION" },
-    { "id": "process", "label": "Process Data", "type": "PROCESS" },
-    { "id": "end", "label": "End", "type": "START_END" }
+    { "id": "start", "label": "Start", "type": "START_END", "level": 0 },
+    { "id": "input", "label": "Get User Input", "type": "INPUT_OUTPUT", "level": 1 },
+    { "id": "decision", "label": "Is Input Valid?", "type": "DECISION", "level": 2 },
+    { "id": "process", "label": "Process Data", "type": "PROCESS", "level": 3 },
+    { "id": "end", "label": "End", "type": "START_END", "level": 4 }
   ],
   "edges": [
     { "source": "start", "target": "input" },
@@ -440,7 +442,7 @@ For relationships, include:
             answer: "A detailed textual answer to the user's question goes here...",
             graph: {
               entities: [
-                {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "A brief summary or definition of the entity."}
+                {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "A brief summary or definition of the entity.", "importance": 5, "properties": {"Attribute": "Value"}}
               ],
               relationships: [
                 {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral", "description": "What connects the two nodes."}
@@ -450,7 +452,7 @@ For relationships, include:
           text: {
             graph: {
               entities: [
-                {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "A brief summary or definition of the entity."}
+                {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "A brief summary or definition of the entity.", "importance": 4, "properties": {"Key": "Data", "Status": "Complete"}}
               ],
               relationships: [
                 {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral", "description": "What connects the two nodes."}
@@ -463,13 +465,13 @@ For relationships, include:
             answer: "A detailed textual answer to the user's question goes here...",
             graph: {
               entities: [
-                {"id": "start", "label": "Start", "type": "START_END", "sentiment": "neutral", "description": "Beginning of the process"},
-                {"id": "step1", "label": "Gather Information", "type": "INPUT_OUTPUT", "sentiment": "neutral", "description": "Collect required information"},
-                {"id": "step2", "label": "Analyze Data", "type": "PROCESS", "sentiment": "neutral", "description": "Process the information"},
-                {"id": "decision1", "label": "Is Data Complete?", "type": "DECISION", "sentiment": "neutral", "description": "Check if all required data is available"},
-                {"id": "step3", "label": "Generate Solution", "type": "PROCESS", "sentiment": "neutral", "description": "Create the solution or answer"},
-                {"id": "display1", "label": "Present Result", "type": "DISPLAY", "sentiment": "neutral", "description": "Show the final result"},
-                {"id": "end", "label": "End", "type": "START_END", "sentiment": "neutral", "description": "End of the process"}
+                {"id": "start", "label": "Start", "type": "START_END", "sentiment": "neutral", "description": "Beginning of the process", "level": 0},
+                {"id": "step1", "label": "Gather Information", "type": "INPUT_OUTPUT", "sentiment": "neutral", "description": "Collect required information", "level": 1},
+                {"id": "step2", "label": "Analyze Data", "type": "PROCESS", "sentiment": "neutral", "description": "Process the information", "level": 2},
+                {"id": "decision1", "label": "Is Data Complete?", "type": "DECISION", "sentiment": "neutral", "description": "Check if all required data is available", "level": 3},
+                {"id": "step3", "label": "Generate Solution", "type": "PROCESS", "sentiment": "neutral", "description": "Create the solution or answer", "level": 4},
+                {"id": "display1", "label": "Present Result", "type": "DISPLAY", "sentiment": "neutral", "description": "Show the final result", "level": 5},
+                {"id": "end", "label": "End", "type": "START_END", "sentiment": "neutral", "description": "End of the process", "level": 6}
               ],
               relationships: [
                 {"source": "start", "target": "step1", "label": "", "sentiment": "neutral", "description": "Begin process"},
@@ -485,25 +487,25 @@ For relationships, include:
           text: {
             graph: {
               entities: [
-                {"id": "start", "label": "Start Program", "type": "START_END", "sentiment": "neutral", "description": "Program execution begins"},
-                {"id": "import1", "label": "Import Libraries", "type": "PROCESS", "sentiment": "neutral", "description": "Load required modules"},
-                {"id": "init1", "label": "Initialize Variables", "type": "PROCESS", "sentiment": "neutral", "description": "Set up program variables"},
-                {"id": "main_entry", "label": "Enter Main Function", "type": "PROCESS", "sentiment": "neutral", "description": "Begin main program logic"},
-                {"id": "input1", "label": "Get User Input", "type": "INPUT_OUTPUT", "sentiment": "neutral", "description": "Receive data from user"},
-                {"id": "validate", "label": "Is Input Valid?", "type": "DECISION", "sentiment": "neutral", "description": "Check input validity"},
-                {"id": "error_msg", "label": "Display Error Message", "type": "DISPLAY", "sentiment": "neutral", "description": "Show error to user"},
-                {"id": "process1", "label": "Process Input Data", "type": "PROCESS", "sentiment": "neutral", "description": "Transform input data"},
-                {"id": "calc1", "label": "Perform Calculations", "type": "PROCESS", "sentiment": "neutral", "description": "Execute mathematical operations"},
-                {"id": "loop_init", "label": "Initialize Loop Counter", "type": "PROCESS", "sentiment": "neutral", "description": "Set up iteration variable"},
-                {"id": "loop_check", "label": "Counter < Limit?", "type": "DECISION", "sentiment": "neutral", "description": "Check loop condition"},
-                {"id": "loop_body", "label": "Execute Loop Body", "type": "PROCESS", "sentiment": "neutral", "description": "Perform loop operations"},
-                {"id": "loop_increment", "label": "Increment Counter", "type": "PROCESS", "sentiment": "neutral", "description": "Update loop variable"},
-                {"id": "func_call", "label": "Call Helper Function", "type": "SUBROUTINE", "sentiment": "neutral", "description": "Execute external function"},
-                {"id": "result_check", "label": "Result Available?", "type": "DECISION", "sentiment": "neutral", "description": "Check if processing succeeded"},
-                {"id": "format_output", "label": "Format Results", "type": "PROCESS", "sentiment": "neutral", "description": "Prepare output data"},
-                {"id": "display_result", "label": "Display Results", "type": "DISPLAY", "sentiment": "neutral", "description": "Show final output"},
-                {"id": "cleanup", "label": "Cleanup Resources", "type": "PROCESS", "sentiment": "neutral", "description": "Free memory and resources"},
-                {"id": "end", "label": "End Program", "type": "START_END", "sentiment": "neutral", "description": "Program execution ends"}
+                {"id": "start", "label": "Start Program", "type": "START_END", "sentiment": "neutral", "description": "Program execution begins", "level": 0},
+                {"id": "import1", "label": "Import Libraries", "type": "PROCESS", "sentiment": "neutral", "description": "Load required modules", "level": 1},
+                {"id": "init1", "label": "Initialize Variables", "type": "PROCESS", "sentiment": "neutral", "description": "Set up program variables", "level": 2},
+                {"id": "main_entry", "label": "Enter Main Function", "type": "PROCESS", "sentiment": "neutral", "description": "Begin main program logic", "level": 3},
+                {"id": "input1", "label": "Get User Input", "type": "INPUT_OUTPUT", "sentiment": "neutral", "description": "Receive data from user", "level": 4},
+                {"id": "validate", "label": "Is Input Valid?", "type": "DECISION", "sentiment": "neutral", "description": "Check input validity", "level": 5},
+                {"id": "error_msg", "label": "Display Error Message", "type": "DISPLAY", "sentiment": "neutral", "description": "Show error to user", "level": 4},
+                {"id": "process1", "label": "Process Input Data", "type": "PROCESS", "sentiment": "neutral", "description": "Transform input data", "level": 6},
+                {"id": "calc1", "label": "Perform Calculations", "type": "PROCESS", "sentiment": "neutral", "description": "Execute mathematical operations", "level": 7},
+                {"id": "loop_init", "label": "Initialize Loop Counter", "type": "PROCESS", "sentiment": "neutral", "description": "Set up iteration variable", "level": 8},
+                {"id": "loop_check", "label": "Counter < Limit?", "type": "DECISION", "sentiment": "neutral", "description": "Check loop condition", "level": 9},
+                {"id": "loop_body", "label": "Execute Loop Body", "type": "PROCESS", "sentiment": "neutral", "description": "Perform loop operations", "level": 10},
+                {"id": "loop_increment", "label": "Increment Counter", "type": "PROCESS", "sentiment": "neutral", "description": "Update loop variable", "level": 11},
+                {"id": "func_call", "label": "Call Helper Function", "type": "SUBROUTINE", "sentiment": "neutral", "description": "Execute external function", "level": 12},
+                {"id": "result_check", "label": "Result Available?", "type": "DECISION", "sentiment": "neutral", "description": "Check if processing succeeded", "level": 13},
+                {"id": "format_output", "label": "Format Results", "type": "PROCESS", "sentiment": "neutral", "description": "Prepare output data", "level": 14},
+                {"id": "display_result", "label": "Display Results", "type": "DISPLAY", "sentiment": "neutral", "description": "Show final output", "level": 15},
+                {"id": "cleanup", "label": "Cleanup Resources", "type": "PROCESS", "sentiment": "neutral", "description": "Free memory and resources", "level": 16},
+                {"id": "end", "label": "End Program", "type": "START_END", "sentiment": "neutral", "description": "Program execution ends", "level": 17}
               ],
               relationships: [
                 {"source": "start", "target": "import1", "label": "", "sentiment": "neutral", "description": "Begin execution"},

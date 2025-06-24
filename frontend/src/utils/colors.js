@@ -62,6 +62,26 @@ const lightThemeColors = {
   DEFAULT: '#64748b', // Slate 500
 }
 
+// Mind map level colors for dark theme
+const darkMindmapLevelColors = {
+  0: '#a855f7', // Central topic - Purple 500 (most important)
+  1: '#3b82f6', // Level 1 - Blue 500 (main branches)
+  2: '#10b981', // Level 2 - Emerald 500 (secondary branches)
+  3: '#f59e0b', // Level 3 - Amber 500 (details)
+  4: '#ef4444', // Level 4 - Red 500 (specific details)
+  5: '#ec4899', // Level 5+ - Pink 500 (deepest details)
+}
+
+// Mind map level colors for light theme
+const lightMindmapLevelColors = {
+  0: '#7c3aed', // Central topic - Purple 600 (most important)
+  1: '#2563eb', // Level 1 - Blue 600 (main branches)
+  2: '#059669', // Level 2 - Emerald 600 (secondary branches)
+  3: '#d97706', // Level 3 - Amber 600 (details)
+  4: '#dc2626', // Level 4 - Red 600 (specific details)
+  5: '#db2777', // Level 5+ - Pink 600 (deepest details)
+}
+
 // Edge colors that work well on both light and dark backgrounds
 const edgeSentimentColors = {
   positive: '#22c55e', // Green 500
@@ -69,9 +89,15 @@ const edgeSentimentColors = {
   neutral: '#a1a1aa', // Zinc 400
 }
 
-export const getNodeColor = (type, theme = 'dark') => {
+export const getNodeColor = (node, diagramType = 'knowledge-graph', theme = 'dark') => {
+  if (diagramType === 'mindmap' && node.level !== undefined) {
+    const levelColors = theme === 'light' ? lightMindmapLevelColors : darkMindmapLevelColors
+    return levelColors[node.level] || levelColors[5] // Default to level 5+ color if level is higher
+  }
+  
   const colors = theme === 'light' ? lightThemeColors : darkThemeColors
-  return colors[type] || colors.DEFAULT
+  const nodeType = node.type || node
+  return colors[nodeType] || colors.DEFAULT
 }
 
 export const getEdgeColor = (sentiment) => {

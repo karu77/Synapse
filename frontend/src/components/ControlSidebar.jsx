@@ -169,7 +169,7 @@ const ControlSidebar = ({
         {/* Content Body */}
             <div className="overflow-y-auto flex-grow p-6 md:p-8 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 dark:scrollbar-thumb-skin-border bg-white dark:bg-transparent">
           <Section icon={<SparklesIcon className="h-6 w-6" />} title="Generate">
-                <TextInput onSubmit={onSubmit} isProcessing={isProcessing} alwaysShowMediaInputs={true} onDiagramTypeChange={onDiagramTypeChange} />
+                <TextInput onSubmit={onSubmit} isProcessing={isProcessing} alwaysShowMediaInputs={true} onDiagramTypeChange={onDiagramTypeChange} currentDiagramType={currentDiagramType} />
           </Section>
           
           {(selectedNode || selectedEdge) && (

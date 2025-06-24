@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const FileInput = ({ label, accept, onFileChange, disabled }) => {
   const [fileName, setFileName] = useState('')
@@ -49,7 +49,7 @@ const FileInput = ({ label, accept, onFileChange, disabled }) => {
   )
 }
 
-const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange }) => {
+const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagramType }) => {
   const [text, setText] = useState('')
   const [question, setQuestion] = useState('')
   const [code, setCode] = useState('')
@@ -57,8 +57,14 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange }) => {
   const [audioFile, setAudioFile] = useState(null)
   const [imageUrl, setImageUrl] = useState('')
   const [audioUrl, setAudioUrl] = useState('')
-  const [diagramType, setDiagramType] = useState('knowledge-graph')
+  const [diagramType, setDiagramType] = useState(currentDiagramType || 'knowledge-graph')
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (currentDiagramType) {
+      setDiagramType(currentDiagramType);
+    }
+  }, [currentDiagramType]);
 
   // Add separate handlers for image and audio/video
   const handleImageFileChange = (file) => {

@@ -12,6 +12,7 @@ import ControlSidebar from './components/ControlSidebar'
 import NodeInfoPanel from './components/NodeInfoPanel'
 import EdgeInfoPanel from './components/EdgeInfoPanel'
 import AnswerPanel from './components/AnswerPanel'
+import WelcomeScreen from './components/WelcomeScreen'
 import {
   ArrowDownTrayIcon,
   ArrowRightOnRectangleIcon,
@@ -84,17 +85,101 @@ const defaultStyleOptions = {
 }
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState(null)
   const [graphData, setGraphData] = useState({ nodes: [], edges: [] })
   const [isProcessing, setIsProcessing] = useState(false)
-  const [graphKey, setGraphKey] = useState(0)
-  const [tooltip, setTooltip] = useState({
-    visible: false,
-    content: '',
-    x: 0,
-    y: 0,
-  })
+  const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, content: '' })
   const [selectedNode, setSelectedNode] = useState(null)
   const [selectedEdge, setSelectedEdge] = useState(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [currentDiagramType, setCurrentDiagramType] = useState('knowledge-graph')
+  const [flowchartDirection, setFlowchartDirection] = useState('TB')
+  const [physicsOptions, setPhysicsOptions] = useState(defaultPhysicsOptions)
+  const [styleOptions, setStyleOptions] = useState(defaultStyleOptions)
+  const [isGraphReady, setIsGraphReady] = useState(false)
+  const [graphKey, setGraphKey] = useState(0)
+  const [history, setHistory] = useState([])
+  const [shortcuts, setShortcuts] = useState({ visible: false })
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight })
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [answer, setAnswer] = useState('')
+  const [contextMenu, setContextMenu] = useState({ visible: false })
+  const graphRef = useRef(null)
+  const containerRef = useRef(null)
+  const onGraphReadyRef = useRef(null)
+  const { user: authUser, logout } = useAuth()
+
+  // Add context menu handlers
+  const handleNodeContextMenu = useCallback((node, position) => {
+    return (
+      <div className="flex flex-col gap-2">
+        <button
+          className="text-left px-3 py-1.5 hover:bg-skin-border rounded-md transition-colors"
+          onClick={() => {
+            setSelectedNode(node);
+            setContextMenu({ visible: false });
+          }}
+        >
+          View Details
+        </button>
+        <button
+          className="text-left px-3 py-1.5 hover:bg-skin-border rounded-md transition-colors"
+          onClick={() => {
+            if (graphRef.current) {
+              graphRef.current.focus(node.id, {
+                scale: 1.5,
+                animation: true
+              });
+            }
+            setContextMenu({ visible: false });
+          }}
+        >
+          Focus Node
+        </button>
+      </div>
+    );
+  }, []);
+
+  const handleEdgeContextMenu = useCallback((edge, position) => {
+    return (
+      <div className="flex flex-col gap-2">
+        <button
+          className="text-left px-3 py-1.5 hover:bg-skin-border rounded-md transition-colors"
+          onClick={() => {
+            setSelectedEdge(edge);
+            setContextMenu({ visible: false });
+          }}
+        >
+          View Relationship
+        </button>
+      </div>
+    );
+  }, []);
+
+  const handleBackgroundContextMenu = useCallback((position) => {
+    return (
+      <div className="flex flex-col gap-2">
+        <button
+          className="text-left px-3 py-1.5 hover:bg-skin-border rounded-md transition-colors"
+          onClick={() => {
+            if (graphRef.current) {
+              graphRef.current.fit({
+                animation: {
+                  duration: 1000,
+                  easingFunction: 'easeInOutQuad'
+                }
+              });
+            }
+            setContextMenu({ visible: false });
+          }}
+        >
+          Fit to View
+        </button>
+      </div>
+    );
+  }, []);
 
   // Debug logging for selection state
   useEffect(() => {
@@ -104,117 +189,89 @@ function App() {
   useEffect(() => {
     console.log('Selected edge changed:', selectedEdge)
   }, [selectedEdge])
-  const [answer, setAnswer] = useState('')
-  const [history, setHistory] = useState([])
-  const [physicsOptions, setPhysicsOptions] = useState(defaultPhysicsOptions)
-  const [styleOptions, setStyleOptions] = useState(defaultStyleOptions)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isGraphReady, setIsGraphReady] = useState(false)
 
-  const [currentDiagramType, setCurrentDiagramType] = useState('knowledge-graph')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
-  const [shortcuts, setShortcuts] = useState({ visible: false })
-  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight })
-  const graphRef = useRef(null)
-  const { user, logout } = useAuth()
-
-  // Window resize handler for responsive design
+  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight })
-    }
-    
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't trigger shortcuts when typing in inputs
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-      
+      // Only handle shortcuts if not in an input field
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
       if (e.ctrlKey || e.metaKey) {
-        switch (e.key) {
+        switch (e.key.toLowerCase()) {
           case 'k':
-            e.preventDefault()
-            setIsSidebarOpen(true)
-            break
-          case 'f':
-            e.preventDefault()
-            if (graphRef.current) graphRef.current.fitToViewport()
-            break
-          case 's':
-            e.preventDefault()
-            if (graphRef.current) graphRef.current.downloadSVG()
-            break
-          case 'j':
-            e.preventDefault()
-            if (graphRef.current) graphRef.current.downloadJSON()
-            break
+            e.preventDefault();
+            toggleSidebar();
+            break;
           case '/':
-            e.preventDefault()
-            setIsSearching(true)
-            break
-          case '?':
-            e.preventDefault()
-            setShortcuts({ visible: !shortcuts.visible })
-            break
-        }
-      }
-      
-      if (e.key === 'Escape') {
-        setSelectedNode(null)
-        setSelectedEdge(null)
-        setAnswer('')
-        setIsSearching(false)
-        setShortcuts({ visible: false })
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [shortcuts.visible])
-
-  // Search functionality
-  const handleSearch = useCallback((query) => {
-    if (!query.trim() || !graphData.nodes.length) return
-    
-    const matchingNodes = graphData.nodes.filter(node => 
-      node.label.toLowerCase().includes(query.toLowerCase()) ||
-      node.type.toLowerCase().includes(query.toLowerCase()) ||
-      (node.description && node.description.toLowerCase().includes(query.toLowerCase()))
-    )
-    
-    if (matchingNodes.length > 0 && graphRef.current?.networkInstance?.current) {
-      const nodeIds = matchingNodes.map(node => node.id)
-      
-      // Use the vis-network API directly to fit to specific nodes
-      graphRef.current.networkInstance.current.fit({
-        nodes: nodeIds,
-        animation: {
-          duration: 1000,
-          easingFunction: 'easeInOutQuad'
-        }
-      })
-      
-      // Highlight matching nodes briefly
-      setTimeout(() => {
-        if (graphRef.current?.networkInstance?.current) {
-          graphRef.current.networkInstance.current.selectNodes(nodeIds)
-          setTimeout(() => {
-            if (graphRef.current?.networkInstance?.current) {
-              graphRef.current.networkInstance.current.unselectAll()
+            e.preventDefault();
+            setIsSearching(true);
+            break;
+          case 'f':
+            e.preventDefault();
+            if (graphRef.current) {
+              graphRef.current.fit({
+                animation: {
+                  duration: 1000,
+                  easingFunction: 'easeInOutQuad'
+                }
+              });
             }
-          }, 3000)
+            break;
+          default:
+            break;
         }
-      }, 500)
+      } else if (e.key === 'Escape') {
+        setIsSearching(false);
+        setShortcuts({ visible: false });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Handle search
+  const handleSearch = (query) => {
+    if (!query.trim()) return;
+    
+    // Find matching nodes
+    const nodes = graphData.nodes || [];
+    const matchingNodes = nodes.filter(node => {
+      const searchableText = `${node.label} ${node.type} ${node.description || ''}`.toLowerCase();
+      return searchableText.includes(query.toLowerCase());
+    });
+
+    // Highlight matching nodes
+    if (matchingNodes.length > 0) {
+      const network = graphRef.current;
+      if (network) {
+        network.selectNodes(matchingNodes.map(node => node.id));
+        network.focus(matchingNodes[0].id, {
+          scale: 1.2,
+          animation: {
+            duration: 1000,
+            easingFunction: 'easeInOutQuad'
+          }
+        });
+      }
     }
-  }, [graphData.nodes])
+  };
 
   const fetchHistory = useCallback(async () => {
-    if (user) {
+    if (authUser) {
     try {
         const historyData = await getHistory()
         setHistory(historyData.reverse())
@@ -222,14 +279,14 @@ function App() {
       console.error('Failed to fetch history:', error)
       }
     }
-  }, [user])
+  }, [authUser])
 
   // Load history from backend on initial render
   useEffect(() => {
-    if (user) {
+    if (authUser) {
       fetchHistory()
     }
-  }, [user, fetchHistory])
+  }, [authUser, fetchHistory])
 
   const handleTextSubmit = async (text, question, imageFile, audioFile, imageUrl, audioUrl, diagramType) => {
     setIsProcessing(true)
@@ -237,6 +294,7 @@ function App() {
     setSelectedEdge(null)
     setAnswer('')
     setIsSidebarOpen(false)
+    
     setCurrentDiagramType(diagramType)
     try {
       const { answer, graphData } = await generateGraph(
@@ -434,6 +492,13 @@ function App() {
 
   const handleDiagramTypeChange = (diagramType) => {
     console.log('Diagram type changed to:', diagramType)
+    
+    // Clear existing graph data immediately when diagram type changes
+    setGraphData({ nodes: [], edges: [] })
+    setSelectedNode(null)
+    setSelectedEdge(null)
+    setAnswer('')
+    
     setCurrentDiagramType(diagramType)
   }
 
@@ -450,7 +515,7 @@ function App() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShortcuts({ visible: false })}
         >
           <motion.div
@@ -497,7 +562,7 @@ function App() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[90] bg-black/30 backdrop-blur-sm flex items-start justify-center pt-20"
+          className="fixed inset-0 z-[50] bg-black/30 backdrop-blur-sm flex items-start justify-center pt-20"
           onClick={() => setIsSearching(false)}
         >
           <motion.div
@@ -547,10 +612,10 @@ function App() {
               physicsOptions={physicsOptions}
               setPhysicsOptions={setPhysicsOptions}
               resetPhysics={resetPhysics}
-              user={user}
+              user={authUser}
               logout={logout}
-            currentDiagramType={currentDiagramType}
-            onDiagramTypeChange={handleDiagramTypeChange}
+              currentDiagramType={currentDiagramType}
+              onDiagramTypeChange={handleDiagramTypeChange}
               alwaysShowMediaInputs={true}
             />
         )}
@@ -565,7 +630,7 @@ function App() {
         </div>
       )}
 
-      <header className="fixed top-0 left-0 right-0 z-[60] p-4 pointer-events-none">
+      <header className="fixed top-0 left-0 right-0 z-30 p-4 pointer-events-none">
         <div
           className={`max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full p-2 pl-4 border border-skin-border shadow-xl pointer-events-auto ${
             isMobile ? 'px-2' : ''
@@ -574,7 +639,11 @@ function App() {
           <div className="flex items-center gap-3 pointer-events-auto">
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto"
+              className={`p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto ${
+                (!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing
+                  ? 'animate-pulse-glow'
+                  : ''
+              }`}
               aria-label="Toggle controls sidebar"
             >
               <Bars3Icon className="h-6 w-6" />
@@ -586,13 +655,12 @@ function App() {
             >
               Synapse
             </h1>
-            {(!graphData?.nodes || graphData.nodes.length === 0) &&
-              !isProcessing && (
-                <div className="hidden md:flex items-center gap-2 text-sm text-skin-text-muted animate-fade-in-panel">
-                  <span>→</span>
-                  <span>Create diagrams here</span>
-                </div>
-              )}
+            {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && (
+              <div className="hidden md:flex items-center gap-2 text-sm text-skin-text-muted animate-fade-in-panel">
+                <span>→</span>
+                <span>Create diagrams here</span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2 pointer-events-auto">
             <button
@@ -710,71 +778,41 @@ function App() {
         <div className="relative h-full w-full">
           <GraphVisualization
             ref={graphRef}
-            key={graphKey}
             data={graphData}
-            isLoading={isProcessing}
             setTooltip={setTooltip}
             setSelectedNode={setSelectedNode}
             setSelectedEdge={setSelectedEdge}
-            physicsOptions={physicsOptions}
-            styleOptions={styleOptions}
             onGraphReady={setIsGraphReady}
             diagramType={currentDiagramType}
+            onNodeContextMenu={handleNodeContextMenu}
+            onEdgeContextMenu={handleEdgeContextMenu}
+            onBackgroundContextMenu={handleBackgroundContextMenu}
+            flowchartDirection={flowchartDirection}
+            isProcessing={isProcessing}
           />
+          {tooltip.visible && (
+            <Tooltip
+              visible={tooltip.visible}
+              content={tooltip.content}
+              x={tooltip.x}
+              y={tooltip.y}
+            />
+          )}
 
           {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && (
-            <div
-              className={`absolute inset-0 flex items-center justify-center p-8 z-5 pointer-events-none`}
-            >
-              <div className="text-center max-w-md animate-fade-in-panel">
-                <div className="mb-6">
-                  <div className="text-6xl mb-4">🕸️</div>
-                  <h2 className="text-2xl font-bold text-skin-text mb-2">Welcome to Synapse</h2>
-                  <p className="text-skin-text-muted mb-6">
-                    Transform your text, images, and audio into interactive diagrams
-                  </p>
-                </div>
-                <div className="space-y-4 text-left">
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-skin-bg-accent border border-skin-border">
-                    <span className="text-2xl">📊</span>
-                    <div>
-                      <div className="font-semibold text-skin-text">Flowcharts</div>
-                      <div className="text-sm text-skin-text-muted">Visualize processes and workflows</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-skin-bg-accent border border-skin-border">
-                    <span className="text-2xl">🧠</span>
-                    <div>
-                      <div className="font-semibold text-skin-text">Mind Maps</div>
-                      <div className="text-sm text-skin-text-muted">Organize ideas hierarchically</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-skin-bg-accent border border-skin-border">
-                    <span className="text-2xl">🕸️</span>
-                    <div>
-                      <div className="font-semibold text-skin-text">Knowledge Graphs</div>
-                      <div className="text-sm text-skin-text-muted">Explore entity relationships</div>
-                    </div>
-                  </div>
-                </div>
-                <button 
-                  className="mt-6 p-4 rounded-lg bg-skin-accent/10 border border-skin-accent/20 cursor-pointer hover:bg-skin-accent/20 transition-colors w-full pointer-events-auto"
-                  onClick={toggleSidebar}
-                  type="button"
-                >
-                  <div className="flex items-center justify-center gap-2 text-skin-accent font-semibold">
-                    <Bars3Icon className="h-5 w-5" />
-                    <span>Start making</span>
-                  </div>
-                </button>
-              </div>
-            </div>
+            <WelcomeScreen
+              onDiagramTypeSelect={(type) => {
+                setCurrentDiagramType(type);
+                toggleSidebar();
+              }}
+              onOpenSidebar={toggleSidebar}
+            />
           )}
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 p-4 text-skin-text-muted text-xs z-50">
-        Welcome, {user?.name || 'Guest'}!
+      <footer className="fixed bottom-0 left-0 p-4 text-skin-text-muted text-xs z-20">
+        Welcome, {authUser?.name || 'Guest'}!
       </footer>
 
       {/* Info panels with simple CSS animations */}

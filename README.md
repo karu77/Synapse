@@ -1,36 +1,48 @@
 # Synapse: Real-time Graph Intelligence
 
-Welcome to Synapse! This is a modern web application that transforms text and multimodal inputs (images, audio) into interactive knowledge graphs in real-time using advanced AI capabilities from Google's Gemini.
+Welcome to Synapse! This is a modern web application that transforms text and multimodal inputs (images, audio) into interactive visual diagrams in real-time using advanced AI capabilities from Google's Gemini.
 
 ## Live Demo
 
 https://synapse-lac.vercel.app
 
-
 ## Features
 
--   **Real-time Text-to-Graph Conversion**: Instantly see entities and their connections visualized.
--   **Multimodal Input Support**: Analyze text, images, and audio/video files to build comprehensive graphs.
--   **Interactive Graph Visualization**: Drag, zoom, and explore the knowledge graph. Click on nodes to get more information.
--   **AI-Powered Analysis**: Uses the Gemini API for entity recognition, relationship extraction, and sentiment analysis.
--   **User Accounts & History**: Securely sign up, log in, and view your past graph generations.
--   **Customizable Experience**: Adjust graph physics and visual styles to your liking.
--   **Light & Dark Mode**: A beautiful UI that respects your system's theme preference.
+### Core Functionality
+-   **Multiple Diagram Types**: Create knowledge graphs, mind maps, and flowcharts from your text and media inputs.
+-   **Real-time AI Processing**: Instantly transform your ideas into structured visual diagrams.
+-   **Multimodal Input Support**: Analyze text, images, and audio/video files to build comprehensive diagrams.
+-   **Interactive Visualization**: Drag, zoom, and explore your diagrams. Click on nodes and edges for detailed information.
+
+### Current Diagram Types
+-   **Knowledge Graphs**: Visualize entities, relationships, and connections in complex information.
+-   **Mind Maps**: Organize ideas hierarchically with central topics and branching subtopics.
+-   **Flowcharts**: Create process flows with proper top-to-bottom structure and decision points.
+
+### User Experience
+-   **AI-Powered Analysis**: Uses the Gemini 2.0 Flash API for intelligent entity recognition, relationship extraction, and content structuring.
+-   **User Accounts & History**: Securely sign up, log in, and access your complete diagram history.
+-   **Customizable Experience**: Adjust diagram physics, visual styles, colors, and layout options.
+-   **Modern UI**: Beautiful, responsive interface with light & dark mode support.
+-   **Download & Export**: Save your diagrams as SVG, JSON, or CSV formats.
+
+### Coming Soon
+Additional diagram types are in development, including:
+- Sequence Diagrams
+- Entity-Relationship Diagrams  
+- Timeline Visualizations
+- Swimlane Diagrams
+- State Diagrams
+- Gantt Charts
+- Venn Diagrams
 
 ## Tech Stack
 
--   **Frontend**:
-    -   React (with Vite)
-    -   Tailwind CSS for styling and theming
-    -   `vis-network` for interactive graph visualization
-    -   Axios for API communication
-    -   React Router for navigation
--   **Backend**:
-    -   Node.js with Express
-    -   Google Generative AI SDK (Gemini 1.5 Flash)
-    -   MongoDB with Mongoose for database storage
-    -   JSON Web Tokens (JWT) for secure authentication
-    -   Multer for handling file uploads
+- **Frontend**: React 19, Vite, Tailwind CSS, Framer Motion, `vis-network` & `vis-data`
+- **Backend**: Node.js, Express, TypeScript, MongoDB, Mongoose
+- **AI & API**: Google Gemini 2.0 Flash SDK, Axios
+- **Authentication**: JSON Web Tokens (JWT), bcrypt.js
+- **Deployment & Tooling**: Vercel, Render, npm Workspaces, ESLint
 
 ## Getting Started (For Developers)
 
@@ -105,12 +117,15 @@ Your browser should automatically open to the application, or you can navigate t
 ## How It Works
 
 1.  **Authentication**: Users must first register for an account and log in. Sessions are managed with JWTs stored in browser local storage.
-2.  **Input**: On the main dashboard, you can input text, upload an image file, and upload an audio/video file (or provide a URL).
-3.  **Generation**: Clicking "Generate Graph" sends the inputs to the backend.
-4.  **AI Processing**: The backend sends a carefully constructed prompt, along with any multimodal data, to the Gemini API.
-5.  **Graph Creation**: The API returns a JSON object containing identified entities and their relationships, which is then sent back to the frontend.
-6.  **Visualization**: The frontend renders the data as an interactive graph.
-7.  **History**: Each successful generation is saved to the user's history for later viewing.
+2.  **Diagram Type Selection**: Choose from Knowledge Graphs, Mind Maps, or Flowcharts based on your visualization needs.
+3.  **Input**: Enter text, upload image files, and upload audio/video files (or provide URLs) for comprehensive analysis.
+4.  **AI Processing**: The backend sends specialized prompts optimized for each diagram type, along with any multimodal data, to the Gemini 2.0 Flash API.
+5.  **Intelligent Structuring**: The API analyzes your content and returns structured data optimized for the selected diagram type:
+    - **Knowledge Graphs**: Entities with types, relationships, and sentiment analysis
+    - **Mind Maps**: Hierarchical topics with central themes and branching subtopics  
+    - **Flowcharts**: Process steps with proper vertical flow, decision points, and logical connections
+6.  **Interactive Visualization**: The frontend renders the structured data as an interactive diagram with customizable styling and physics.
+7.  **History & Export**: Each generation is saved to your history and can be exported in multiple formats (SVG, JSON, CSV).
 
 ## Deployment (For End-Users)
 
