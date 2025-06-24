@@ -39,7 +39,8 @@ const RegisterPage = () => {
 
   const handleBlur = (field) => {
     const newErrors = { ...errors }
-    if (!eval(field)) {
+    const fields = { name, email, password, confirmPassword };
+    if (!fields[field]) {
       newErrors[field] = `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
     } else {
       delete newErrors[field]

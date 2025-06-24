@@ -26,8 +26,8 @@ const WelcomeScreen = memo(({ onDiagramTypeSelect, onOpenSidebar }) => {
   };
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 5 }}>
-      <div className="text-center max-w-md animate-fade-in-panel pointer-events-auto">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-transparent pointer-events-none">
+      <div className="text-center max-w-md w-full animate-fade-in-panel pointer-events-auto">
         <div className="mb-6">
           <div className="text-6xl mb-4">🕸️</div>
           <h2 className="text-2xl font-bold text-skin-text mb-2">Welcome to Synapse</h2>

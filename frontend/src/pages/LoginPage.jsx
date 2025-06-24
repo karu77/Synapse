@@ -29,9 +29,10 @@ const LoginPage = () => {
   
   const handleBlur = (field) => {
     const newErrors = { ...errors }
+    const fields = { email, password };
     if (!field) { // validate all on submit
       Object.assign(newErrors, validate());
-    } else if (!eval(field)) {
+    } else if (!fields[field]) {
       newErrors[field] = `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
     } else {
       delete newErrors[field]

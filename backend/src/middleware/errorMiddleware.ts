@@ -57,8 +57,10 @@ export const errorHandler = (
   if (err instanceof AppError) {
     statusCode = err.statusCode
     message = err.message
-    errorType = ErrorType[err.errorType as keyof typeof ErrorType] || ErrorType.UNKNOWN   
-     details = err.details
+    if (Object.values(ErrorType).includes(err.errorType as ErrorType)) {
+      errorType = err.errorType as ErrorType;
+    }
+    details = err.details
   } else {
     // Handle specific error types
     switch(err.name) {

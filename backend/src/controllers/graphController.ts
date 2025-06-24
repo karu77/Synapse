@@ -439,7 +439,7 @@ For relationships, include:
       const baseStructures: Record<string, any> = {
         'knowledge-graph': {
           question: {
-            answer: "A detailed textual answer to the user's question goes here...",
+            answer: "A detailed textual answer to the user's question goes here. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
             graph: {
               entities: [
                 {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "A brief summary or definition of the entity.", "importance": 5, "properties": {"Attribute": "Value"}}
@@ -462,7 +462,7 @@ For relationships, include:
         },
         'flowchart': {
           question: {
-            answer: "A detailed textual answer to the user's question goes here...",
+            answer: "A detailed textual answer to the user's question goes here. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
             graph: {
               entities: [
                 {"id": "start", "label": "Start", "type": "START_END", "sentiment": "neutral", "description": "Beginning of the process", "level": 0},
@@ -535,7 +535,7 @@ For relationships, include:
         },
         'mindmap': {
           question: {
-            answer: "A detailed textual answer to the user's question goes here...",
+            answer: "A detailed textual answer to the user's question goes here. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
             graph: {
               entities: [
                 {"id": "center", "label": "Central Topic", "type": "TOPIC", "sentiment": "neutral", "description": "The main topic", "level": 0},
