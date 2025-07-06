@@ -38,6 +38,10 @@ html,
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Mobile optimizations */
+  -webkit-text-size-adjust: 100%;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -372,5 +376,137 @@ body::before {
   to {
     transform: translate(50px, -80px) scale(1.3);
   }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Better touch targets */
+  button, .cursor-pointer {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth scrolling on mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Disable zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    font-size: 16px;
+  }
+  
+  /* Better sidebar on mobile */
+  .safe-area-inset-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  /* Hide scrollbars on mobile for cleaner look */
+  .scrollbar-thin {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Reduce motion for better performance on mobile */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in-panel,
+    .animate-slide-up,
+    .animate-slide-in-left {
+      animation: none;
+      transition: none;
+    }
+  }
+  
+  /* Mobile-specific panel adjustments */
+  .liquid-glass-panel {
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+  }
+  
+  /* Prevent overscroll bounce on mobile */
+  body {
+    overscroll-behavior: none;
+  }
+  
+  /* Mobile sidebar improvements */
+  .mobile-sidebar {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    left: 0 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+  }
+  
+  /* Mobile overlay improvements */
+  .mobile-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 30 !important;
+  }
+
+  /* Force mobile sidebar to override any conflicting styles */
+  @media (max-width: 767px) {
+    .mobile-sidebar {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      max-width: none !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      transform: none !important;
+      border-right: none !important;
+    }
+    
+    /* Ensure mobile sidebar content is scrollable */
+    .mobile-sidebar .overflow-y-auto {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    
+    /* Better touch targets on mobile */
+    .mobile-sidebar button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+}
+
+/* Tablet-specific optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Slightly larger touch targets for tablets */
+  button, .cursor-pointer {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}
+
+/* Animation for Tooltip fade-in */
+@keyframes fadeInTooltip {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-tooltip-fade-in {
+  animation: fadeInTooltip 0.2s ease-out;
 }
 

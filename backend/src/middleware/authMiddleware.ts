@@ -36,13 +36,13 @@ const protect = async (req: Request, res: Response, next: NextFunction) => {
 
       next()
     } catch (error) {
-      console.error(error)
+      console.error('Auth middleware error:', error)
       res.status(401).json({ message: 'Not authorized, token failed' })
+      return
     }
-  }
-
-  if (!token) {
+  } else {
     res.status(401).json({ message: 'Not authorized, no token' })
+    return
   }
 }
 

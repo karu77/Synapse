@@ -9,6 +9,7 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/outline'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from 'react'
 import CustomizationPanel from './CustomizationPanel'
 import HistoryPanel from './HistoryPanel'
 import StyleCustomizationPanel from './StyleCustomizationPanel'
@@ -16,10 +17,10 @@ import TextInput from './TextInput'
 import { deleteAccount } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 
-// Simplified sidebar animation variants
-const sidebarVariants = {
+// Simplified sidebar animation variants - mobile-aware
+const getSidebarVariants = (isMobile) => ({
   hidden: {
-    x: '-100%',
+    x: isMobile ? '-100vw' : '-100%',
     opacity: 0,
     transition: {
       type: 'tween',
@@ -38,7 +39,7 @@ const sidebarVariants = {
       delayChildren: 0.15,
     },
   },
-}
+})
 
 // Simplified item animation variants
 const itemVariants = {
@@ -109,6 +110,16 @@ const ControlSidebar = ({
   onDiagramTypeChange,
 }) => {
   const { logout: authLogout } = useAuth()
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const handleDeleteAccount = async () => {
     if (
@@ -136,17 +147,21 @@ const ControlSidebar = ({
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="fixed inset-0 bg-black/40 dark:bg-black/30 backdrop-blur-sm z-30"
+            className={`fixed inset-0 bg-black/50 dark:bg-black/60 backdrop-blur-sm z-30 ${isMobile ? 'mobile-overlay' : ''}`}
         onClick={onClose}
       />
           
       {/* Sidebar Panel */}
       <motion.div
-        variants={sidebarVariants}
+        variants={getSidebarVariants(isMobile)}
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="fixed top-0 left-0 h-full bg-white dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl z-40 w-full max-w-md border-r-2 border-gray-200 dark:border-gray-700 flex flex-col pointer-events-auto"
+            className={`fixed top-0 left-0 h-full bg-white dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl z-40 flex flex-col pointer-events-auto safe-area-inset-left ${
+              isMobile 
+                ? 'mobile-sidebar w-screen max-w-none' 
+                : 'w-full sm:max-w-md border-r-2 border-gray-200 dark:border-gray-700'
+            }`}
             style={{
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 25px -5px rgba(0, 0, 0, 0.15)',
             }}
@@ -155,9 +170,9 @@ const ControlSidebar = ({
         {/* Header */}
             <motion.div 
               variants={itemVariants}
-              className="p-6 md:p-8 flex justify-between items-center border-b-2 border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800/80"
+              className={`${isMobile ? 'p-4' : 'p-4 sm:p-6'} flex justify-between items-center border-b-2 border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800/80`}
             >
-          <h2 className="text-2xl font-bold text-skin-text">Controls</h2>
+          <h2 className={`${isMobile ? 'text-lg' : 'text-xl sm:text-2xl'} font-bold text-skin-text`}>Controls</h2>
           <button
             onClick={onClose}
                 className="p-2 rounded-full text-gray-500 dark:text-skin-text-muted hover:bg-gray-200 dark:hover:bg-skin-border hover:text-gray-700 dark:hover:text-skin-text transition-all duration-200 hover:scale-110 pointer-events-auto"
@@ -167,7 +182,7 @@ const ControlSidebar = ({
             </motion.div>
 
         {/* Content Body */}
-            <div className="overflow-y-auto flex-grow p-6 md:p-8 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 dark:scrollbar-thumb-skin-border bg-white dark:bg-transparent">
+            <div className={`overflow-y-auto flex-grow ${isMobile ? 'p-4' : 'p-4 sm:p-6'} scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 dark:scrollbar-thumb-skin-border bg-white dark:bg-transparent`}>
           <Section icon={<SparklesIcon className="h-6 w-6" />} title="Generate">
                 <TextInput onSubmit={onSubmit} isProcessing={isProcessing} alwaysShowMediaInputs={true} onDiagramTypeChange={onDiagramTypeChange} currentDiagramType={currentDiagramType} />
           </Section>
@@ -226,7 +241,7 @@ const ControlSidebar = ({
         {/* Footer */}
             <motion.div 
               variants={itemVariants}
-              className="p-6 md:p-8 border-t-2 border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800/60"
+              className={`${isMobile ? 'p-4' : 'p-4 sm:p-6'} border-t-2 border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800/60`}
             >
           <div className="flex justify-between items-center mb-4">
                 <span className="text-sm text-gray-600 dark:text-skin-text-muted truncate">

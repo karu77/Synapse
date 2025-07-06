@@ -14,19 +14,71 @@ const api = axios.create({
   },
 });
 
+// Debug helper to check token status
+export const checkTokenStatus = () => {
+  try {
+    const userInfo = localStorage.getItem('userInfo')
+    if (!userInfo) {
+      console.log('🔐 Token Debug: No userInfo in localStorage')
+      return { valid: false, reason: 'No userInfo found' }
+    }
+    
+    const parsed = JSON.parse(userInfo)
+    if (!parsed.token) {
+      console.log('🔐 Token Debug: No token in userInfo')
+      return { valid: false, reason: 'No token in userInfo' }
+    }
+    
+    console.log('🔐 Token Debug: Token found', {
+      hasToken: true,
+      tokenLength: parsed.token.length,
+      tokenPreview: parsed.token.substring(0, 20) + '...',
+      userEmail: parsed.email,
+      userName: parsed.name
+    })
+    
+    return { valid: true, token: parsed.token, user: parsed }
+  } catch (error) {
+    console.error('🔐 Token Debug: Error parsing userInfo', error)
+    return { valid: false, reason: 'Parse error' }
+  }
+}
+
 // Add a request interceptor to include the token in the headers
 api.interceptors.request.use(
   (config) => {
-    const userInfo = localStorage.getItem('userInfo')
-      ? JSON.parse(localStorage.getItem('userInfo'))
-      : null
-
-    if (userInfo && userInfo.token) {
-      config.headers['Authorization'] = `Bearer ${userInfo.token}`
+    const tokenStatus = checkTokenStatus()
+    
+    if (tokenStatus.valid && tokenStatus.token) {
+      config.headers['Authorization'] = `Bearer ${tokenStatus.token}`
+      console.log('🔐 Request: Adding auth header for', config.url)
+    } else {
+      console.log('🔐 Request: No valid token for', config.url, 'Reason:', tokenStatus.reason)
     }
+    
     return config
   },
   (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Add a response interceptor to handle token expiration
+api.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token is invalid or expired
+      console.error('Authentication failed - removing invalid token')
+      localStorage.removeItem('userInfo')
+      
+      // Redirect to login page if not already there
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login'
+      }
+    }
     return Promise.reject(error)
   }
 )
@@ -151,6 +203,18 @@ export const getHistory = async () => {
     return data
   } catch (error) {
     console.error('Error fetching history:', error)
+    
+    // Provide more specific error messages
+    if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.')
+    } else if (error.response?.status === 403) {
+      throw new Error('Access denied. You may not have permission to view history.')
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.')
+    } else if (!error.response) {
+      throw new Error('Network error. Please check your connection.')
+    }
+    
     throw error
   }
 }

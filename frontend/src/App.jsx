@@ -6,6 +6,7 @@ import {
   getHistory,
   deleteHistoryItem,
   clearAllHistory,
+  checkTokenStatus,
 } from './services/api'
 import ThemeToggleButton from './components/ThemeToggleButton'
 import ControlSidebar from './components/ControlSidebar'
@@ -272,14 +273,34 @@ function App() {
 
   const fetchHistory = useCallback(async () => {
     if (authUser) {
-    try {
+      try {
+        console.log('🔄 Fetching history for user:', authUser.name)
+        
+        // Debug token status before making request
+        const tokenStatus = checkTokenStatus()
+        console.log('🔐 Token status before history fetch:', tokenStatus)
+        
         const historyData = await getHistory()
-        setHistory(historyData.reverse())
-    } catch (error) {
-      console.error('Failed to fetch history:', error)
+        setHistory(historyData)
+        console.log('✅ History fetched successfully:', historyData.length, 'items')
+      } catch (error) {
+        console.error('❌ Failed to fetch history:', error)
+        console.log('🔍 Error details:', {
+          status: error.response?.status,
+          message: error.message,
+          response: error.response?.data
+        })
+        
+        // Handle authentication errors specifically
+        if (error.message?.includes('Authentication required') || error.response?.status === 401) {
+          console.log('🚨 Authentication failed, logging out user')
+          logout() // This will redirect to login page
+        }
       }
+    } else {
+      console.log('⚠️ No authenticated user, skipping history fetch')
     }
-  }, [authUser])
+  }, [authUser, logout])
 
   // Load history from backend on initial render
   useEffect(() => {
@@ -298,8 +319,8 @@ function App() {
     setCurrentDiagramType(diagramType)
     try {
       const { answer, graphData } = await generateGraph(
-        '', // Always leave text blank
-        text || question, // Always send the user's input as the question
+        text,
+        question,
         imageFile,
         audioFile,
         imageUrl,
@@ -393,66 +414,62 @@ function App() {
     
     // Ensure the diagram type is set before the graph data
     const diagramType = historyItem.graphData.diagramType || historyItem.inputs.diagramType || 'knowledge-graph'
-    setCurrentDiagramType(diagramType)
     
-    // For hierarchical diagrams (mind maps and flowcharts), ensure all nodes have proper level properties
+    // For mindmaps, construct the full type with subtype if available
+    let fullDiagramType = diagramType
+    if (diagramType === 'mindmap' && historyItem.graphData.mindmapSubtype) {
+      fullDiagramType = `${diagramType}-${historyItem.graphData.mindmapSubtype}`
+    }
+    
+    setCurrentDiagramType(fullDiagramType)
+    
     let graphData = historyItem.graphData
-    if ((diagramType === 'mindmap' || diagramType === 'flowchart') && graphData.nodes) {
+    const isHierarchical = (diagramType === 'flowchart') || (diagramType === 'mindmap' && fullDiagramType !== 'mindmap-radial')
+
+    // For hierarchical diagrams, ensure all nodes have proper level properties
+    if (isHierarchical && graphData.nodes) {
       graphData = {
         ...graphData,
         nodes: graphData.nodes.map(node => {
           let nodeLevel = node.level
-          
-          // If level is missing, try to infer it based on diagram type and node properties
+
+          // If level is missing, try to infer it
           if (nodeLevel === undefined || nodeLevel === null) {
             if (diagramType === 'mindmap') {
-              // Infer mind map levels based on node type and properties
               if (node.type === 'TOPIC' && (node.label?.toLowerCase().includes('central') || node.id === 'center')) {
-                nodeLevel = 0 // Central topic
+                nodeLevel = 0
               } else if (node.type === 'TOPIC') {
-                nodeLevel = 1 // Main branch
+                nodeLevel = 1
               } else if (node.type === 'SUBTOPIC') {
-                nodeLevel = 2 // Secondary branch
-              } else if (node.type === 'CONCEPT') {
-                nodeLevel = 3 // Detail level
+                nodeLevel = 2
               } else {
-                nodeLevel = 1 // Default to main branch
+                nodeLevel = 3
               }
             } else if (diagramType === 'flowchart') {
-              // Infer flowchart levels based on node type
               if (node.type === 'START_END' && (node.label?.toLowerCase().includes('start') || node.id?.includes('start'))) {
-                nodeLevel = 0 // Start node
-              } else if (node.type === 'START_END' && (node.label?.toLowerCase().includes('end') || node.id?.includes('end'))) {
-                nodeLevel = 10 // End node (high level to place at bottom)
-              } else if (node.type === 'DECISION') {
-                nodeLevel = 3 // Decision nodes in middle
-              } else if (node.type === 'PROCESS') {
-                nodeLevel = 2 // Process nodes
+                nodeLevel = 0
               } else {
-                nodeLevel = 1 // Default level
+                nodeLevel = 1
               }
             }
           }
           
-          return {
-            ...node,
-            level: nodeLevel
-          }
+          return { ...node, level: nodeLevel }
         }),
-        diagramType: diagramType // Ensure diagram type is preserved
+        diagramType: diagramType
       }
-    } else if (diagramType === 'knowledge-graph' && graphData.nodes) {
-      // For knowledge graphs, remove level properties to avoid conflicts
+    } else if (graphData.nodes) {
+      // For non-hierarchical graphs (knowledge-graph, mindmap-radial), remove level properties to avoid conflicts
       graphData = {
         ...graphData,
         nodes: graphData.nodes.map(node => {
-          const { level: _level, ...nodeWithoutLevel } = node
+          const { level, ...nodeWithoutLevel } = node
           return nodeWithoutLevel
         }),
         diagramType: diagramType
       }
     }
-    
+
     setGraphData(graphData)
     setAnswer(historyItem.inputs.answer || '')
     setGraphKey((prevKey) => prevKey + 1)
@@ -504,6 +521,7 @@ function App() {
 
   // Responsive breakpoints
   const isMobile = windowSize.width < 768
+  const isTablet = windowSize.width >= 768 && windowSize.width < 1024
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-skin-bg text-skin-text font-sans flex flex-col">
@@ -623,34 +641,32 @@ function App() {
 
       {/* Move AI Answer panel to the left, vertically centered, and always visible */}
       {answer && (
-        <div className={`fixed top-1/2 transform -translate-y-1/2 z-40 max-w-xs w-full sm:w-96 animate-fade-in-panel transition-all duration-300 ${
-          isSidebarOpen ? 'left-[28rem]' : 'left-4'
-        }`}>
+        <div className={`fixed ${isMobile ? 'bottom-4 left-4 right-4 top-auto transform-none' : 'top-1/2 transform -translate-y-1/2'} z-40 ${isMobile ? 'w-auto' : 'max-w-xs w-full sm:w-96'} animate-fade-in-panel transition-all duration-300 ${
+          isSidebarOpen && !isMobile ? 'left-[28rem]' : isMobile ? '' : 'left-4'
+        } ${isSidebarOpen && isMobile ? 'hidden' : ''}`}>
           <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
         </div>
       )}
 
-      <header className="fixed top-0 left-0 right-0 z-30 p-4 pointer-events-none">
+      <header className={`fixed top-0 left-0 right-0 z-30 ${isMobile ? 'p-2' : 'p-4'} pointer-events-none`}>
         <div
-          className={`max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full p-2 pl-4 border border-skin-border shadow-xl pointer-events-auto ${
-            isMobile ? 'px-2' : ''
-          }`}
+          className={`max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full ${isMobile ? 'p-1' : 'p-2 pl-4'} border border-skin-border shadow-xl pointer-events-auto`}
         >
           <div className="flex items-center gap-3 pointer-events-auto">
             <button
               onClick={toggleSidebar}
-              className={`p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto ${
+              className={`${isMobile ? 'p-3' : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto ${
                 (!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing
                   ? 'animate-pulse-glow'
                   : ''
               }`}
               aria-label="Toggle controls sidebar"
             >
-              <Bars3Icon className="h-6 w-6" />
+              <Bars3Icon className={`${isMobile ? 'h-7 w-7' : 'h-6 w-6'}`} />
             </button>
             <h1
-              className={`text-xl font-bold bg-gradient-to-r from-skin-text to-skin-accent bg-clip-text text-transparent ${
-                isMobile ? 'hidden' : 'hidden sm:block'
+              className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold bg-gradient-to-r from-skin-text to-skin-accent bg-clip-text text-transparent ${
+                isMobile ? 'block' : 'hidden sm:block'
               }`}
             >
               Synapse
@@ -662,23 +678,25 @@ function App() {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 pointer-events-auto">
+          <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'} pointer-events-auto`}>
             <button
               onClick={() => setIsSearching(true)}
               disabled={!graphData?.nodes?.length}
-              className="p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto"
+              className={`${isMobile ? 'p-3' : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto`}
               aria-label="Search graph"
             >
-              <MagnifyingGlassIcon className="h-5 w-5" />
+              <MagnifyingGlassIcon className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} />
             </button>
 
-            <button
-              onClick={() => setShortcuts({ visible: true })}
-              className="p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto"
-              aria-label="Show keyboard shortcuts"
-            >
-              <CommandLineIcon className="h-5 w-5" />
-            </button>
+            {!isMobile && (
+              <button
+                onClick={() => setShortcuts({ visible: true })}
+                className="p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto"
+                aria-label="Show keyboard shortcuts"
+              >
+                <CommandLineIcon className="h-5 w-5" />
+              </button>
+            )}
 
             <Menu
               as="div"
@@ -693,13 +711,13 @@ function App() {
                       graphData.nodes.length > 0
                     )
                   }
-                  className="inline-flex w-full justify-center items-center gap-2 rounded-full bg-skin-bg p-2 border border-skin-border text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:scale-105 focus:scale-105 active:scale-95 duration-150 pointer-events-auto"
+                  className={`inline-flex w-full justify-center items-center gap-2 rounded-full bg-skin-bg ${isMobile ? 'p-3' : 'p-2'} border border-skin-border text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:scale-105 focus:scale-105 active:scale-95 duration-150 pointer-events-auto`}
                 >
-                  <ArrowDownTrayIcon className="h-5 w-5" />
-                  <span className="hidden sm:inline">Download</span>
+                  <ArrowDownTrayIcon className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} />
+                  <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Download</span>
                 </Menu.Button>
               </div>
-              <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-skin-border rounded-md bg-skin-bg-accent shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <Menu.Items className={`absolute right-0 mt-2 ${isMobile ? 'w-48' : 'w-56'} origin-top-right divide-y divide-skin-border rounded-md bg-skin-bg-accent shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none`}>
                 <div className="px-1 py-1 ">
                   <Menu.Item>
                     {({ active }) => (
@@ -766,15 +784,15 @@ function App() {
                 </div>
               </Menu.Items>
             </Menu>
-            <div className="hidden sm:block h-6 border-l border-skin-border mx-1"></div>
-            <div className="flex items-center gap-1 bg-skin-bg p-1 rounded-full border border-skin-border pointer-events-auto">
+            {!isMobile && <div className="hidden sm:block h-6 border-l border-skin-border mx-1"></div>}
+            <div className={`flex items-center gap-1 bg-skin-bg ${isMobile ? 'p-2' : 'p-1'} rounded-full border border-skin-border pointer-events-auto`}>
               <ThemeToggleButton />
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-grow pt-24 pb-10">
+      <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'}`}>
         <div className="relative h-full w-full">
           <GraphVisualization
             ref={graphRef}
@@ -799,7 +817,7 @@ function App() {
             />
           )}
 
-          {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && (
+          {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && !(isSidebarOpen && isMobile) && (
             <WelcomeScreen
               onDiagramTypeSelect={(type) => {
                 setCurrentDiagramType(type);
@@ -811,26 +829,30 @@ function App() {
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 p-4 text-skin-text-muted text-xs z-20">
-        Welcome, {authUser?.name || 'Guest'}!
+      <footer className={`fixed bottom-0 left-0 ${isMobile ? 'p-2 text-xs' : 'p-4 text-xs'} text-skin-text-muted z-20`}>
+        {isMobile ? `Hi ${authUser?.name?.split(' ')[0] || 'Guest'}!` : `Welcome, ${authUser?.name || 'Guest'}!`}
       </footer>
 
       {/* Info panels with simple CSS animations */}
-      {selectedNode && (
-        <NodeInfoPanel
-          node={selectedNode}
-          onClose={() => setSelectedNode(null)}
-          panelClassName="animate-slide-up"
-        />
-      )}
-      {selectedEdge && (
-        <EdgeInfoPanel
-          edge={selectedEdge}
-          nodes={graphData.nodes}
-          onClose={() => setSelectedEdge(null)}
-          panelClassName="animate-slide-up"
-        />
-      )}
+      <AnimatePresence>
+        {selectedNode && (
+          <NodeInfoPanel
+            key={selectedNode.id}
+            node={selectedNode}
+            onClose={() => setSelectedNode(null)}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {selectedEdge && (
+          <EdgeInfoPanel
+            key={selectedEdge.id}
+            edge={selectedEdge}
+            nodes={graphData.nodes}
+            onClose={() => setSelectedEdge(null)}
+          />
+        )}
+      </AnimatePresence>
       
     </div>
   )

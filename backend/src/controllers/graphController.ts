@@ -300,8 +300,17 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       hasImage: boolean,
       hasAudio: boolean
     ): string => {
+      // Parse mind map subtypes
+      let actualType = type
+      let mindmapSubtype = 'traditional'
+      
+      if (type.startsWith('mindmap-')) {
+        actualType = 'mindmap'
+        mindmapSubtype = type.substring('mindmap-'.length)
+      }
+
       // Special handling for flowcharts
-      if (type === 'flowchart') {
+      if (actualType === 'flowchart') {
         return `You are to generate a detailed flowchart for the process described below.
 
 **Flowchart Requirements:**
@@ -324,6 +333,8 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
   - DATABASE: Database shape
   - DISPLAY: Display shape
   - OFF_PAGE: Off-page connector
+
+- **CRITICAL: Every DECISION node MUST have at least two outgoing edges, typically labeled 'Yes' and 'No'. These edges must represent the branching paths.**
 
 - For each node, specify:
   - id: unique string
@@ -391,18 +402,7 @@ For relationships, include:
 - description: How the entities are connected
 - strength: A number from 0-1 indicating relationship strength`,
 
-        'mindmap': `Create a detailed mind map with a central concept and well-structured branches. Include:
-- MAIN_TOPIC: The central concept (most important)
-- TOPIC: Main branches (key themes)
-- SUBPOINT: Supporting details
-- NOTE: Additional information or examples
-- TASK: Action items or to-dos
-- QUESTION: Open questions or areas needing clarification
-- IDEA: Creative suggestions or possibilities
-- DECISION: Important choices or conclusions
-- PRO/CON: Advantages and disadvantages
-- SUMMARY: Key takeaways or synthesis`,
-
+        'mindmap': getMindmapPrompt(mindmapSubtype),
         'flowchart': 'Create a detailed flowchart with clear nodes and logical flows. ',
         'sequence': 'Generate a sequence diagram showing detailed interactions between components. ',
         'er-diagram': 'Generate a comprehensive entity-relationship diagram with detailed attributes and relationships. ',
@@ -411,12 +411,10 @@ For relationships, include:
         'state': 'Create a state diagram showing detailed states and transitions. ',
         'gantt': 'Generate a Gantt chart showing project timeline, tasks, dependencies, and resources. ',
         'venn': 'Create a Venn diagram showing detailed overlapping concepts and relationships. ',
-      }[type] || 'Generate a detailed diagram with the following structure: ';
+      }[actualType] || 'Generate a detailed diagram with the following structure: ';
       
       return basePrompt + contextPrompt + diagramSpecificPrompt;
     }
-
-
 
     // Ensure diagramType is always a string
     const safeDiagramType = diagramType || 'knowledge-graph';
@@ -436,6 +434,15 @@ For relationships, include:
     )
 
     const getExampleStructure = (diagramType: string, hasQuestion: boolean) => {
+      // Parse mind map subtypes
+      let actualType = diagramType
+      let mindmapSubtype = 'traditional'
+      
+      if (diagramType.startsWith('mindmap-')) {
+        actualType = 'mindmap'
+        mindmapSubtype = diagramType.substring('mindmap-'.length)
+      }
+
       const baseStructures: Record<string, any> = {
         'knowledge-graph': {
           question: {
@@ -533,55 +540,83 @@ For relationships, include:
             }
           }
         },
-        'mindmap': {
+        'mindmap': getMindmapExampleStructure(mindmapSubtype, hasQuestion)
+      }
+
+      const structure = baseStructures[actualType] || baseStructures['knowledge-graph']
+      return hasQuestion ? structure.question : structure.text
+    }
+
+    // Helper function to get mindmap example structures
+    const getMindmapExampleStructure = (mindmapSubtype: string, hasQuestion: boolean) => {
+      const baseExample = {
+        question: {
+          answer: "A detailed textual answer to the user's question goes here. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
+          graph: {
+            entities: [
+              {"id": "center", "label": "Central Topic", "type": "MAIN_TOPIC", "sentiment": "neutral", "description": "The main topic", "level": 0},
+              {"id": "branch1", "label": "Main Branch 1", "type": "TOPIC", "sentiment": "neutral", "description": "First major aspect", "level": 1},
+              {"id": "branch2", "label": "Main Branch 2", "type": "TOPIC", "sentiment": "neutral", "description": "Second major aspect", "level": 1},
+              {"id": "sub1", "label": "Subtopic 1", "type": "SUBTOPIC", "sentiment": "neutral", "description": "Supporting detail", "level": 2},
+              {"id": "detail1", "label": "Detail 1", "type": "CONCEPT", "sentiment": "neutral", "description": "Specific detail", "level": 3}
+            ],
+            relationships: [
+              {"source": "center", "target": "branch1", "label": "HAS_BRANCH", "sentiment": "neutral", "description": "Central topic branches to main aspect"},
+              {"source": "center", "target": "branch2", "label": "HAS_BRANCH", "sentiment": "neutral", "description": "Central topic branches to main aspect"},
+              {"source": "branch1", "target": "sub1", "label": "CONTAINS", "sentiment": "neutral", "description": "Main branch contains subtopic"},
+              {"source": "sub1", "target": "detail1", "label": "INCLUDES", "sentiment": "neutral", "description": "Subtopic includes specific detail"}
+            ]
+          }
+        },
+        text: {
+          graph: {
+            entities: [
+              {"id": "center", "label": "Central Topic", "type": "MAIN_TOPIC", "sentiment": "neutral", "description": "The main topic", "level": 0},
+              {"id": "branch1", "label": "Main Branch 1", "type": "TOPIC", "sentiment": "neutral", "description": "A major aspect", "level": 1},
+              {"id": "branch2", "label": "Main Branch 2", "type": "TOPIC", "sentiment": "neutral", "description": "Another major aspect", "level": 1},
+              {"id": "sub1", "label": "Subtopic", "type": "SUBTOPIC", "sentiment": "neutral", "description": "A subtopic", "level": 2},
+              {"id": "detail1", "label": "Detail", "type": "CONCEPT", "sentiment": "neutral", "description": "Specific detail", "level": 3}
+            ],
+            relationships: [
+              {"source": "center", "target": "branch1", "label": "HAS_BRANCH", "sentiment": "neutral", "description": "Central topic branches to main aspect"},
+              {"source": "center", "target": "branch2", "label": "HAS_BRANCH", "sentiment": "neutral", "description": "Central topic branches to main aspect"},
+              {"source": "branch1", "target": "sub1", "label": "CONTAINS", "sentiment": "neutral", "description": "Main branch contains subtopic"},
+              {"source": "sub1", "target": "detail1", "label": "INCLUDES", "sentiment": "neutral", "description": "Subtopic includes specific detail"}
+            ]
+          }
+        }
+      }
+      
+      // Customize examples based on mindmap subtype
+      const typeSpecificExamples: Record<string, any> = {
+        organizational: {
           question: {
-            answer: "A detailed textual answer to the user's question goes here. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
+            ...baseExample.question,
             graph: {
               entities: [
-                {"id": "center", "label": "Central Topic", "type": "TOPIC", "sentiment": "neutral", "description": "The main topic", "level": 0},
-                {"id": "branch1", "label": "Main Branch 1", "type": "TOPIC", "sentiment": "neutral", "description": "First major aspect", "level": 1},
-                {"id": "branch2", "label": "Main Branch 2", "type": "TOPIC", "sentiment": "neutral", "description": "Second major aspect", "level": 1},
-                {"id": "branch3", "label": "Main Branch 3", "type": "TOPIC", "sentiment": "neutral", "description": "Third major aspect", "level": 1},
-                {"id": "sub1a", "label": "Subtopic 1A", "type": "SUBTOPIC", "sentiment": "neutral", "description": "First subtopic of branch 1", "level": 2},
-                {"id": "sub1b", "label": "Subtopic 1B", "type": "SUBTOPIC", "sentiment": "neutral", "description": "Second subtopic of branch 1", "level": 2},
-                {"id": "sub2a", "label": "Subtopic 2A", "type": "SUBTOPIC", "sentiment": "neutral", "description": "First subtopic of branch 2", "level": 2},
-                {"id": "detail1", "label": "Detail 1", "type": "CONCEPT", "sentiment": "neutral", "description": "Specific detail", "level": 3},
-                {"id": "detail2", "label": "Detail 2", "type": "CONCEPT", "sentiment": "neutral", "description": "Another specific detail", "level": 3}
+                {"id": "ceo", "label": "CEO", "type": "MAIN_TOPIC", "sentiment": "neutral", "description": "Chief Executive", "level": 0},
+                {"id": "dept1", "label": "Engineering", "type": "TOPIC", "sentiment": "neutral", "description": "Engineering department", "level": 1},
+                {"id": "dept2", "label": "Marketing", "type": "TOPIC", "sentiment": "neutral", "description": "Marketing department", "level": 1},
+                {"id": "team1", "label": "Frontend Team", "type": "SUBTOPIC", "sentiment": "neutral", "description": "Frontend development", "level": 2},
+                {"id": "role1", "label": "Senior Developer", "type": "ROLE", "sentiment": "neutral", "description": "Lead developer role", "level": 3}
               ],
               relationships: [
-                {"source": "center", "target": "branch1", "label": "HAS_BRANCH", "sentiment": "neutral", "description": "Central topic branches to main aspect"},
-                {"source": "center", "target": "branch2", "label": "HAS_BRANCH", "sentiment": "neutral", "description": "Central topic branches to main aspect"},
-                {"source": "center", "target": "branch3", "label": "HAS_BRANCH", "sentiment": "neutral", "description": "Central topic branches to main aspect"},
-                {"source": "branch1", "target": "sub1a", "label": "CONTAINS", "sentiment": "neutral", "description": "Main branch contains subtopic"},
-                {"source": "branch1", "target": "sub1b", "label": "CONTAINS", "sentiment": "neutral", "description": "Main branch contains subtopic"},
-                {"source": "branch2", "target": "sub2a", "label": "CONTAINS", "sentiment": "neutral", "description": "Main branch contains subtopic"},
-                {"source": "sub1a", "target": "detail1", "label": "INCLUDES", "sentiment": "neutral", "description": "Subtopic includes specific detail"},
-                {"source": "sub1b", "target": "detail2", "label": "INCLUDES", "sentiment": "neutral", "description": "Subtopic includes specific detail"}
-              ]
-            }
-          },
-          text: {
-            graph: {
-              entities: [
-                {"id": "center", "label": "Central Topic", "type": "TOPIC", "sentiment": "neutral", "description": "The main topic", "level": 0},
-                {"id": "branch1", "label": "Main Branch 1", "type": "TOPIC", "sentiment": "neutral", "description": "A major aspect", "level": 1},
-                {"id": "branch2", "label": "Main Branch 2", "type": "TOPIC", "sentiment": "neutral", "description": "Another major aspect", "level": 1},
-                {"id": "sub1", "label": "Subtopic", "type": "SUBTOPIC", "sentiment": "neutral", "description": "A subtopic", "level": 2},
-                {"id": "detail1", "label": "Detail", "type": "CONCEPT", "sentiment": "neutral", "description": "Specific detail", "level": 3}
-              ],
-              relationships: [
-                {"source": "center", "target": "branch1", "label": "HAS_BRANCH", "sentiment": "neutral", "description": "Central topic branches to main aspect"},
-                {"source": "center", "target": "branch2", "label": "HAS_BRANCH", "sentiment": "neutral", "description": "Central topic branches to main aspect"},
-                {"source": "branch1", "target": "sub1", "label": "CONTAINS", "sentiment": "neutral", "description": "Main branch contains subtopic"},
-                {"source": "sub1", "target": "detail1", "label": "INCLUDES", "sentiment": "neutral", "description": "Subtopic includes specific detail"}
+                {"source": "ceo", "target": "dept1", "label": "MANAGES", "sentiment": "neutral", "description": "Organizational hierarchy"},
+                {"source": "ceo", "target": "dept2", "label": "MANAGES", "sentiment": "neutral", "description": "Organizational hierarchy"},
+                {"source": "dept1", "target": "team1", "label": "CONTAINS", "sentiment": "neutral", "description": "Department structure"},
+                {"source": "team1", "target": "role1", "label": "INCLUDES", "sentiment": "neutral", "description": "Team roles"}
               ]
             }
           }
         }
       }
-
-      const structure = baseStructures[diagramType] || baseStructures['knowledge-graph']
-      return hasQuestion ? structure.question : structure.text
+      
+      if (typeSpecificExamples[mindmapSubtype]) {
+        const customExample = typeSpecificExamples[mindmapSubtype]
+        return hasQuestion ? customExample.question : (customExample.text || customExample.question)
+      }
+      
+      return hasQuestion ? baseExample.question : baseExample.text
     }
 
     const fullPrompt = `${textPrompt}
@@ -649,6 +684,22 @@ For relationships, include:
       console.log('Detected graph wrapper format');
       graphData = aiResponse.graph;
       answer = aiResponse.answer || '';
+    } 
+    // Check for mindmap wrapper format, as the AI sometimes adds this
+    else if (aiResponse.mindmap && typeof aiResponse.mindmap === 'object') {
+      console.log('Detected mindmap wrapper format');
+      const mindmapContent = aiResponse.mindmap;
+      if (mindmapContent.graph && typeof mindmapContent.graph === 'object') {
+        graphData = mindmapContent.graph;
+        answer = mindmapContent.answer || '';
+      } else {
+        // Fallback for direct entities/relationships inside mindmap wrapper
+        graphData = {
+          nodes: mindmapContent.entities || [],
+          edges: mindmapContent.relationships || [],
+        };
+        answer = mindmapContent.answer || '';
+      }
     } 
     // Check for legacy entities/relationships format
     else if (Array.isArray(aiResponse.entities) && Array.isArray(aiResponse.relationships)) {
@@ -731,14 +782,15 @@ For relationships, include:
     })
 
     // Ensure level consistency for hierarchical layouts
-    if (diagramType === 'flowchart' || diagramType === 'mindmap') {
+    const isHierarchical = (diagramType.startsWith('flowchart') || diagramType.startsWith('mindmap')) && diagramType !== 'mindmap-radial'
+    if (isHierarchical) {
       // For hierarchical layouts, ensure ALL nodes have a level property
       nodes = nodes.map((node: any) => ({
         ...node,
         level: node.level !== undefined ? node.level : 0
       }))
     } else {
-      // For knowledge graphs, remove level property to avoid conflicts
+      // For non-hierarchical layouts (knowledge graphs, radial mindmaps), REMOVE the level property
       nodes = nodes.map((node: any) => {
         const { level, ...nodeWithoutLevel } = node
         return nodeWithoutLevel
@@ -746,10 +798,13 @@ For relationships, include:
     }
 
     // PATCH: Always return { nodes, edges, diagramType } to the frontend
+    // For mind map subtypes, store the base type for frontend compatibility
+    const frontendDiagramType = diagramType.startsWith('mindmap-') ? 'mindmap' : diagramType
     const graphDataForFrontend = {
       nodes,
       edges,
-      diagramType,
+      diagramType: frontendDiagramType,
+      mindmapSubtype: diagramType.startsWith('mindmap-') ? diagramType.split('-')[1] : undefined,
     }
 
     const historyItem = new History({
@@ -771,4 +826,76 @@ For relationships, include:
     console.error('Error in graph generation:', error)
     res.status(500).json({ error: 'Failed to generate graph' })
   }
+}
+
+// Helper function to get mind map prompts for different structures
+const getMindmapPrompt = (mindmapSubtype: string): string => {
+  const prompts: Record<string, string> = {
+    traditional: `Create a traditional mind map with a strict hierarchical structure, designed to branch from left to right.
+- The structure MUST be a tree, starting with a single MAIN_TOPIC node.
+- All other nodes must be descendants of this MAIN_TOPIC node.
+- For EACH node, you must include:
+  - id: a unique identifier string.
+  - label: a short, clear title for the node.
+  - type: one of MAIN_TOPIC, TOPIC, SUBTOPIC, or CONCEPT.
+  - description: a one-sentence explanation of the node's content.
+  - level: the correct hierarchy level (MAIN_TOPIC is 0, TOPICs are 1, etc.).
+  - importance: a number from 1 (least) to 5 (most) indicating its significance.
+- The layout should be wide, not deep. Prefer adding more branches over deeply nested chains.
+
+The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object. Do not create circular relationships. The graph must be a directed acyclic graph.`,
+
+    radial: `Create a radial mind map with a simple star-like structure.
+- CRITICAL: The graph MUST have exactly ONE central node of type 'MAIN_TOPIC'. All other nodes are secondary.
+- All secondary nodes MUST have the type 'CHILD_TOPIC'.
+- EVERY 'CHILD_TOPIC' node MUST connect directly to the central 'MAIN_TOPIC' node.
+- VERY IMPORTANT: Do NOT create any connections between 'CHILD_TOPIC' nodes. The graph must be a simple star shape where all lines radiate from the center.
+- For EACH node, you must include:
+  - id: a unique identifier string.
+  - label: a short, clear title for the node.
+  - type: 'MAIN_TOPIC' or 'CHILD_TOPIC'.
+  - description: a one-sentence explanation of the node's content.
+  - importance: a number from 1 (most important) to 5 (least important).
+- CRITICAL: Do NOT include a 'level' property in the nodes. The layout is purely physics-based and non-hierarchical.
+
+The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object.`,
+
+    organizational: `Create an organizational-style mind map with a top-down hierarchical structure.
+- For EACH node, you must include:
+  - id: a unique identifier string.
+  - label: a short, clear title for the node.
+  - type: one of MAIN_TOPIC, TOPIC, SUBTOPIC, CONCEPT, ROLE, FUNCTION, GOAL, or METRIC.
+  - description: a one-sentence explanation of the node's content.
+  - level: the correct hierarchy level.
+  - importance: a number from 1 (least) to 5 (most) indicating its significance.
+- The structure should flow top-down with clear reporting lines.
+
+The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object.`,
+
+    'concept-map': `Create a concept map with interconnected relationships, focusing on how ideas connect.
+- For EACH node, you must include:
+  - id: a unique identifier string.
+  - label: a short, clear title for the node.
+  - type: one of MAIN_TOPIC, TOPIC, SUBTOPIC, CONCEPT, PRINCIPLE, THEORY, EXAMPLE, or CONNECTION.
+  - description: a one-sentence explanation of the node's content.
+  - level: the correct hierarchy level.
+  - importance: a number from 1 (least) to 5 (most) indicating its significance.
+- Focus on showing how concepts relate to and influence each other.
+
+The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object.`,
+
+    timeline: `Create a timeline-based mind map with a chronological structure from left to right.
+- For EACH node, you must include:
+  - id: a unique identifier string.
+  - label: a short, clear title for the node.
+  - type: one of MAIN_TOPIC, TOPIC, SUBTOPIC, CONCEPT, DATE, EVENT, MILESTONE, or PERIOD.
+  - description: a one-sentence explanation of the node's content.
+  - level: the correct hierarchy level.
+  - importance: a number from 1 (least) to 5 (most) indicating its significance.
+- The structure should show progression and development over time.
+
+The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object.`,
+  }
+  
+  return prompts[mindmapSubtype] || prompts.traditional
 }

@@ -11,6 +11,7 @@ const historySchema = new mongoose.Schema(
       nodes: { type: Array, required: true },
       edges: { type: Array, required: true },
       diagramType: { type: String, default: 'knowledge-graph' },
+      mindmapSubtype: { type: String },
     },
     inputs: {
       textInput: { type: String },

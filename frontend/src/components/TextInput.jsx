@@ -50,8 +50,8 @@ const FileInput = ({ label, accept, onFileChange, disabled }) => {
 }
 
 const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagramType }) => {
-  const [text, setText] = useState('')
-  const [question, setQuestion] = useState('')
+  const [inputValue, setInputValue] = useState('')
+  const [processDescription, setProcessDescription] = useState('')
   const [code, setCode] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [audioFile, setAudioFile] = useState(null)
@@ -59,6 +59,9 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
   const [audioUrl, setAudioUrl] = useState('')
   const [diagramType, setDiagramType] = useState(currentDiagramType || 'knowledge-graph')
   const [error, setError] = useState(null)
+  const [expanded, setExpanded] = useState(false)
+  const [inputType, setInputType] = useState('text')
+  const [mindmapType, setMindmapType] = useState('traditional')
 
   useEffect(() => {
     if (currentDiagramType) {
@@ -84,27 +87,21 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
     }
   }
 
-  const handleTextChange = (e) => {
-    setText(e.target.value)
-    if (e.target.value !== '') {
-      setQuestion('')
-      setCode('')
-    }
-  }
+  const handleInputValueChange = (e) => {
+    setInputValue(e.target.value);
+  };
 
-  const handleQuestionChange = (e) => {
-    setQuestion(e.target.value)
+  const handleProcessDescriptionChange = (e) => {
+    setProcessDescription(e.target.value);
     if (e.target.value !== '') {
-      setText('')
-      setCode('')
+      setCode('');
     }
-  }
+  };
 
   const handleCodeChange = (e) => {
     setCode(e.target.value)
     if (e.target.value !== '') {
-      setText('')
-      setQuestion('')
+      setProcessDescription('')
     }
   }
 
@@ -123,8 +120,8 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
 
   // Helper to determine if any input is present
   const hasInput =
-    !!text?.trim() ||
-    !!question?.trim() ||
+    !!inputValue?.trim() ||
+    !!processDescription?.trim() ||
     !!code?.trim() ||
     !!imageFile ||
     !!audioFile ||
@@ -132,11 +129,27 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
     (typeof audioUrl === 'string' && audioUrl.trim().length > 0)
 
   const handleSubmit = async () => {
-    console.log('Button clicked! hasInput:', hasInput, 'isProcessing:', isProcessing)
-    if (!hasInput) return
-    // For flowcharts, prioritize code if provided, otherwise use text
-    const mainText = code || text
-    await onSubmit(mainText, question, imageFile, audioFile, imageUrl, audioUrl, diagramType)
+    if (!hasInput) {
+      alert('Please provide some input before submitting.')
+      return
+    }
+
+    const effectiveDiagramType = diagramType === 'mindmap' ? `${diagramType}-${mindmapType}` : diagramType
+
+    let textToSend = ''
+    let questionToSend = ''
+
+    if (inputType === 'question') {
+      questionToSend = inputValue
+    } else { // inputType === 'text'
+      if (diagramType === 'flowchart') {
+        textToSend = processDescription || code
+      } else {
+        textToSend = inputValue
+      }
+    }
+    
+    await onSubmit(textToSend, questionToSend, imageFile, audioFile, imageUrl, audioUrl, effectiveDiagramType)
   }
 
   const getDiagramDescription = (type) => {
@@ -151,6 +164,32 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
         return ''
     }
   }
+
+  const getMindmapTypeDescription = (type) => {
+    const descriptions = {
+      traditional: 'Classic hierarchical structure with a central topic and branching subtopics.',
+      radial: 'Central concept with themes radiating outward in all directions.',
+      organizational: 'Top-down structure, ideal for org charts and hierarchies.',
+      'concept-map': 'Web of concepts with explicit relationships, showing how ideas connect.',
+      timeline: 'Chronological layout for visualizing events or processes over time.',
+    }
+    return descriptions[type] || 'Select a mind map type.'
+  }
+
+  const mindmapTypes = [
+    { id: 'traditional', name: 'Traditional (Classic)' },
+    { id: 'radial', name: 'Radial Structure' },
+    { id: 'organizational', name: 'Organizational Chart' },
+    { id: 'concept-map', name: 'Concept Map' },
+    { id: 'timeline', name: 'Timeline' },
+  ]
+
+  // Update selectedMindmapType if it's no longer valid
+  useEffect(() => {
+    if (currentDiagramType) {
+      setDiagramType(currentDiagramType);
+    }
+  }, [currentDiagramType]);
 
   return (
     <div className="space-y-6 pointer-events-auto">
@@ -203,81 +242,132 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
         </div>
       </div>
 
-      {diagramType === 'flowchart' ? (
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="text" className="block text-base font-semibold text-skin-text mb-1">
-              Describe a Process or Workflow
-            </label>
-            <textarea
-              id="text"
-              rows={4}
-              className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical pointer-events-auto"
-              placeholder="Describe a process, workflow, or procedure (e.g., 'How to make coffee', 'User registration process', etc.)..."
-              value={text}
-              onChange={handleTextChange}
-              disabled={isProcessing || question !== '' || code !== ''}
-            />
-          </div>
-          
-          <div className="relative flex items-center">
-            <div className="flex-grow border-t border-skin-border"></div>
-            <span className="flex-shrink mx-4 text-skin-text-muted font-semibold text-sm">OR</span>
-            <div className="flex-grow border-t border-skin-border"></div>
-          </div>
-
-          <div>
-            <label htmlFor="code" className="block text-base font-semibold text-skin-text mb-1">
-              Paste Your Code
-            </label>
-            <textarea
-              id="code"
-              rows={6}
-              className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical font-mono pointer-events-auto"
-              placeholder="Paste your code here to generate a flowchart (supports Python, JavaScript, Java, C++, etc.)..."
-              value={code}
-              onChange={handleCodeChange}
-              disabled={isProcessing || question !== '' || text !== ''}
-            />
-          </div>
+      {/* Mind Map Type Selection - only show when mindmap is selected */}
+      {diagramType === 'mindmap' && (
+        <div>
+          <label className="block text-sm font-medium text-skin-text mb-2">
+            Mind Map Structure
+          </label>
+          <select
+            value={mindmapType}
+            onChange={(e) => setMindmapType(e.target.value)}
+            className="w-full p-3 border border-skin-border rounded-lg bg-skin-bg text-skin-text focus:outline-none focus:ring-2 focus:ring-skin-accent"
+          >
+            {mindmapTypes.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-skin-text-muted mt-1">
+            {getMindmapTypeDescription(mindmapType)}
+          </p>
         </div>
-      ) : (
-      <div>
-        <label htmlFor="text" className="block text-base font-semibold text-skin-text mb-1">
-          Analyze Text & Files
-        </label>
-        <textarea
-          id="text"
-          rows={6}
-            className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical pointer-events-auto"
-          placeholder="Paste text here, or provide an image/audio file below..."
-          value={text}
-          onChange={handleTextChange}
-          disabled={isProcessing || question !== ''}
-        />
-      </div>
       )}
 
-      <div className="relative flex items-center">
-        <div className="flex-grow border-t border-skin-border"></div>
-        <span className="flex-shrink mx-4 text-skin-text-muted font-semibold">OR</span>
-        <div className="flex-grow border-t border-skin-border"></div>
+      {/* Input Type Selection */}
+      <div>
+        <label className="block text-base font-semibold text-skin-text mb-2">
+          Input Type
+        </label>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setInputType('text')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              inputType === 'text'
+                ? 'bg-skin-accent text-white'
+                : 'bg-skin-border text-skin-text hover:bg-skin-accent/20'
+            }`}
+          >
+            Text
+          </button>
+          <button
+            onClick={() => setInputType('question')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              inputType === 'question'
+                ? 'bg-skin-accent text-white'
+                : 'bg-skin-border text-skin-text hover:bg-skin-accent/20'
+            }`}
+          >
+            Question
+          </button>
+        </div>
       </div>
 
-      <div>
-        <label htmlFor="question" className="block text-base font-semibold text-skin-text mb-1">
-          Ask a Question
-        </label>
-        <textarea
-          id="question"
-          rows={3}
-          className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical pointer-events-auto"
-          placeholder="e.g., What is the powerhouse of the cell?"
-          value={question}
-          onChange={handleQuestionChange}
-          disabled={isProcessing || text !== '' || code !== '' || imageFile !== null || audioFile !== null}
-        />
-      </div>
+      {/* Conditional Inputs */}
+      {inputType === 'question' ? (
+        <div>
+          <label htmlFor="input-value" className="block text-base font-semibold text-skin-text mb-1">
+            Ask a Question
+          </label>
+          <textarea
+            id="input-value"
+            rows={6}
+            className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical pointer-events-auto"
+            placeholder={`e.g., How does photosynthesis work?`}
+            value={inputValue}
+            onChange={handleInputValueChange}
+            disabled={isProcessing}
+          />
+        </div>
+      ) : (
+        <>
+          {diagramType === 'flowchart' ? (
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="text" className="block text-base font-semibold text-skin-text mb-1">
+                  Describe a Process or Workflow
+                </label>
+                <textarea
+                  id="text"
+                  rows={4}
+                  className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical pointer-events-auto"
+                  placeholder="Describe a process, workflow, or procedure (e.g., 'How to make coffee', 'User registration process', etc.)..."
+                  value={processDescription}
+                  onChange={handleProcessDescriptionChange}
+                  disabled={isProcessing || code !== ''}
+                />
+              </div>
+              
+              <div className="relative flex items-center">
+                <div className="flex-grow border-t border-skin-border"></div>
+                <span className="flex-shrink mx-4 text-skin-text-muted font-semibold text-sm">OR</span>
+                <div className="flex-grow border-t border-skin-border"></div>
+              </div>
+
+              <div>
+                <label htmlFor="code" className="block text-base font-semibold text-skin-text mb-1">
+                  Paste Your Code
+                </label>
+                <textarea
+                  id="code"
+                  rows={6}
+                  className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical font-mono pointer-events-auto"
+                  placeholder="Paste your code here to generate a flowchart (supports Python, JavaScript, Java, C++, etc.)..."
+                  value={code}
+                  onChange={handleCodeChange}
+                  disabled={isProcessing || processDescription !== ''}
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label htmlFor="input-value" className="block text-base font-semibold text-skin-text mb-1">
+                Analyze Text & Files
+              </label>
+              <textarea
+                id="input-value"
+                rows={6}
+                className="mt-1 block w-full rounded-lg border border-skin-border shadow-sm focus:border-skin-accent focus:ring-skin-accent text-base p-3 bg-skin-bg-accent text-skin-text resize-vertical pointer-events-auto"
+                placeholder="Paste text here, or provide an image/audio file below..."
+                value={inputValue}
+                onChange={handleInputValueChange}
+                disabled={isProcessing}
+              />
+            </div>
+          )}
+        </>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className={isProcessing ? 'file-input-disabled' : ''}>

@@ -41,6 +41,34 @@ const getNodeShape = (node, diagramType) => {
       default:
         return { shape: 'box' };
     }
+  } else if (diagramType?.startsWith('mindmap')) {
+    // Differentiate mindmap node shapes based on type
+    switch (node.type) {
+      case 'MAIN_TOPIC':
+        return { shape: 'box', shapeProperties: { borderRadius: 10 } }; // Larger, rounded box for central
+      case 'TOPIC':
+        return { shape: 'ellipse' }; // Oval for main branches
+      case 'SUBTOPIC':
+        return { shape: 'circle' }; // Circle for sub-branches
+      case 'CONCEPT':
+        return { shape: 'diamond' }; // Diamond for concepts in concept maps
+      case 'DATE':
+      case 'EVENT':
+      case 'MILESTONE':
+      case 'PERIOD':
+        return { shape: 'box', shapeProperties: { borderRadius: 4 } }; // Small box for timeline items
+      case 'CHILD_TOPIC':
+        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // Default for radial child topics
+      case 'PERSON':
+      case 'ORG':
+      case 'LOCATION':
+      case 'PRODUCT':
+      case 'ROLE':
+      case 'FUNCTION':
+        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // Default box for organizational/other specific types
+      default:
+        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // Fallback mindmap shape
+    }
   }
   return { shape: 'dot' };
 };
@@ -57,7 +85,7 @@ const getNodeFont = (node, diagramType, theme) => {
     },
   };
 
-  if (diagramType === 'mindmap') {
+  if (diagramType?.startsWith('mindmap')) {
     font.size = 18;
     font.face = 'Poppins';
   }
@@ -72,7 +100,7 @@ const getNodeFont = (node, diagramType, theme) => {
 const getNodeSize = (node, diagramType) => {
   if (node.size) return node.size;
   if (diagramType === 'knowledge-graph') return 30;
-  if (diagramType === 'mindmap') return 40;
+  if (diagramType?.startsWith('mindmap')) return 40;
   return 25;
 };
 
@@ -94,11 +122,6 @@ const getNodeStyle = (node, diagramType, theme) => {
     margin: { top: 20, right: 20, bottom: 20, left: 20 },
     labelHighlightBold: true,
   };
-
-  if (diagramType === 'mindmap') {
-    style.shape = 'box';
-    style.shapeProperties = { borderRadius: 6 };
-  }
 
   if (node.style) {
     Object.assign(style, node.style);
@@ -125,7 +148,7 @@ const getEdgeStyle = (edge, diagramType, theme) => {
   }
 
   // Improve text visibility for mind maps
-  if (diagramType === 'mindmap') {
+  if (diagramType?.startsWith('mindmap')) {
     // Use brighter, more visible colors for mind map edge text
     fontColor = theme === 'dark' ? '#F1F5F9' : '#1E293B'; // Much brighter in dark, darker in light
     color = theme === 'dark' ? '#64748B' : '#94A3B8'; // Better edge line visibility
@@ -139,11 +162,11 @@ const getEdgeStyle = (edge, diagramType, theme) => {
     smooth: { enabled: true, type: 'dynamic', roundness: 0.5 },
     font: { 
       color: fontColor, 
-      size: diagramType === 'mindmap' ? 14 : 12, // Larger font for mind maps
-      face: diagramType === 'mindmap' ? 'Inter, sans-serif' : 'monospace', 
+      size: diagramType?.startsWith('mindmap') ? 14 : 12, // Larger font for mind maps
+      face: diagramType?.startsWith('mindmap') ? 'Inter, sans-serif' : 'monospace', 
       align: 'horizontal',
-      strokeWidth: diagramType === 'mindmap' && theme === 'dark' ? 2 : 0, // Add stroke for better visibility in dark theme
-      strokeColor: diagramType === 'mindmap' && theme === 'dark' ? '#1E293B' : 'transparent'
+      strokeWidth: diagramType?.startsWith('mindmap') && theme === 'dark' ? 2 : 0, // Add stroke for better visibility in dark theme
+      strokeColor: diagramType?.startsWith('mindmap') && theme === 'dark' ? '#1E293B' : 'transparent'
     },
     labelHighlightBold: true,
   };
@@ -153,7 +176,7 @@ const getEdgeStyle = (edge, diagramType, theme) => {
     style.arrows.to.enabled = true;
   }
 
-  if (diagramType === 'mindmap') {
+  if (diagramType?.startsWith('mindmap')) {
     style.smooth = { enabled: true, type: 'cubicBezier', forceDirection: 'horizontal', roundness: 0.9 };
   }
 
@@ -165,7 +188,20 @@ const getEdgeStyle = (edge, diagramType, theme) => {
 };
 
 const getLayoutOptions = (type, flowchartDirection) => {
-  switch (type) {
+  // Radial maps are physics-based, not hierarchical
+  if (type === 'mindmap-radial') {
+    return {
+      randomSeed: 2,
+      improvedLayout: true,
+      clusterThreshold: 150,
+      hierarchical: {
+        enabled: false,
+      },
+    }
+  }
+
+  const diagramFamily = type?.startsWith('mindmap') ? 'mindmap' : type;
+  switch (diagramFamily) {
     case 'flowchart':
       return {
         hierarchical: {
@@ -201,7 +237,24 @@ const getLayoutOptions = (type, flowchartDirection) => {
 };
 
 const getPhysicsOptions = (type) => {
-  switch (type) {
+  // Radial maps need physics to arrange themselves
+  if (type === 'mindmap-radial') {
+    return {
+      enabled: true,
+      solver: 'forceAtlas2Based',
+      forceAtlas2Based: {
+        gravitationalConstant: -120,
+        centralGravity: 0.01,
+        springLength: 300,
+        springConstant: 0.1,
+        damping: 0.4,
+        avoidOverlap: 0.9,
+      },
+    }
+  }
+
+  const diagramFamily = type?.startsWith('mindmap') ? 'mindmap' : type;
+  switch (diagramFamily) {
     case 'flowchart':
       return {
         enabled: true,
@@ -345,11 +398,13 @@ const GraphVisualization = forwardRef(
           }
         });
 
-        networkInstance.current.on('hoverNode', ({ node, event }) => {
-          const nodeData = normalizedData.nodes.get(node);
-          const content = `<b>${nodeData.label}</b>`;
-          setTooltip({ visible: true, content, x: event.pointer.DOM.x, y: event.pointer.DOM.y });
-          containerRef.current.style.cursor = 'pointer';
+        networkInstance.current.on('hoverNode', ({ node, pointer }) => {
+          if (pointer) {
+            const nodeData = normalizedData.nodes.get(node);
+            const content = `<b>${nodeData.label}</b>`;
+            setTooltip({ visible: true, content, x: pointer.DOM.x, y: pointer.DOM.y });
+            containerRef.current.style.cursor = 'pointer';
+          }
         });
 
         networkInstance.current.on('blurNode', () => {

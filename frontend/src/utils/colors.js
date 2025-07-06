@@ -26,6 +26,8 @@ const darkThemeColors = {
   DATABASE: '#a78bfa', // Violet 400 - Database (cylinder)
   DISPLAY: '#38bdf8', // Sky 400 - Display (rounded rectangle)
   // Mindmap node types
+  MAIN_TOPIC: '#a855f7', // Purple 500
+  CHILD_TOPIC: '#3b82f6', // Blue 500
   TOPIC: '#8b5cf6', // Violet 500
   SUBTOPIC: '#06b6d4', // Cyan 500
   DEFAULT: '#94a3b8', // Slate 400
@@ -57,6 +59,8 @@ const lightThemeColors = {
   DATABASE: '#6d28d9', // Violet 700 - Database (cylinder)
   DISPLAY: '#0284c7', // Sky 600 - Display (rounded rectangle)
   // Mindmap node types
+  MAIN_TOPIC: '#7c3aed', // Purple 600
+  CHILD_TOPIC: '#2563eb', // Blue 600
   TOPIC: '#7c3aed', // Violet 600
   SUBTOPIC: '#0891b2', // Cyan 600
   DEFAULT: '#64748b', // Slate 500
