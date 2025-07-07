@@ -436,67 +436,6 @@ const GraphVisualization = forwardRef(
     useImperativeHandle(ref, () => ({
       fit: () => networkInstance.current?.fit(),
       getNetwork: () => networkInstance.current,
-      downloadSVG: () => {
-        const network = networkInstance.current;
-        if (!network) {
-          console.error('Network instance not available');
-          alert('Download failed: Graph not ready.');
-          return;
-        }
-
-        try {
-          // Use a flag to ensure the download logic runs only once
-          let downloadTriggered = false;
-
-          const onAfterDrawing = () => {
-            if (downloadTriggered) return;
-            downloadTriggered = true;
-
-            // Remove the listener immediately to prevent multiple triggers
-            network.off('afterDrawing', onAfterDrawing);
-
-            // Give the browser a moment to breathe before capturing
-            setTimeout(() => {
-              try {
-                const svgData = network.getSVG();
-                const blob = new Blob([svgData], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `synapse-${diagramType}-${new Date().toISOString().slice(0, 10)}.svg`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-              } catch (svgError) {
-                console.error('SVG generation failed, falling back to PNG:', svgError);
-                try {
-                  const canvas = network.canvas.frame.canvas;
-                  const dataURL = canvas.toDataURL('image/png');
-                  const link = document.createElement('a');
-                  link.href = dataURL;
-                  link.download = `synapse-${diagramType}-${new Date().toISOString().slice(0, 10)}.png`;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  alert('SVG export failed. The diagram has been downloaded as a PNG image instead.');
-                } catch (fallbackError) {
-                  console.error('Fallback PNG download also failed:', fallbackError);
-                  alert('Download failed for both SVG and PNG. Please check the console for errors.');
-                }
-              }
-            }, 100); // 100ms delay for safety
-          };
-
-          // Attach the listener and then fit the network to the view
-          network.on('afterDrawing', onAfterDrawing);
-          network.fit({ animation: false });
-
-        } catch (error) {
-          console.error('An unexpected error occurred during the download process setup:', error);
-          alert('An unexpected error occurred. Could not initiate download.');
-        }
-      },
       downloadJSON: () => {
         if (!data || (!data.nodes && !data.edges)) {
           console.error('No graph data available for download');
@@ -590,6 +529,130 @@ const GraphVisualization = forwardRef(
         const link = document.createElement('a');
         link.href = url;
         link.download = `synapse-edges-${diagramType}-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      },
+      exportAsSVG: () => {
+        const network = networkInstance.current;
+        if (!network) {
+          alert('Network not ready');
+          return;
+        }
+        const positions = network.getPositions();
+        const nodes = network.body.data.nodes.get();
+        const edges = network.body.data.edges.get();
+        // Use the diagramType from props, not from network.body.data
+        // This ensures subtypes are respected
+        // Calculate bounds
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        Object.values(positions).forEach(pos => {
+          if (!pos) return;
+          minX = Math.min(minX, pos.x);
+          minY = Math.min(minY, pos.y);
+          maxX = Math.max(maxX, pos.x);
+          maxY = Math.max(maxY, pos.y);
+        });
+        // Padding for labels/arrows
+        const pad = 80;
+        const width = Math.ceil(maxX - minX + 2 * pad);
+        const height = Math.ceil(maxY - minY + 2 * pad);
+        // SVG header
+        let svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='${minX-pad} ${minY-pad} ${width} ${height}'>`;
+        // --- Draw Edges ---
+        edges.forEach(edge => {
+          const from = positions[edge.from];
+          const to = positions[edge.to];
+          if (!from || !to) return;
+          const style = getEdgeStyle(edge, diagramType, theme);
+          // Edge path: straight or Bezier
+          let path = '';
+          if (style.smooth && style.smooth.enabled && style.smooth.type === 'cubicBezier') {
+            // Calculate control points for Bezier
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            let cx1, cy1, cx2, cy2;
+            if (style.smooth.forceDirection === 'vertical') {
+              cx1 = from.x;
+              cy1 = from.y + dy * style.smooth.roundness;
+              cx2 = to.x;
+              cy2 = to.y - dy * style.smooth.roundness;
+            } else { // horizontal or dynamic
+              cx1 = from.x + dx * style.smooth.roundness;
+              cy1 = from.y;
+              cx2 = to.x - dx * style.smooth.roundness;
+              cy2 = to.y;
+            }
+            path = `<path d='M${from.x},${from.y} C${cx1},${cy1} ${cx2},${cy2} ${to.x},${to.y}' stroke='${style.color.color}' stroke-width='${style.width}' fill='none' marker-end='${style.arrows.to.enabled ? 'url(#arrowhead)' : ''}' />`;
+          } else {
+            path = `<line x1='${from.x}' y1='${from.y}' x2='${to.x}' y2='${to.y}' stroke='${style.color.color}' stroke-width='${style.width}' marker-end='${style.arrows.to.enabled ? 'url(#arrowhead)' : ''}' />`;
+          }
+          svg += path;
+          // Edge label (centered)
+          if (edge.label) {
+            const mx = (from.x + to.x) / 2;
+            const my = (from.y + to.y) / 2;
+            svg += `<text x='${mx}' y='${my - 8}' text-anchor='middle' font-size='${style.font.size}' fill='${style.font.color}' font-family='${style.font.face}'>${edge.label}</text>`;
+          }
+        });
+        // Arrowhead marker
+        svg += `<defs><marker id='arrowhead' markerWidth='10' markerHeight='7' refX='10' refY='3.5' orient='auto' markerUnits='strokeWidth'><polygon points='0 0, 10 3.5, 0 7' fill='#333' /></marker></defs>`;
+        // --- Draw Nodes ---
+        nodes.forEach(node => {
+          const pos = positions[node.id];
+          if (!pos) return;
+          const style = getNodeStyle(node, diagramType, theme);
+          let nodeSVG = '';
+          // Node shape
+          switch (style.shape) {
+            case 'ellipse':
+              nodeSVG = `<ellipse cx='${pos.x}' cy='${pos.y}' rx='${style.size*1.1}' ry='${style.size*0.8}' fill='${style.color}' stroke='#333' stroke-width='${style.borderWidth}' />`;
+              break;
+            case 'box':
+              const r = style.shapeProperties?.borderRadius || 6;
+              nodeSVG = `<rect x='${pos.x-style.size}' y='${pos.y-style.size*0.7}' width='${style.size*2}' height='${style.size*1.4}' rx='${r}' fill='${style.color}' stroke='#333' stroke-width='${style.borderWidth}' />`;
+              break;
+            case 'diamond':
+              nodeSVG = `<polygon points='${pos.x},${pos.y-style.size} ${pos.x+style.size},${pos.y} ${pos.x},${pos.y+style.size} ${pos.x-style.size},${pos.y}' fill='${style.color}' stroke='#333' stroke-width='${style.borderWidth}' />`;
+              break;
+            case 'circle':
+              nodeSVG = `<circle cx='${pos.x}' cy='${pos.y}' r='${style.size}' fill='${style.color}' stroke='#333' stroke-width='${style.borderWidth}' />`;
+              break;
+            case 'triangle':
+              nodeSVG = `<polygon points='${pos.x},${pos.y-style.size} ${pos.x+style.size},${pos.y+style.size} ${pos.x-style.size},${pos.y+style.size}' fill='${style.color}' stroke='#333' stroke-width='${style.borderWidth}' />`;
+              break;
+            case 'triangleDown':
+              nodeSVG = `<polygon points='${pos.x-style.size},${pos.y-style.size} ${pos.x+style.size},${pos.y-style.size} ${pos.x},${pos.y+style.size}' fill='${style.color}' stroke='#333' stroke-width='${style.borderWidth}' />`;
+              break;
+            case 'hexagon':
+              const hex = Array.from({length:6},(_,i)=>{
+                const angle = Math.PI/3*i;
+                return `${pos.x+style.size*Math.cos(angle)},${pos.y+style.size*Math.sin(angle)}`;
+              }).join(' ');
+              nodeSVG = `<polygon points='${hex}' fill='${style.color}' stroke='#333' stroke-width='${style.borderWidth}' />`;
+              break;
+            case 'database':
+              nodeSVG = `<ellipse cx='${pos.x}' cy='${pos.y}' rx='${style.size*1.1}' ry='${style.size*0.7}' fill='${style.color}' stroke='#333' stroke-width='${style.borderWidth}' />`;
+              nodeSVG += `<ellipse cx='${pos.x}' cy='${pos.y+style.size*0.7}' rx='${style.size*1.1}' ry='${style.size*0.2}' fill='rgba(0,0,0,0.08)' />`;
+              break;
+            default:
+              nodeSVG = `<circle cx='${pos.x}' cy='${pos.y}' r='${style.size}' fill='${style.color}' stroke='#333' stroke-width='${style.borderWidth}' />`;
+          }
+          // Node label
+          if (node.label) {
+            svg += nodeSVG + `<text x='${pos.x}' y='${pos.y+5}' text-anchor='middle' font-size='${style.font.size}' fill='${style.font.color}' font-family='${style.font.face}'>${node.label}</text>`;
+          } else {
+            svg += nodeSVG;
+          }
+        });
+        svg += '</svg>';
+        // Download SVG
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'graph-export.svg';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

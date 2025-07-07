@@ -1,5 +1,6 @@
 import { memo, useEffect, useState } from 'react';
 import { Bars3Icon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
 const FeatureCard = memo(({ emoji, title, description, onClick, isMobile }) => (
   <div 
@@ -42,7 +43,13 @@ const WelcomeScreen = memo(({ onDiagramTypeSelect, onOpenSidebar }) => {
   }, []);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-transparent pointer-events-none">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ duration: 0.35, ease: 'easeInOut' }}
+      className="fixed inset-0 flex items-center justify-center z-50 bg-transparent pointer-events-none"
+    >
       <div className={`text-center ${isMobile ? 'max-w-sm px-4' : 'max-w-md'} w-full animate-fade-in-panel pointer-events-auto`}>
         <div className={`${isMobile ? 'mb-4' : 'mb-6'}`}>
           <div className={`${isMobile ? 'text-5xl mb-3' : 'text-6xl mb-4'}`}>🕸️</div>
@@ -88,7 +95,7 @@ const WelcomeScreen = memo(({ onDiagramTypeSelect, onOpenSidebar }) => {
           </div>
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 });
 

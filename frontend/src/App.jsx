@@ -351,14 +351,12 @@ function App() {
 
   // Download handlers with useCallback for performance
   const handleDownloadSVG = useCallback(() => {
-    console.log('Download SVG clicked, graphRef.current:', graphRef.current)
-    console.log('Available methods:', graphRef.current ? Object.keys(graphRef.current) : 'No ref')
-    if (graphRef.current && graphRef.current.downloadSVG) {
-      graphRef.current.downloadSVG()
+    if (graphRef.current && graphRef.current.exportAsSVG) {
+      graphRef.current.exportAsSVG();
     } else {
-      console.error('downloadSVG method not available')
+      console.error('exportAsSVG method not available');
     }
-  }, [])
+  }, []);
   const handleDownloadJSON = useCallback(() => {
     console.log('Download JSON clicked, graphRef.current:', graphRef.current)
     console.log('Available methods:', graphRef.current ? Object.keys(graphRef.current) : 'No ref')
@@ -817,7 +815,7 @@ function App() {
             />
           )}
 
-          {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && !(isSidebarOpen && isMobile) && (
+          {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && !isSidebarOpen && (
             <WelcomeScreen
               onDiagramTypeSelect={(type) => {
                 setCurrentDiagramType(type);
