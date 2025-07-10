@@ -117,6 +117,7 @@ function App() {
   const { user: authUser, logout } = useAuth()
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
   const handleLogout = () => setShowLogoutModal(true);
   const handleDeleteAccount = () => setShowDeleteModal(true);
@@ -128,11 +129,14 @@ function App() {
     setShowDeleteModal(false);
     try {
       await deleteAccount();
-      alert('Your account has been successfully deleted.');
-      logout();
+      setShowDeleteSuccess(true);
     } catch (error) {
       alert(error.message || 'Failed to delete account. Please try again.');
     }
+  };
+  const handleDeleteSuccessClose = () => {
+    setShowDeleteSuccess(false);
+    logout();
   };
 
   // Add context menu handlers
@@ -720,6 +724,14 @@ function App() {
         danger
         onConfirm={confirmDeleteAccount}
         onCancel={() => setShowDeleteModal(false)}
+      />
+      <ConfirmModal
+        open={showDeleteSuccess}
+        title="Account Deleted"
+        description="Your account has been successfully deleted."
+        confirmText="OK"
+        onConfirm={handleDeleteSuccessClose}
+        onCancel={handleDeleteSuccessClose}
       />
 
       <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'}`}>
