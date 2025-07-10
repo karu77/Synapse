@@ -247,23 +247,7 @@ const ControlSidebar = ({
                 <span className="text-sm text-gray-600 dark:text-skin-text-muted truncate">
               Welcome, {user?.name || 'Guest'}
             </span>
-            <button
-              onClick={logout}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-gray-600 dark:text-skin-text-muted bg-gray-100 dark:bg-skin-bg hover:bg-gray-200 dark:hover:bg-skin-border hover:text-gray-800 dark:hover:text-skin-text transition-all duration-200 pointer-events-auto"
-              aria-label="Logout"
-            >
-              <ArrowRightOnRectangleIcon className="h-5 w-5" />
-              <span>Logout</span>
-            </button>
           </div>
-          <button
-            onClick={handleDeleteAccount}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/60 transition-all duration-200 pointer-events-auto"
-            aria-label="Delete Account"
-          >
-            <TrashIcon className="h-5 w-5" />
-            <span>Delete Account</span>
-          </button>
             </motion.div>
       </motion.div>
     </>

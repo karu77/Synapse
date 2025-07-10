@@ -8,13 +8,18 @@ import RegisterPage from './pages/RegisterPage'
 import PrivateRoute from './components/PrivateRoute'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
+import LandingPage from './pages/LandingPage';
 
 const router = createBrowserRouter([
   {
     path: '/',
+    element: <LandingPage />,
+  },
+  {
+    path: '/app',
     element: (
       <PrivateRoute>
-    <App />
+        <App />
       </PrivateRoute>
     ),
   },

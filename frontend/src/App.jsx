@@ -7,6 +7,7 @@ import {
   deleteHistoryItem,
   clearAllHistory,
   checkTokenStatus,
+  deleteAccount,
 } from './services/api'
 import ThemeToggleButton from './components/ThemeToggleButton'
 import ControlSidebar from './components/ControlSidebar'
@@ -24,6 +25,8 @@ import {
   ArrowDownOnSquareIcon,
   MagnifyingGlassIcon,
   CommandLineIcon,
+  UserCircleIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from './contexts/AuthContext'
 import { Menu } from '@headlessui/react'
@@ -111,6 +114,22 @@ function App() {
   const containerRef = useRef(null)
   const onGraphReadyRef = useRef(null)
   const { user: authUser, logout } = useAuth()
+
+  const handleDeleteAccount = async () => {
+    if (
+      window.confirm(
+        'Are you sure you want to delete your account? This action is irreversible and will remove all your data.'
+      )
+    ) {
+      try {
+        await deleteAccount();
+        alert('Your account has been successfully deleted.');
+        logout();
+      } catch (error) {
+        alert(error.message || 'Failed to delete account. Please try again.');
+      }
+    }
+  };
 
   // Add context menu handlers
   const handleNodeContextMenu = useCallback((node, position) => {
@@ -646,148 +665,40 @@ function App() {
         </div>
       )}
 
-      <header className={`fixed top-0 left-0 right-0 z-30 ${isMobile ? 'p-2' : 'p-4'} pointer-events-none`}>
-        <div
-          className={`max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full ${isMobile ? 'p-1' : 'p-2 pl-4'} border border-skin-border shadow-xl pointer-events-auto`}
-        >
-          <div className="flex items-center gap-3 pointer-events-auto">
-            <button
-              onClick={toggleSidebar}
-              className={`${isMobile ? 'p-3' : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto ${
-                (!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing
-                  ? 'animate-pulse-glow'
-                  : ''
-              }`}
-              aria-label="Toggle controls sidebar"
-            >
-              <Bars3Icon className={`${isMobile ? 'h-7 w-7' : 'h-6 w-6'}`} />
-            </button>
-            <h1
-              className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold bg-gradient-to-r from-skin-text to-skin-accent bg-clip-text text-transparent ${
-                isMobile ? 'block' : 'hidden sm:block'
-              }`}
-            >
-              Synapse
-            </h1>
-            {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && (
-              <div className="hidden md:flex items-center gap-2 text-sm text-skin-text-muted animate-fade-in-panel">
-                <span>→</span>
-                <span>Create diagrams here</span>
-              </div>
-            )}
-          </div>
-          <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'} pointer-events-auto`}>
-            <button
-              onClick={() => setIsSearching(true)}
-              disabled={!graphData?.nodes?.length}
-              className={`${isMobile ? 'p-3' : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto`}
-              aria-label="Search graph"
-            >
-              <MagnifyingGlassIcon className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} />
-            </button>
-
-            {!isMobile && (
-              <button
-                onClick={() => setShortcuts({ visible: true })}
-                className="p-2 rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto"
-                aria-label="Show keyboard shortcuts"
-              >
-                <CommandLineIcon className="h-5 w-5" />
-              </button>
-            )}
-
-            <Menu
-              as="div"
-              className="relative inline-block text-left pointer-events-auto"
-            >
-              <div>
-                <Menu.Button
-                  disabled={
-                    isProcessing ||
-                    !(
-                      Array.isArray(graphData.nodes) &&
-                      graphData.nodes.length > 0
-                    )
-                  }
-                  className={`inline-flex w-full justify-center items-center gap-2 rounded-full bg-skin-bg ${isMobile ? 'p-3' : 'p-2'} border border-skin-border text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:scale-105 focus:scale-105 active:scale-95 duration-150 pointer-events-auto`}
-                >
-                  <ArrowDownTrayIcon className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} />
-                  <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Download</span>
-                </Menu.Button>
-              </div>
-              <Menu.Items className={`absolute right-0 mt-2 ${isMobile ? 'w-48' : 'w-56'} origin-top-right divide-y divide-skin-border rounded-md bg-skin-bg-accent shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none`}>
-                <div className="px-1 py-1 ">
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={handleDownloadSVG}
-                        className={`${
-                          active
-                            ? 'bg-skin-border text-skin-text'
-                            : 'text-skin-text'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <ArrowDownOnSquareIcon className="mr-2 h-5 w-5" />
-                        SVG (Infinite Zoom, Vector)
-                      </button>
-                    )}
-                  </Menu.Item>
-                </div>
-                <div className="px-1 py-1">
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={handleDownloadJSON}
-                        className={`${
-                          active
-                            ? 'bg-skin-border text-skin-text'
-                            : 'text-skin-text'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <CodeBracketIcon className="mr-2 h-5 w-5" />
-                        JSON (Graph Data)
-                      </button>
-                    )}
-                  </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={handleDownloadNodesCSV}
-                        className={`${
-                          active
-                            ? 'bg-skin-border text-skin-text'
-                            : 'text-skin-text'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <TableCellsIcon className="mr-2 h-5 w-5" />
-                        Nodes (CSV)
-                      </button>
-                    )}
-                  </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={handleDownloadEdgesCSV}
-                        className={`${
-                          active
-                            ? 'bg-skin-border text-skin-text'
-                            : 'text-skin-text'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <TableCellsIcon className="mr-2 h-5 w-5" />
-                        Edges (CSV)
-                      </button>
-                    )}
-                  </Menu.Item>
-                </div>
-              </Menu.Items>
-            </Menu>
-            {!isMobile && <div className="hidden sm:block h-6 border-l border-skin-border mx-1"></div>}
-            <div className={`flex items-center gap-1 bg-skin-bg ${isMobile ? 'p-2' : 'p-1'} rounded-full border border-skin-border pointer-events-auto`}>
-              <ThemeToggleButton />
+      {/* User Dropdown Menu */}
+      <header className="flex justify-end items-center p-4">
+        <Menu as="div" className="relative inline-block text-left">
+          <Menu.Button className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-skin-text-muted bg-gray-100 dark:bg-skin-bg hover:bg-gray-200 dark:hover:bg-skin-border transition">
+            <UserCircleIcon className="h-6 w-6" />
+            <span>{authUser?.name || 'Account'}</span>
+          </Menu.Button>
+          <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg focus:outline-none z-50">
+            <div className="py-1">
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    onClick={logout}
+                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-skin-text-muted hover:bg-gray-100 dark:hover:bg-skin-border ${active ? 'bg-gray-100 dark:bg-skin-border' : ''}`}
+                  >
+                    <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                    Logout
+                  </button>
+                )}
+              </Menu.Item>
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    onClick={handleDeleteAccount}
+                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 ${active ? 'bg-red-100 dark:bg-red-900/30' : ''}`}
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                    Delete Account
+                  </button>
+                )}
+              </Menu.Item>
             </div>
-          </div>
-        </div>
+          </Menu.Items>
+        </Menu>
       </header>
 
       <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'}`}>

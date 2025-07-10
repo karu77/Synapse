@@ -378,6 +378,24 @@ body::before {
   }
 }
 
+.auth-form-panel {
+  background: #fff;
+  border: 1.5px solid var(--color-border);
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10), 0 1.5px 8px 0 rgba(var(--color-accent-rgb), 0.10);
+  padding: 2rem;
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  color: var(--color-text);
+  transition: box-shadow 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.dark .auth-form-panel {
+  background: #23272f;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text);
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.35), 0 1.5px 8px 0 rgba(var(--color-accent-rgb), 0.10);
+}
+
 /* Mobile-specific optimizations */
 @media (max-width: 768px) {
   /* Better touch targets */
@@ -397,6 +415,13 @@ body::before {
   input[type="password"],
   textarea {
     font-size: 16px;
+  }
+  input[type='text'], input[type='email'], input[type='password'],
+  input[type='text']:focus, input[type='email']:focus, input[type='password']:focus,
+  input[type='text']:active, input[type='email']:active, input[type='password']:active {
+    color: #111 !important;
+    background: #fff !important;
+    caret-color: #111 !important;
   }
   
   /* Better sidebar on mobile */
@@ -508,5 +533,39 @@ body::before {
 
 .animate-tooltip-fade-in {
   animation: fadeInTooltip 0.2s ease-out;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+input:-webkit-autofill:hover {
+  -webkit-text-fill-color: #111 !important;
+  color: #111 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  caret-color: #111 !important;
+  border-color: #b9bcc0 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input[type='text'], .dark input[type='email'], .dark input[type='password'],
+.dark input[type='text']:focus, .dark input[type='email']:focus, .dark input[type='password']:focus,
+.dark input[type='text']:active, .dark input[type='email']:active, .dark input[type='password']:active {
+  color: #111 !important;
+  background: #fff !important;
+  caret-color: #111 !important;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active,
+.dark input:-webkit-autofill:hover {
+  -webkit-text-fill-color: #111 !important;
+  color: #111 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  caret-color: #111 !important;
+  border-color: #b9bcc0 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 

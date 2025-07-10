@@ -28,7 +28,7 @@ const PasswordInput = ({
           onChange={onChange}
           onBlur={onBlur}
           placeholder={placeholder}
-          className={`w-full px-4 py-2 bg-skin-bg/80 border rounded-lg focus:outline-none focus:ring-2 transition ${
+          className={`w-full px-4 py-2 bg-skin-bg/80 border rounded-lg focus:outline-none focus:ring-2 transition text-black dark:text-white !opacity-100 ${
             error
               ? 'border-red-500 focus:ring-red-500/50'
               : 'border-skin-border focus:border-skin-accent focus:ring-skin-accent/50'

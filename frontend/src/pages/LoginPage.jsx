@@ -80,7 +80,7 @@ const LoginPage = () => {
           </p>
         </div>
 
-        <div className="bg-skin-bg-accent/70 dark:bg-skin-bg-accent/50 backdrop-blur-xl border border-skin-border rounded-2xl shadow-2xl p-8">
+        <div className="auth-form-panel">
           <form onSubmit={handleSubmit} noValidate>
             {errors.form && <ErrorDisplay error={{ message: errors.form }} />}
             
@@ -96,7 +96,7 @@ const LoginPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 onBlur={() => handleBlur('email')}
                 placeholder="you@example.com"
-                className={`w-full px-4 py-2 bg-skin-bg/80 border rounded-lg focus:outline-none focus:ring-2 transition ${
+                className={`w-full px-4 py-2 bg-skin-bg/80 border rounded-lg focus:outline-none focus:ring-2 transition text-black dark:text-white ${
                   errors.email
                     ? 'border-red-500 focus:ring-red-500/50'
                     : 'border-skin-border focus:border-skin-accent focus:ring-skin-accent/50'
