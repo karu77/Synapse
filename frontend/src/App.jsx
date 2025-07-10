@@ -32,6 +32,7 @@ import { useAuth } from './contexts/AuthContext'
 import { Menu } from '@headlessui/react'
 import { Fragment } from 'react'
 import Tooltip from './components/Tooltip'
+import ConfirmModal from './components/ConfirmModal';
 
 const defaultPhysicsOptions = {
   gravitationalConstant: -40000,
@@ -114,20 +115,23 @@ function App() {
   const containerRef = useRef(null)
   const onGraphReadyRef = useRef(null)
   const { user: authUser, logout } = useAuth()
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const handleDeleteAccount = async () => {
-    if (
-      window.confirm(
-        'Are you sure you want to delete your account? This action is irreversible and will remove all your data.'
-      )
-    ) {
-      try {
-        await deleteAccount();
-        alert('Your account has been successfully deleted.');
-        logout();
-      } catch (error) {
-        alert(error.message || 'Failed to delete account. Please try again.');
-      }
+  const handleLogout = () => setShowLogoutModal(true);
+  const handleDeleteAccount = () => setShowDeleteModal(true);
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    logout();
+  };
+  const confirmDeleteAccount = async () => {
+    setShowDeleteModal(false);
+    try {
+      await deleteAccount();
+      alert('Your account has been successfully deleted.');
+      logout();
+    } catch (error) {
+      alert(error.message || 'Failed to delete account. Please try again.');
     }
   };
 
@@ -677,7 +681,7 @@ function App() {
               <Menu.Item>
                 {({ active }) => (
                   <button
-                    onClick={logout}
+                    onClick={handleLogout}
                     className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-skin-text-muted hover:bg-gray-100 dark:hover:bg-skin-border ${active ? 'bg-gray-100 dark:bg-skin-border' : ''}`}
                   >
                     <ArrowRightOnRectangleIcon className="h-5 w-5" />
@@ -700,6 +704,23 @@ function App() {
           </Menu.Items>
         </Menu>
       </header>
+      <ConfirmModal
+        open={showLogoutModal}
+        title="Log Out?"
+        description="Are you sure you want to log out?"
+        confirmText="Log Out"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Account?"
+        description="Are you sure you want to delete your account? This action is irreversible and will remove all your data."
+        confirmText="Delete"
+        danger
+        onConfirm={confirmDeleteAccount}
+        onCancel={() => setShowDeleteModal(false)}
+      />
 
       <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'}`}>
         <div className="relative h-full w-full">
