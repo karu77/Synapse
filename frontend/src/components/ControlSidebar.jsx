@@ -161,7 +161,7 @@ const ControlSidebar = ({
               isMobile 
                 ? 'mobile-sidebar w-screen max-w-none' 
                 : 'w-full sm:max-w-md border-r-2 border-gray-200 dark:border-gray-700'
-            }`}
+            } scrollbar-hide`}
             style={{
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 25px -5px rgba(0, 0, 0, 0.15)',
             }}

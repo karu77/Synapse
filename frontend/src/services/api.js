@@ -7,7 +7,7 @@ const apiPath = import.meta.env.VITE_API_URL || '/api';
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: isDevelopment ? apiPath : `${apiBaseUrl}${apiPath}`,
+  baseURL: apiPath, // Use the full URL from VITE_API_URL
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

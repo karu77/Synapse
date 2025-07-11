@@ -2,16 +2,18 @@ import { Request, Response } from 'express'
 import User from '../models/User'
 import History from '../models/History'
 import generateToken from '../utils/generateToken'
-import crypto from 'crypto'
-import sgMail from '@sendgrid/mail'
-
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || '')
 
 // @desc    Register a new user
 // @route   POST /api/users
 // @access  Public
 const registerUser = async (req: Request, res: Response) => {
   const { email, password } = req.body
+
+  // Check if email and password are provided
+  if (!email || !password) {
+    res.status(400).json({ message: 'Email and password are required' })
+    return
+  }
 
   // Basic email format validation
   const emailRegex = /^\S+@\S+\.\S+$/
@@ -27,46 +29,26 @@ const registerUser = async (req: Request, res: Response) => {
     return
   }
 
-  const verificationToken = crypto.randomBytes(20).toString('hex')
-  const verificationTokenExpires = new Date(Date.now() + 3600000) // 1 hour
+  try {
+    const user = await User.create({
+      email,
+      password,
+      isVerified: true, // Auto-verify users
+    })
 
-  const user = await User.create({
-    email,
-    password,
-    verificationToken,
-    verificationTokenExpires,
-  })
-
-  if (user) {
-    const verificationUrl = `${req.protocol}://${req.get('host')}/api/users/verify-email/${verificationToken}`
-
-    const msg = {
-      to: email,
-      from: 'noreply@yourdomain.com', // Your verified sender email
-      subject: 'Verify Your Synapse Account',
-      html: `
-        <p>Hello,</p>
-        <p>Thank you for registering with Synapse. Please click the link below to verify your email address:</p>
-        <p><a href="${verificationUrl}">Verify Email</a></p>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you did not register for an account, please ignore this email.</p>
-      `,
-    }
-
-    try {
-      await sgMail.send(msg)
+    if (user) {
       res.status(201).json({
-        message: 'User registered successfully. Please check your email to verify your account.',
+        message: 'User registered successfully.',
         email: user.email,
+        token: generateToken(user._id.toString()),
       })
-    } catch (sendgridError) {
-      console.error('SendGrid Email Error:', sendgridError)
-      // Optionally, delete the user if email sending fails critically
-      // await user.deleteOne(); 
-      res.status(500).json({ message: 'Failed to send verification email. Please try again later.' })
+    } else {
+      res.status(400).json({ message: 'Invalid user data' })
     }
-  } else {
-    res.status(400).json({ message: 'Invalid user data' })
+  } catch (error: unknown) {
+    console.error('Error creating user:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(400).json({ message: 'Error creating user', error: errorMessage })
   }
 }
 
@@ -79,10 +61,6 @@ const authUser = async (req: Request, res: Response) => {
   const user = await User.findOne({ email })
 
   if (user && (await user.matchPassword(password))) {
-    if (!user.isVerified) {
-      res.status(401).json({ message: 'Email not verified. Please check your inbox for a verification link.' })
-      return
-    }
     res.json({
       _id: user._id,
       email: user.email,
@@ -144,28 +122,4 @@ const clearAllUsers = async (req: Request, res: Response) => {
   }
 };
 
-// @desc    Verify user email
-// @route   GET /api/users/verify-email/:token
-// @access  Public
-const verifyEmail = async (req: Request, res: Response) => {
-  const { token } = req.params
-
-  const user = await User.findOne({
-    verificationToken: token,
-    verificationTokenExpires: { $gt: Date.now() },
-  })
-
-  if (!user) {
-    return res.status(400).json({ message: 'Invalid or expired verification token.' })
-  }
-
-  user.isVerified = true
-  user.verificationToken = undefined
-  user.verificationTokenExpires = undefined
-
-  await user.save()
-
-  res.status(200).json({ message: 'Email verified successfully. You can now log in.' })
-}
-
-export { registerUser, authUser, deleteUser, resetPassword, clearAllUsers, verifyEmail } 
+export { registerUser, authUser, deleteUser, resetPassword, clearAllUsers } 

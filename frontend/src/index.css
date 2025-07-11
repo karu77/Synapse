@@ -569,3 +569,44 @@ input:-webkit-autofill:hover {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* Custom thin, modern scrollbar styles for all scrollable elements */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent, #2563eb);
+  border-radius: 8px;
+  min-height: 40px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg, #18181b);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent, #2563eb) var(--color-bg, #18181b);
+}
+
+/* Optional: add hover effect for thumb */
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-hover, #1d4ed8);
+}
+
+/* Hide scrollbars globally by default for a cleaner look */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Only show scrollbars for modals and main content areas where scrolling is essential */
+/* NodeInfoPanel, AiInfoPanel, and main content should use custom scrollbars as before */
+

@@ -95,7 +95,7 @@ const HistoryPanel = ({ history = [], onSelect, onDelete, onClear }) => {
         <FilterButton type="flowchart" label="Flows" icon="📊" />
       </div>
 
-      <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-skin-border">
+      <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-hide">
         {filteredHistory.length > 0 ? (
           filteredHistory.map((item) => {
             const diagramType = item.inputs?.diagramType || item.graphData?.diagramType || 'knowledge-graph'

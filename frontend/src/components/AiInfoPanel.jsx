@@ -1,6 +1,6 @@
-import { XMarkIcon, InformationCircleIcon, LinkIcon, LightBulbIcon } from '@heroicons/react/24/outline'
-import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { XMarkIcon, LinkIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 const panelVariants = {
   hidden: { opacity: 0, scale: 0.95, y: -20 },
@@ -16,29 +16,28 @@ const panelVariants = {
     y: -20,
     transition: { duration: 0.2, ease: 'easeOut' },
   },
-}
+};
 
-const NodeInfoPanel = ({ node, onClose, references = [], recommendations = [] }) => {
+const AiInfoPanel = ({ answer, references = [], onClose }) => {
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const isMobile = windowSize.width < 768;
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({
         width: window.innerWidth,
-        height: window.innerHeight
+        height: window.innerHeight,
       });
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  if (!node) return null
+  if (!answer) return null;
 
   return (
     <motion.div
-      key="node-info-modal"
+      key="ai-info-modal"
       variants={panelVariants}
       initial="hidden"
       animate="visible"
@@ -60,22 +59,20 @@ const NodeInfoPanel = ({ node, onClose, references = [], recommendations = [] })
         >
           <XMarkIcon className="h-6 w-6" />
         </button>
-        {/* Node Title */}
+        {/* Title */}
         <div className="mb-4 text-center">
-          <h2 className="text-2xl font-bold text-white break-words drop-shadow">{node.label}</h2>
+          <h2 className="text-2xl font-bold text-white break-words drop-shadow">AI Response</h2>
         </div>
         {/* Scrollable Content */}
         <div className={`mb-2 ${isMobile ? 'max-h-[60vh]' : 'max-h-[70vh]'} overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-skin-accent scrollbar-track-skin-bg rounded-lg`}>
           {/* About Section */}
-          {node.description && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                <InformationCircleIcon className="h-5 w-5 text-skin-accent" />
-                <h4 className="font-semibold text-white">About</h4>
-              </div>
-              <p className="text-base text-gray-100 whitespace-pre-wrap leading-relaxed">{node.description}</p>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <InformationCircleIcon className="h-5 w-5 text-skin-accent" />
+              <h4 className="font-semibold text-white">Answer</h4>
             </div>
-          )}
+            <p className="text-base text-gray-100 whitespace-pre-wrap leading-relaxed">{answer}</p>
+          </div>
           {/* References */}
           {references.length > 0 && (
             <div className="mb-6">
@@ -99,7 +96,7 @@ const NodeInfoPanel = ({ node, onClose, references = [], recommendations = [] })
         </div>
       </motion.div>
     </motion.div>
-  )
-}
+  );
+};
 
-export default NodeInfoPanel
+export default AiInfoPanel; 

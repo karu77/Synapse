@@ -33,6 +33,7 @@ import { Menu } from '@headlessui/react'
 import { Fragment } from 'react'
 import Tooltip from './components/Tooltip'
 import ConfirmModal from './components/ConfirmModal';
+import AiInfoPanel from './components/AiInfoPanel';
 
 const defaultPhysicsOptions = {
   gravitationalConstant: -40000,
@@ -114,6 +115,8 @@ function App() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiReferences, setAiReferences] = useState([]);
   const graphRef = useRef(null)
   const containerRef = useRef(null)
   const onGraphReadyRef = useRef(null)
@@ -316,6 +319,7 @@ function App() {
     }
   }, [authUser, fetchHistory])
 
+  // When you set the answer, also set aiReferences if available from backend (for now fallback to empty array)
   const handleTextSubmit = async (text, question, imageFile, audioFile, imageUrl, audioUrl, diagramType) => {
     setIsProcessing(true)
     setSelectedNode(null)
@@ -334,14 +338,17 @@ function App() {
         audioUrl,
         diagramType
       )
-      console.log('Received graphData from backend:', graphData)
       setAnswer(answer)
+      // Aggregate all unique references from all nodes
+      const allReferences = [
+        ...new Set(
+          (graphData?.nodes || [])
+            .flatMap(node => node.references || [])
+            .filter(Boolean)
+        )
+      ];
+      setAiReferences(allReferences);
       setGraphData({
-        nodes: Array.isArray(graphData?.nodes) ? graphData.nodes : [],
-        edges: Array.isArray(graphData?.edges) ? graphData.edges : [],
-        diagramType: diagramType
-      })
-      console.log('Set graphData in state:', {
         nodes: Array.isArray(graphData?.nodes) ? graphData.nodes : [],
         edges: Array.isArray(graphData?.edges) ? graphData.edges : [],
         diagramType: diagramType
@@ -775,7 +782,7 @@ function App() {
       />
 
       {/* Main Content */}
-      <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'}`}>
+      <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'} ${selectedNode ? 'filter blur-sm pointer-events-none select-none' : ''}`}>
         <div className="relative h-full w-full">
           <GraphVisualization
             ref={graphRef}
@@ -812,59 +819,80 @@ function App() {
         </div>
       </main>
 
-      {/* Other components */}
-      <AnimatePresence>
-        {isSidebarOpen && (
-            <ControlSidebar
-              isOpen={isSidebarOpen}
-              onClose={toggleSidebar}
-              onSubmit={handleTextSubmit}
-              isProcessing={isProcessing}
-              selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
-              history={history}
-              loadFromHistory={loadFromHistory}
-              onDelete={handleDeleteFromHistory}
-              onClear={handleClearHistory}
-              styleOptions={styleOptions}
-              setStyleOptions={setStyleOptions}
-              resetStyles={resetStyles}
-              physicsOptions={physicsOptions}
-              setPhysicsOptions={setPhysicsOptions}
-              resetPhysics={resetPhysics}
-              user={authUser}
-              logout={logout}
-              currentDiagramType={currentDiagramType}
-              onDiagramTypeChange={handleDiagramTypeChange}
-              alwaysShowMediaInputs={true}
-            />
-        )}
-      </AnimatePresence>
+      {/* Other components, hidden when node modal is open */}
+      {!selectedNode && (
+        <>
+          <AnimatePresence>
+            {isSidebarOpen && (
+                <ControlSidebar
+                  isOpen={isSidebarOpen}
+                  onClose={toggleSidebar}
+                  onSubmit={handleTextSubmit}
+                  isProcessing={isProcessing}
+                  selectedNode={selectedNode}
+                  selectedEdge={selectedEdge}
+                  history={history}
+                  loadFromHistory={loadFromHistory}
+                  onDelete={handleDeleteFromHistory}
+                  onClear={handleClearHistory}
+                  styleOptions={styleOptions}
+                  setStyleOptions={setStyleOptions}
+                  resetStyles={resetStyles}
+                  physicsOptions={physicsOptions}
+                  setPhysicsOptions={setPhysicsOptions}
+                  resetPhysics={resetPhysics}
+                  user={authUser}
+                  logout={logout}
+                  currentDiagramType={currentDiagramType}
+                  onDiagramTypeChange={handleDiagramTypeChange}
+                  alwaysShowMediaInputs={true}
+                />
+            )}
+          </AnimatePresence>
 
-      {answer && (
-        <div className={`fixed ${isMobile ? 'bottom-4 left-4 right-4 top-auto transform-none' : 'top-1/2 transform -translate-y-1/2'} z-40 ${isMobile ? 'w-auto' : 'max-w-xs w-full sm:w-96'} animate-fade-in-panel transition-all duration-300 ${
-          isSidebarOpen && !isMobile ? 'left-[28rem]' : isMobile ? '' : 'left-4'
-        } ${isSidebarOpen && isMobile ? 'hidden' : ''}`}>
-          <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
-        </div>
+          {answer && !showAiModal && (
+            <div className={`fixed ${isMobile ? 'bottom-4 left-4 right-4 top-auto transform-none' : 'top-1/2 transform -translate-y-1/2'} z-40 ${isMobile ? 'w-auto' : 'max-w-xs w-full sm:w-96'} animate-fade-in-panel transition-all duration-300 ${
+              isSidebarOpen && !isMobile ? 'left-[28rem]' : isMobile ? '' : 'left-4'
+            } ${isSidebarOpen && isMobile ? 'hidden' : ''}`}
+              onClick={() => setShowAiModal(true)}
+              style={{ cursor: 'pointer' }}
+            >
+              <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
+            </div>
+          )}
+
+          <AnimatePresence>
+            {showAiModal && (
+              <AiInfoPanel
+                answer={answer}
+                references={aiReferences}
+                onClose={() => setShowAiModal(false)}
+              />
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {selectedEdge && (
+              <EdgeInfoPanel
+                key={selectedEdge.id}
+                edge={selectedEdge}
+                nodes={graphData.nodes}
+                onClose={() => setSelectedEdge(null)}
+              />
+            )}
+          </AnimatePresence>
+        </>
       )}
 
+      {/* Node modal, only when selectedNode is set */}
       <AnimatePresence>
         {selectedNode && (
           <NodeInfoPanel
             key={selectedNode.id}
             node={selectedNode}
             onClose={() => setSelectedNode(null)}
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {selectedEdge && (
-          <EdgeInfoPanel
-            key={selectedEdge.id}
-            edge={selectedEdge}
-            nodes={graphData.nodes}
-            onClose={() => setSelectedEdge(null)}
+            references={selectedNode.references}
+            recommendations={selectedNode.recommendations}
           />
         )}
       </AnimatePresence>

@@ -393,17 +393,36 @@ ${input}
         'knowledge-graph': `Generate a comprehensive knowledge graph with detailed entities and meaningful relationships. For each entity, include:
 - type: One of PERSON, GROUP, ROLE, ORG, COMPANY, GOVERNMENT, NONPROFIT, LOCATION, CITY, COUNTRY, REGION, EVENT, MEETING, CONFERENCE, MILESTONE, CONCEPT, IDEA, PRINCIPLE, THEORY, OBJECT, PRODUCT, DOCUMENT, TOOL, DATE, PERIOD, METRIC, GOAL, PROBLEM, or SOLUTION
 - label: A clear, descriptive name
-- description: A detailed explanation (2-3 sentences)
+- description: A truly comprehensive, in-depth, and exhaustive explanation. Cover all relevant background, context, applications, examples, significance, and technical or historical details. The explanation should be as long and detailed as necessary for a deep understanding, not just a summary.
 - properties: Key attributes relevant to the entity
 - importance: A number from 1-5 indicating significance
+- references: An array of at least 2 real, relevant URLs or objects with label and url, relevant to the node's topic (no placeholders)
+- recommendations: An array of at least 2 related topics or next concepts to explore
 
 For relationships, include:
 - label: The type of relationship
-- description: How the entities are connected
-- strength: A number from 0-1 indicating relationship strength`,
+- description: How the entities are connected (detailed)
+- strength: A number from 0-1 indicating relationship strength
+
+WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.`,
 
         'mindmap': getMindmapPrompt(mindmapSubtype),
-        'flowchart': 'Create a detailed flowchart with clear nodes and logical flows. ',
+        'flowchart': `Create a detailed flowchart with clear nodes and logical flows. For each node, include:
+- id: unique string
+- label: short description
+- type: one of the allowed types
+- level: REQUIRED integer indicating vertical order (0 = top, higher numbers = lower)
+- description: A truly comprehensive, in-depth, and exhaustive explanation. Cover all relevant background, context, applications, examples, significance, and technical or historical details. The explanation should be as long and detailed as necessary for a deep understanding, not just a summary.
+- references: An array of at least 2 real, relevant URLs or objects with label and url, relevant to the node's topic (no placeholders)
+- recommendations: An array of at least 2 related topics or next concepts to explore
+
+For each edge, specify:
+- source: id of the source node
+- target: id of the target node
+- label: (optional) label for the edge (e.g., "Yes", "No" for decisions)
+- description: a detailed explanation of the connection
+
+WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.`,
         'sequence': 'Generate a sequence diagram showing detailed interactions between components. ',
         'er-diagram': 'Generate a comprehensive entity-relationship diagram with detailed attributes and relationships. ',
         'timeline': 'Create a detailed timeline of events with dates, descriptions, and significance. ',
@@ -449,20 +468,20 @@ For relationships, include:
             answer: "A detailed textual answer to the user's question goes here. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
             graph: {
               entities: [
-                {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "A brief summary or definition of the entity.", "importance": 5, "properties": {"Attribute": "Value"}}
+                {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "Example Entity is a foundational concept in computer science and information theory. It originated in the early 20th century as researchers sought to formalize the representation of abstract ideas and their relationships. Over the decades, Example Entity has been applied in various domains, including artificial intelligence, data modeling, and semantic web technologies. Its applications range from structuring knowledge bases to enabling advanced search and reasoning in large datasets. The significance of Example Entity lies in its ability to bridge the gap between human understanding and machine processing, making it a cornerstone of modern knowledge representation. For instance, in the context of ontologies, Example Entity serves as a building block for defining classes, properties, and relationships, facilitating interoperability across systems. The evolution of Example Entity continues as new paradigms in machine learning and data science emerge, further expanding its relevance and utility.", "importance": 5, "properties": {"Attribute": "Value"}, "references": ["https://en.wikipedia.org/wiki/Entity", {"label": "Stanford Encyclopedia of Philosophy: Entity", "url": "https://plato.stanford.edu/entries/entity/"}], "recommendations": ["Ontology", "Knowledge Representation"]}
               ],
               relationships: [
-                {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral", "description": "What connects the two nodes."}
+                {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral", "description": "Example Entity is related to e2 through a shared conceptual framework that underpins both entities. This connection is often explored in the context of semantic networks, where relationships like IS_RELATED_TO enable the mapping of complex interdependencies. For example, in a knowledge graph, this relationship might represent a thematic or functional link, supported by empirical studies and domain-specific literature.", "strength": 0.8}
               ]
             }
           },
           text: {
             graph: {
               entities: [
-                {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "A brief summary or definition of the entity.", "importance": 4, "properties": {"Key": "Data", "Status": "Complete"}}
+                {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "Example Entity is a foundational concept in computer science and information theory. It originated in the early 20th century as researchers sought to formalize the representation of abstract ideas and their relationships. Over the decades, Example Entity has been applied in various domains, including artificial intelligence, data modeling, and semantic web technologies. Its applications range from structuring knowledge bases to enabling advanced search and reasoning in large datasets. The significance of Example Entity lies in its ability to bridge the gap between human understanding and machine processing, making it a cornerstone of modern knowledge representation. For instance, in the context of ontologies, Example Entity serves as a building block for defining classes, properties, and relationships, facilitating interoperability across systems. The evolution of Example Entity continues as new paradigms in machine learning and data science emerge, further expanding its relevance and utility.", "importance": 4, "properties": {"Key": "Data", "Status": "Complete"}, "references": ["https://en.wikipedia.org/wiki/Entity", {"label": "Stanford Encyclopedia of Philosophy: Entity", "url": "https://plato.stanford.edu/entries/entity/"}], "recommendations": ["Ontology", "Knowledge Representation"]}
               ],
               relationships: [
-                {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral", "description": "What connects the two nodes."}
+                {"source": "e1", "target": "e2", "label": "IS_RELATED_TO", "sentiment": "neutral", "description": "Example Entity is related to e2 through a shared conceptual framework that underpins both entities. This connection is often explored in the context of semantic networks, where relationships like IS_RELATED_TO enable the mapping of complex interdependencies. For example, in a knowledge graph, this relationship might represent a thematic or functional link, supported by empirical studies and domain-specific literature.", "strength": 0.7}
               ]
             }
           }
@@ -472,70 +491,21 @@ For relationships, include:
             answer: "A detailed textual answer to the user's question goes here. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
             graph: {
               entities: [
-                {"id": "start", "label": "Start", "type": "START_END", "sentiment": "neutral", "description": "Beginning of the process", "level": 0},
-                {"id": "step1", "label": "Gather Information", "type": "INPUT_OUTPUT", "sentiment": "neutral", "description": "Collect required information", "level": 1},
-                {"id": "step2", "label": "Analyze Data", "type": "PROCESS", "sentiment": "neutral", "description": "Process the information", "level": 2},
-                {"id": "decision1", "label": "Is Data Complete?", "type": "DECISION", "sentiment": "neutral", "description": "Check if all required data is available", "level": 3},
-                {"id": "step3", "label": "Generate Solution", "type": "PROCESS", "sentiment": "neutral", "description": "Create the solution or answer", "level": 4},
-                {"id": "display1", "label": "Present Result", "type": "DISPLAY", "sentiment": "neutral", "description": "Show the final result", "level": 5},
-                {"id": "end", "label": "End", "type": "START_END", "sentiment": "neutral", "description": "End of the process", "level": 6}
+                {"id": "start", "label": "Start", "type": "START_END", "sentiment": "neutral", "description": "The Start node marks the initiation of the process. It is essential because it sets the stage for all subsequent actions, ensuring that prerequisites are met and the system is ready for operation. In many systems, the Start node is responsible for initializing variables, allocating resources, and performing safety checks. For example, in a software application, this might involve loading configuration files, establishing database connections, and verifying user credentials. The Start node's role is critical in preventing errors and ensuring a smooth transition to the next phase. Its design often reflects best practices in system engineering, emphasizing reliability and clarity. The importance of a well-defined Start node cannot be overstated, as it directly impacts the efficiency and robustness of the entire process.", "level": 0, "references": ["https://en.wikipedia.org/wiki/Start", {"label": "Start Node Resource", "url": "https://www.geeksforgeeks.org/start-node-in-flowcharts/"}], "recommendations": ["Initialization", "Configuration"]},
+                {"id": "step1", "label": "Gather Information", "type": "INPUT_OUTPUT", "sentiment": "neutral", "description": "Gathering information is a pivotal step in any process, as it lays the foundation for informed decision-making. This step involves collecting relevant data from various sources, which may include user input, sensors, databases, or external APIs. The quality and completeness of the gathered information directly influence the accuracy and effectiveness of subsequent actions. For instance, in a medical diagnosis system, gathering comprehensive patient data is crucial for accurate assessment and treatment planning. Techniques such as data validation, error checking, and redundancy are often employed to enhance reliability. The process of gathering information is iterative and may require feedback loops to address gaps or inconsistencies. Ultimately, this step ensures that the system operates on a solid informational basis, reducing the risk of errors and improving outcomes.", "level": 1, "references": ["https://en.wikipedia.org/wiki/Information_gathering", {"label": "Data Collection Methods", "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2657603/"}], "recommendations": ["Data Validation", "User Input"]}
               ],
               relationships: [
-                {"source": "start", "target": "step1", "label": "", "sentiment": "neutral", "description": "Begin process"},
-                {"source": "step1", "target": "step2", "label": "", "sentiment": "neutral", "description": "Move to analysis"},
-                {"source": "step2", "target": "decision1", "label": "", "sentiment": "neutral", "description": "Check data completeness"},
-                {"source": "decision1", "target": "step3", "label": "Yes", "sentiment": "neutral", "description": "Data is complete", "condition": "yes"},
-                {"source": "decision1", "target": "step1", "label": "No", "sentiment": "neutral", "description": "Need more data", "condition": "no"},
-                {"source": "step3", "target": "display1", "label": "", "sentiment": "neutral", "description": "Present solution"},
-                {"source": "display1", "target": "end", "label": "", "sentiment": "neutral", "description": "Complete process"}
+                {"source": "start", "target": "step1", "label": "", "sentiment": "neutral", "description": "The transition from the Start node to the Gather Information step is driven by the need to establish a knowledge base before proceeding. This connection ensures that all necessary preparations are complete, minimizing the likelihood of errors in later stages. In practice, this might involve checks for data availability, system readiness, and user authentication. The relationship is foundational, as it underpins the logical flow of the process and supports traceability and accountability.", "strength": 0.9}
               ]
             }
           },
           text: {
             graph: {
               entities: [
-                {"id": "start", "label": "Start Program", "type": "START_END", "sentiment": "neutral", "description": "Program execution begins", "level": 0},
-                {"id": "import1", "label": "Import Libraries", "type": "PROCESS", "sentiment": "neutral", "description": "Load required modules", "level": 1},
-                {"id": "init1", "label": "Initialize Variables", "type": "PROCESS", "sentiment": "neutral", "description": "Set up program variables", "level": 2},
-                {"id": "main_entry", "label": "Enter Main Function", "type": "PROCESS", "sentiment": "neutral", "description": "Begin main program logic", "level": 3},
-                {"id": "input1", "label": "Get User Input", "type": "INPUT_OUTPUT", "sentiment": "neutral", "description": "Receive data from user", "level": 4},
-                {"id": "validate", "label": "Is Input Valid?", "type": "DECISION", "sentiment": "neutral", "description": "Check input validity", "level": 5},
-                {"id": "error_msg", "label": "Display Error Message", "type": "DISPLAY", "sentiment": "neutral", "description": "Show error to user", "level": 4},
-                {"id": "process1", "label": "Process Input Data", "type": "PROCESS", "sentiment": "neutral", "description": "Transform input data", "level": 6},
-                {"id": "calc1", "label": "Perform Calculations", "type": "PROCESS", "sentiment": "neutral", "description": "Execute mathematical operations", "level": 7},
-                {"id": "loop_init", "label": "Initialize Loop Counter", "type": "PROCESS", "sentiment": "neutral", "description": "Set up iteration variable", "level": 8},
-                {"id": "loop_check", "label": "Counter < Limit?", "type": "DECISION", "sentiment": "neutral", "description": "Check loop condition", "level": 9},
-                {"id": "loop_body", "label": "Execute Loop Body", "type": "PROCESS", "sentiment": "neutral", "description": "Perform loop operations", "level": 10},
-                {"id": "loop_increment", "label": "Increment Counter", "type": "PROCESS", "sentiment": "neutral", "description": "Update loop variable", "level": 11},
-                {"id": "func_call", "label": "Call Helper Function", "type": "SUBROUTINE", "sentiment": "neutral", "description": "Execute external function", "level": 12},
-                {"id": "result_check", "label": "Result Available?", "type": "DECISION", "sentiment": "neutral", "description": "Check if processing succeeded", "level": 13},
-                {"id": "format_output", "label": "Format Results", "type": "PROCESS", "sentiment": "neutral", "description": "Prepare output data", "level": 14},
-                {"id": "display_result", "label": "Display Results", "type": "DISPLAY", "sentiment": "neutral", "description": "Show final output", "level": 15},
-                {"id": "cleanup", "label": "Cleanup Resources", "type": "PROCESS", "sentiment": "neutral", "description": "Free memory and resources", "level": 16},
-                {"id": "end", "label": "End Program", "type": "START_END", "sentiment": "neutral", "description": "Program execution ends", "level": 17}
+                {"id": "start", "label": "Start Program", "type": "START_END", "sentiment": "neutral", "description": "The Start Program node is responsible for initializing the application environment. This includes loading essential libraries, setting up configuration parameters, and performing system checks. In complex systems, this step may also involve security verifications and resource allocation. The thoroughness of this initialization phase determines the stability and performance of the program. For example, in mission-critical applications, rigorous startup procedures are implemented to prevent failures. The Start Program node's effectiveness is often measured by its ability to handle exceptions and recover from errors gracefully. Its design reflects a balance between efficiency and robustness, tailored to the specific requirements of the application domain.", "level": 0, "references": ["https://en.wikipedia.org/wiki/Start", {"label": "Software Initialization", "url": "https://www.ibm.com/docs/en/zos/2.3.0?topic=initialization-software"}], "recommendations": ["Initialization", "Configuration"]}
               ],
               relationships: [
-                {"source": "start", "target": "import1", "label": "", "sentiment": "neutral", "description": "Begin execution"},
-                {"source": "import1", "target": "init1", "label": "", "sentiment": "neutral", "description": "Setup phase"},
-                {"source": "init1", "target": "main_entry", "label": "", "sentiment": "neutral", "description": "Enter main logic"},
-                {"source": "main_entry", "target": "input1", "label": "", "sentiment": "neutral", "description": "Get input"},
-                {"source": "input1", "target": "validate", "label": "", "sentiment": "neutral", "description": "Validate input"},
-                {"source": "validate", "target": "error_msg", "label": "No", "sentiment": "neutral", "description": "Invalid input", "condition": "no"},
-                {"source": "error_msg", "target": "input1", "label": "", "sentiment": "neutral", "description": "Retry input"},
-                {"source": "validate", "target": "process1", "label": "Yes", "sentiment": "neutral", "description": "Valid input", "condition": "yes"},
-                {"source": "process1", "target": "calc1", "label": "", "sentiment": "neutral", "description": "Continue processing"},
-                {"source": "calc1", "target": "loop_init", "label": "", "sentiment": "neutral", "description": "Setup iteration"},
-                {"source": "loop_init", "target": "loop_check", "label": "", "sentiment": "neutral", "description": "Check condition"},
-                {"source": "loop_check", "target": "loop_body", "label": "Yes", "sentiment": "neutral", "description": "Continue loop", "condition": "yes"},
-                {"source": "loop_body", "target": "loop_increment", "label": "", "sentiment": "neutral", "description": "Update counter"},
-                {"source": "loop_increment", "target": "loop_check", "label": "", "sentiment": "neutral", "description": "Check again"},
-                {"source": "loop_check", "target": "func_call", "label": "No", "sentiment": "neutral", "description": "Exit loop", "condition": "no"},
-                {"source": "func_call", "target": "result_check", "label": "", "sentiment": "neutral", "description": "Check result"},
-                {"source": "result_check", "target": "format_output", "label": "Yes", "sentiment": "neutral", "description": "Success", "condition": "yes"},
-                {"source": "result_check", "target": "error_msg", "label": "No", "sentiment": "neutral", "description": "Error occurred", "condition": "no"},
-                {"source": "format_output", "target": "display_result", "label": "", "sentiment": "neutral", "description": "Show output"},
-                {"source": "display_result", "target": "cleanup", "label": "", "sentiment": "neutral", "description": "Clean up"},
-                {"source": "cleanup", "target": "end", "label": "", "sentiment": "neutral", "description": "Finish program"}
+                {"source": "start", "target": "step1", "label": "", "sentiment": "neutral", "description": "The transition from Start Program to the next step is critical for ensuring that all prerequisites are satisfied. This relationship often involves validation checks, resource allocation, and logging. In high-reliability systems, this connection is meticulously designed to support fault tolerance and traceability, providing a clear audit trail for system operations.", "strength": 0.95}
               ]
             }
           }
@@ -739,6 +709,23 @@ For relationships, include:
         edges = graphData.relationships;
       }
     }
+
+    // Ensure every node has references and recommendations
+    nodes = nodes.map((node: any) => {
+      let changed = false;
+      if (!Array.isArray(node.references) || node.references.length === 0) {
+        node.references = ["No references available"];
+        changed = true;
+      }
+      if (!Array.isArray(node.recommendations) || node.recommendations.length === 0) {
+        node.recommendations = ["No recommendations available"];
+        changed = true;
+      }
+      if (changed) {
+        console.warn(`AI omitted references or recommendations for node: ${node.label || node.id}`);
+      }
+      return node;
+    });
 
     if (!nodes.length || !edges.length) {
       console.error('Invalid graph data structure:', {

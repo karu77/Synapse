@@ -296,7 +296,7 @@ const StyleCustomizationPanel = ({ options, onUpdate, onReset, diagramType = 'kn
           Reset
         </button>
       </div>
-      <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
+      <div className="space-y-4 max-h-60 overflow-y-auto pr-2 scrollbar-hide">
         <div>
           <label className="block text-sm font-medium text-skin-text-muted mb-1">
             Edge Style

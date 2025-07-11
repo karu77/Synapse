@@ -6,9 +6,6 @@ export interface IUser extends Document {
   _id: any
   email: string
   password: string
-  isVerified: boolean
-  verificationToken?: string
-  verificationTokenExpires?: Date
   matchPassword(enteredPassword: string): Promise<boolean>
 }
 
@@ -26,12 +23,6 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       required: true,
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    verificationToken: String,
-    verificationTokenExpires: Date,
   },
   {
     timestamps: true,
