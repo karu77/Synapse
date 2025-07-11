@@ -15,6 +15,7 @@ import NodeInfoPanel from './components/NodeInfoPanel'
 import EdgeInfoPanel from './components/EdgeInfoPanel'
 import AnswerPanel from './components/AnswerPanel'
 import WelcomeScreen from './components/WelcomeScreen'
+import PresetExamples from './components/PresetExamples'
 import {
   ArrowDownTrayIcon,
   ArrowRightOnRectangleIcon,
@@ -117,10 +118,36 @@ function App() {
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiReferences, setAiReferences] = useState([]);
+  const [showPresetExamples, setShowPresetExamples] = useState(false);
   const graphRef = useRef(null)
   const containerRef = useRef(null)
   const onGraphReadyRef = useRef(null)
   const { user: authUser, logout } = useAuth()
+
+  // Preset examples handlers
+  const handleLoadExample = (exampleData, diagramType) => {
+    setGraphData(exampleData);
+    setCurrentDiagramType(diagramType);
+    setAnswer('Example loaded successfully!');
+    setShowPresetExamples(false);
+    setIsSidebarOpen(false);
+    setGraphKey((prevKey) => prevKey + 1);
+  };
+
+  const handlePreviewExample = (exampleData, diagramType) => {
+    // Temporarily show the example without changing the current state
+    const originalData = graphData;
+    const originalType = currentDiagramType;
+    
+    setGraphData(exampleData);
+    setCurrentDiagramType(diagramType);
+    
+    // Restore original data after 5 seconds
+    setTimeout(() => {
+      setGraphData(originalData);
+      setCurrentDiagramType(originalType);
+    }, 5000);
+  };
 
   // Add context menu handlers
   const handleNodeContextMenu = useCallback((node, position) => {
@@ -267,7 +294,7 @@ function App() {
 
     // Highlight matching nodes
     if (matchingNodes.length > 0) {
-      const network = graphRef.current;
+      const network = graphRef.current?.getNetwork();
       if (network) {
         network.selectNodes(matchingNodes.map(node => node.id));
         network.focus(matchingNodes[0].id, {
@@ -277,7 +304,34 @@ function App() {
             easingFunction: 'easeInOutQuad'
           }
         });
+        // Show feedback
+        setTooltip({
+          visible: true,
+          content: `Found ${matchingNodes.length} matching node${matchingNodes.length > 1 ? 's' : ''}`,
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2
+        });
+        setTimeout(() => setTooltip({ visible: false, content: '', x: 0, y: 0 }), 2000);
+      } else {
+        console.warn('Network not available for search');
+        // Fallback: just select nodes without focusing
+        setTooltip({
+          visible: true,
+          content: `Found ${matchingNodes.length} matching node${matchingNodes.length > 1 ? 's' : ''} (network not ready)`,
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2
+        });
+        setTimeout(() => setTooltip({ visible: false, content: '', x: 0, y: 0 }), 2000);
       }
+    } else {
+      // No results found
+      setTooltip({
+        visible: true,
+        content: 'No matching nodes found',
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2
+      });
+      setTimeout(() => setTooltip({ visible: false, content: '', x: 0, y: 0 }), 2000);
     }
   };
 
@@ -566,6 +620,28 @@ function App() {
   const isMobile = windowSize.width < 768
   const isTablet = windowSize.width >= 768 && windowSize.width < 1024
 
+  // Robustly open knowledge graph after data is set
+  useEffect(() => {
+    if (currentDiagramType.startsWith('knowledge-graph') && graphRef.current && graphData.nodes && graphData.nodes.length > 0) {
+      const network = graphRef.current.getNetwork?.();
+      if (network) {
+        // Explicitly set data to ensure network is up to date
+        network.setData({
+          nodes: graphData.nodes,
+          edges: (graphData.edges || []).map(e => ({ ...e, from: e.source, to: e.target }))
+        });
+        setTimeout(() => {
+          if (typeof network.stabilize === 'function') {
+            network.stabilize();
+          }
+          network.fit({ animation: { duration: 800, easingFunction: 'easeInOutQuad' } });
+        }, 120);
+      }
+    }
+    // Only run when knowledge-graph is loaded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDiagramType, graphData]);
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-skin-bg text-skin-text font-sans flex flex-col">
       <Tooltip {...tooltip} />
@@ -625,7 +701,7 @@ function App() {
             className="bg-skin-bg-accent rounded-2xl p-4 max-w-lg w-full mx-4 border border-skin-border shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-3">
               <MagnifyingGlassIcon className="h-5 w-5 text-skin-text-muted" />
               <input
                 type="text"
@@ -642,6 +718,53 @@ function App() {
                 autoFocus
               />
             </div>
+            
+            {/* Search Results Preview */}
+            {searchQuery.trim() && (
+              <div className="max-h-48 overflow-y-auto">
+                {(() => {
+                  const nodes = graphData.nodes || [];
+                  const matchingNodes = nodes.filter(node => {
+                    const searchableText = `${node.label} ${node.type} ${node.description || ''}`.toLowerCase();
+                    return searchableText.includes(searchQuery.toLowerCase());
+                  });
+                  
+                  if (matchingNodes.length === 0) {
+                    return (
+                      <div className="text-sm text-skin-text-muted text-center py-4">
+                        No matching nodes found
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="space-y-2">
+                      <div className="text-xs text-skin-text-muted font-medium">
+                        Found {matchingNodes.length} matching node{matchingNodes.length > 1 ? 's' : ''}
+                      </div>
+                      {matchingNodes.slice(0, 5).map((node, index) => (
+                        <button
+                          key={node.id}
+                          className="w-full text-left p-2 rounded-lg hover:bg-skin-border transition-colors text-sm"
+                          onClick={() => {
+                            handleSearch(node.label);
+                            setIsSearching(false);
+                          }}
+                        >
+                          <div className="font-medium text-skin-text">{node.label}</div>
+                          <div className="text-xs text-skin-text-muted">{node.type}</div>
+                        </button>
+                      ))}
+                      {matchingNodes.length > 5 && (
+                        <div className="text-xs text-skin-text-muted text-center py-2">
+                          ... and {matchingNodes.length - 5} more
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}
@@ -678,6 +801,14 @@ function App() {
             )}
           </div>
           <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'} pointer-events-auto`}>
+            <button
+              onClick={() => setShowPresetExamples(true)}
+              className={`${isMobile ? 'p-3' : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto`}
+              aria-label="Show preset examples"
+            >
+              <CodeBracketIcon className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} />
+            </button>
+
             <button
               onClick={() => setIsSearching(true)}
               disabled={!graphData?.nodes?.length}
@@ -830,6 +961,32 @@ function App() {
               onOpenSidebar={toggleSidebar}
             />
           )}
+          
+          {/* Preset Examples Modal */}
+          <AnimatePresence>
+            {showPresetExamples && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+                onClick={() => setShowPresetExamples(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="bg-skin-bg-accent rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-skin-border shadow-2xl"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <PresetExamples
+                    onLoadExample={handleLoadExample}
+                    onPreviewExample={handlePreviewExample}
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </main>
 
