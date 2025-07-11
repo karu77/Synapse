@@ -694,13 +694,6 @@ const GraphVisualization = forwardRef(
                     Generating {diagramType === 'knowledge-graph' ? 'Knowledge Graph' : 
                               diagramType === 'mindmap' ? 'Mind Map' :
                               diagramType === 'flowchart' ? 'Flowchart' :
-                              diagramType === 'sequence' ? 'Sequence Diagram' :
-                              diagramType === 'er-diagram' ? 'ER Diagram' :
-                              diagramType === 'timeline' ? 'Timeline' :
-                              diagramType === 'swimlane' ? 'Swimlane Diagram' :
-                              diagramType === 'state' ? 'State Diagram' :
-                              diagramType === 'gantt' ? 'Gantt Chart' :
-                              diagramType === 'venn' ? 'Venn Diagram' :
                               'Diagram'}...
                   </div>
                   <div className="h-px bg-gradient-to-r from-transparent via-skin-border to-transparent"></div>
@@ -720,22 +713,13 @@ const GraphVisualization = forwardRef(
         )}
         {contextMenu.visible && (
           <div
-            style={{
-              position: 'absolute',
-              top: contextMenu.y,
-              left: contextMenu.x,
-              zIndex: 2000,
-              backgroundColor: theme === 'dark' ? '#2D3748' : 'white',
-              border: `1px solid ${theme === 'dark' ? '#4A5568' : '#CBD5E0'} `,
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              padding: '8px',
-              minWidth: '150px',
-            }}
+            className="absolute bg-skin-bg-accent rounded-lg shadow-xl p-2 z-50 border border-skin-border text-sm"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
           >
-            {contextMenu.node && onNodeContextMenu && onNodeContextMenu(contextMenu.node, { x: contextMenu.x, y: contextMenu.y })}
-            {contextMenu.edge && onEdgeContextMenu && onEdgeContextMenu(contextMenu.edge, { x: contextMenu.x, y: contextMenu.y })}
-            {!contextMenu.node && !contextMenu.edge && onBackgroundContextMenu && onBackgroundContextMenu({ x: contextMenu.x, y: contextMenu.y })}
+            {contextMenu.node && onNodeContextMenu ? onNodeContextMenu(contextMenu.node) : null}
+            {contextMenu.edge && onEdgeContextMenu ? onEdgeContextMenu(contextMenu.edge) : null}
+            {!contextMenu.node && !contextMenu.edge && onBackgroundContextMenu ? onBackgroundContextMenu() : null}
           </div>
         )}
       </div>

@@ -52,7 +52,7 @@ const LoginPage = () => {
     setIsLoading(true)
     try {
       await login(email, password)
-      navigate('/')
+      navigate('/app')
     } catch (err) {
       setErrors({ form: err.message })
     } finally {

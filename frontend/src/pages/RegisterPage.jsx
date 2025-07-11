@@ -6,11 +6,11 @@ import ErrorDisplay from '../components/ErrorDisplay'
 import { ArrowRightIcon } from '@heroicons/react/24/outline'
 
 const RegisterPage = () => {
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState({})
+  const [registrationSuccess, setRegistrationSuccess] = useState(false)
   const { register } = useAuth()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
@@ -24,8 +24,11 @@ const RegisterPage = () => {
 
   const validate = () => {
     const newErrors = {}
-    if (!name) newErrors.name = 'Name is required'
-    if (!email) newErrors.email = 'Email is required'
+    if (!email) {
+      newErrors.email = 'Email is required'
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Email address is invalid'
+    }
     if (!password) {
       newErrors.password = 'Password is required'
     } else if (password.length < 6) {
@@ -39,7 +42,7 @@ const RegisterPage = () => {
 
   const handleBlur = (field) => {
     const newErrors = { ...errors }
-    const fields = { name, email, password, confirmPassword };
+    const fields = { email, password, confirmPassword };
     if (!fields[field]) {
       newErrors[field] = `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
     } else {
@@ -65,8 +68,8 @@ const RegisterPage = () => {
 
     setIsLoading(true)
     try {
-      await register(name, email, password)
-      navigate('/')
+      await register(email, password)
+      setRegistrationSuccess(true)
     } catch (err) {
       setErrors({ form: err.message })
     } finally {
@@ -95,91 +98,82 @@ const RegisterPage = () => {
         </div>
 
         <div className="auth-form-panel">
-          <form onSubmit={handleSubmit} noValidate>
-            {errors.form && <ErrorDisplay error={{ message: errors.form }} />}
-            
-            <div className="mb-4">
-              <label htmlFor="name" className="block text-sm font-medium text-skin-text-muted mb-2">
-                Full Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onBlur={() => handleBlur('name')}
-                placeholder="Your Name"
-                className={`w-full px-4 py-2 bg-skin-bg/80 border rounded-lg focus:outline-none focus:ring-2 transition text-black dark:text-white ${
-                  errors.name
-                    ? 'border-red-500 focus:ring-red-500/50'
-                    : 'border-skin-border focus:border-skin-accent focus:ring-skin-accent/50'
-                }`}
-                required
-              />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+          {registrationSuccess ? (
+            <div className="text-center py-8">
+              <p className="text-skin-text text-lg mb-4">
+                Registration successful! Please check your email inbox (and spam folder) for a verification link.
+              </p>
+              <Link to="/login" className="font-semibold text-skin-accent hover:underline">
+                Proceed to Login
+              </Link>
             </div>
-
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-skin-text-muted mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onBlur={() => handleBlur('email')}
-                placeholder="you@example.com"
-                className={`w-full px-4 py-2 bg-skin-bg/80 border rounded-lg focus:outline-none focus:ring-2 transition text-black dark:text-white ${
-                  errors.email
-                    ? 'border-red-500 focus:ring-red-500/50'
-                    : 'border-skin-border focus:border-skin-accent focus:ring-skin-accent/50'
-                }`}
-                required
-              />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-            </div>
-            
-            <div className="mb-4">
-                <PasswordInput
-                  id="password"
-                  label="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onBlur={() => handleBlur('password')}
-                  error={errors.password}
+          ) : (
+            <form onSubmit={handleSubmit} noValidate>
+              {errors.form && <ErrorDisplay error={{ message: errors.form }} />}
+              
+              <div className="mb-4">
+                <label htmlFor="email" className="block text-sm font-medium text-skin-text-muted mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => handleBlur('email')}
+                  placeholder="you@example.com"
+                  className={`w-full px-4 py-2 bg-skin-bg/80 border rounded-lg focus:outline-none focus:ring-2 transition text-black dark:text-white ${
+                    errors.email
+                      ? 'border-red-500 focus:ring-red-500/50'
+                      : 'border-skin-border focus:border-skin-accent focus:ring-skin-accent/50'
+                  }`}
+                  required
                 />
-            </div>
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
+              
+              <div className="mb-4">
+                  <PasswordInput
+                    id="password"
+                    label="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onBlur={() => handleBlur('password')}
+                    error={errors.password}
+                  />
+              </div>
 
-            <div className="mb-6">
-                <PasswordInput
-                  id="confirmPassword"
-                  label="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  onBlur={() => handleBlur('confirmPassword')}
-                  error={errors.confirmPassword}
-                />
-            </div>
+              <div className="mb-6">
+                  <PasswordInput
+                    id="confirmPassword"
+                    label="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onBlur={() => handleBlur('confirmPassword')}
+                    error={errors.confirmPassword}
+                  />
+              </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-skin-accent to-skin-accent-light text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity duration-300 disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
-            >
-              <span>{isLoading ? 'Creating Account...' : 'Sign Up'}</span>
-              {!isLoading && <ArrowRightIcon className="h-5 w-5" />}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-skin-accent to-skin-accent-light text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity duration-300 disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
+              >
+                <span>{isLoading ? 'Creating Account...' : 'Sign Up'}</span>
+                {!isLoading && <ArrowRightIcon className="h-5 w-5" />}
+              </button>
+            </form>
+          )}
 
-          <p className="text-center text-sm text-skin-text-muted mt-6">
-            Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-skin-accent hover:underline">
-              Sign In
-            </Link>
-          </p>
+          {!registrationSuccess && (
+            <p className="text-center text-sm text-skin-text-muted mt-6">
+              Already have an account?{' '}
+              <Link to="/login" className="font-semibold text-skin-accent hover:underline">
+                Sign In
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </div>

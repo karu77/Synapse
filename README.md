@@ -89,6 +89,8 @@ You will need to set up environment variables for both the backend and frontend.
     -   `MONGO_URI`: This is your connection string for a MongoDB database. You can get a free one from [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register).
     -   `JWT_SECRET`: Create a long, random, and secure string. This is used to sign authentication tokens.
 
+    -   `SENDGRID_API_KEY`: Obtain your API key from [SendGrid](https://sendgrid.com/). Remember to verify your sender email address in SendGrid, and update the `from` email address in `backend/src/controllers/userController.ts` to your verified sender.
+
 #### Frontend Configuration
 
 1.  Navigate to the `frontend` directory.
@@ -116,7 +118,7 @@ Your browser should automatically open to the application, or you can navigate t
 
 ## How It Works
 
-1.  **Authentication**: Users must first register for an account and log in. Sessions are managed with JWTs stored in browser local storage.
+1.  **Authentication**: Users must first register for an account and log in. Email verification is required upon registration. Sessions are managed with JWTs stored in browser local storage.
 2.  **Diagram Type Selection**: Choose from Knowledge Graphs, Mind Maps, or Flowcharts based on your visualization needs.
 3.  **Input**: Enter text, upload image files, and upload audio/video files (or provide URLs) for comprehensive analysis.
 4.  **AI Processing**: The backend sends specialized prompts optimized for each diagram type, along with any multimodal data, to the Gemini 2.0 Flash API.

@@ -34,7 +34,6 @@ export const checkTokenStatus = () => {
       tokenLength: parsed.token.length,
       tokenPreview: parsed.token.substring(0, 20) + '...',
       userEmail: parsed.email,
-      userName: parsed.name
     })
     
     return { valid: true, token: parsed.token, user: parsed }

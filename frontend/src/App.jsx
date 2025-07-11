@@ -7,6 +7,7 @@ import {
   deleteHistoryItem,
   clearAllHistory,
   checkTokenStatus,
+  deleteAccount,
 } from './services/api'
 import ThemeToggleButton from './components/ThemeToggleButton'
 import ControlSidebar from './components/ControlSidebar'
@@ -24,11 +25,14 @@ import {
   ArrowDownOnSquareIcon,
   MagnifyingGlassIcon,
   CommandLineIcon,
+  UserCircleIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from './contexts/AuthContext'
 import { Menu } from '@headlessui/react'
 import { Fragment } from 'react'
 import Tooltip from './components/Tooltip'
+import ConfirmModal from './components/ConfirmModal';
 
 const defaultPhysicsOptions = {
   gravitationalConstant: -40000,
@@ -107,6 +111,9 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [answer, setAnswer] = useState('')
   const [contextMenu, setContextMenu] = useState({ visible: false })
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const graphRef = useRef(null)
   const containerRef = useRef(null)
   const onGraphReadyRef = useRef(null)
@@ -517,6 +524,37 @@ function App() {
     setCurrentDiagramType(diagramType)
   }
 
+  // User account action handlers
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutModal(false);
+  };
+
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAccount = async () => {
+    try {
+      await deleteAccount();
+      setShowDeleteModal(false);
+      setShowDeleteSuccess(true);
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      // You might want to show an error message to the user here
+      setShowDeleteModal(false);
+    }
+  };
+
+  const handleDeleteSuccessClose = () => {
+    setShowDeleteSuccess(false);
+    logout(); // Log out after user acknowledges deletion
+  };
+
   // Responsive breakpoints
   const isMobile = windowSize.width < 768
   const isTablet = windowSize.width >= 768 && windowSize.width < 1024
@@ -550,14 +588,6 @@ function App() {
               <div className="flex justify-between">
                 <span className="text-skin-text-muted">Fit to View</span>
                 <kbd className="px-2 py-1 bg-skin-border rounded text-xs">Ctrl+F</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-skin-text-muted">Download SVG</span>
-                <kbd className="px-2 py-1 bg-skin-border rounded text-xs">Ctrl+S</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-skin-text-muted">Download JSON</span>
-                <kbd className="px-2 py-1 bg-skin-border rounded text-xs">Ctrl+J</kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-skin-text-muted">Search</span>
@@ -608,44 +638,8 @@ function App() {
           </motion.div>
         </motion.div>
       )}
-
-      <AnimatePresence>
-        {isSidebarOpen && (
-            <ControlSidebar
-              isOpen={isSidebarOpen}
-              onClose={toggleSidebar}
-              onSubmit={handleTextSubmit}
-              isProcessing={isProcessing}
-              selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
-              history={history}
-              loadFromHistory={loadFromHistory}
-              onDelete={handleDeleteFromHistory}
-              onClear={handleClearHistory}
-              styleOptions={styleOptions}
-              setStyleOptions={setStyleOptions}
-              resetStyles={resetStyles}
-              physicsOptions={physicsOptions}
-              setPhysicsOptions={setPhysicsOptions}
-              resetPhysics={resetPhysics}
-              user={authUser}
-              logout={logout}
-              currentDiagramType={currentDiagramType}
-              onDiagramTypeChange={handleDiagramTypeChange}
-              alwaysShowMediaInputs={true}
-            />
-        )}
-      </AnimatePresence>
-
-      {/* Move AI Answer panel to the left, vertically centered, and always visible */}
-      {answer && (
-        <div className={`fixed ${isMobile ? 'bottom-4 left-4 right-4 top-auto transform-none' : 'top-1/2 transform -translate-y-1/2'} z-40 ${isMobile ? 'w-auto' : 'max-w-xs w-full sm:w-96'} animate-fade-in-panel transition-all duration-300 ${
-          isSidebarOpen && !isMobile ? 'left-[28rem]' : isMobile ? '' : 'left-4'
-        } ${isSidebarOpen && isMobile ? 'hidden' : ''}`}>
-          <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
-        </div>
-      )}
-
+      
+      {/* Header */}
       <header className={`fixed top-0 left-0 right-0 z-30 ${isMobile ? 'p-2' : 'p-4'} pointer-events-none`}>
         <div
           className={`max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full ${isMobile ? 'p-1' : 'p-2 pl-4'} border border-skin-border shadow-xl pointer-events-auto`}
@@ -696,92 +690,55 @@ function App() {
               </button>
             )}
 
-            <Menu
-              as="div"
-              className="relative inline-block text-left pointer-events-auto"
-            >
-              <div>
-                <Menu.Button
-                  disabled={
-                    isProcessing ||
-                    !(
-                      Array.isArray(graphData.nodes) &&
-                      graphData.nodes.length > 0
-                    )
-                  }
-                  className={`inline-flex w-full justify-center items-center gap-2 rounded-full bg-skin-bg ${isMobile ? 'p-3' : 'p-2'} border border-skin-border text-sm font-semibold text-skin-text hover:bg-skin-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:scale-105 focus:scale-105 active:scale-95 duration-150 pointer-events-auto`}
+            {/* User Menu */}
+            <Menu as="div" className="relative inline-block text-left pointer-events-auto">
+              <Menu.Button className="flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium text-skin-text hover:bg-skin-border transition">
+                <UserCircleIcon className="h-6 w-6" />
+              </Menu.Button>
+              <AnimatePresence>
+                <Menu.Items
+                  as={motion.div}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 mt-2 w-48 origin-top-right bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg focus:outline-none z-50 p-1"
                 >
-                  <ArrowDownTrayIcon className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} />
-                  <span className={`${isMobile ? 'hidden' : 'hidden sm:inline'}`}>Download</span>
-                </Menu.Button>
-              </div>
-              <Menu.Items className={`absolute right-0 mt-2 ${isMobile ? 'w-48' : 'w-56'} origin-top-right divide-y divide-skin-border rounded-md bg-skin-bg-accent shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none`}>
-                <div className="px-1 py-1 ">
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-semibold truncate">Signed in as</p>
+                    <p className="text-sm text-skin-text-muted truncate">{authUser.email}</p>
+                  </div>
+                  <div className="h-px bg-skin-border my-1" />
                   <Menu.Item>
                     {({ active }) => (
                       <button
-                        onClick={handleDownloadSVG}
+                        onClick={handleLogout}
                         className={`${
-                          active
-                            ? 'bg-skin-border text-skin-text'
-                            : 'text-skin-text'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          active ? 'bg-gray-100 dark:bg-skin-border' : ''
+                        } group flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-600 dark:text-skin-text-muted`}
                       >
-                        <ArrowDownOnSquareIcon className="mr-2 h-5 w-5" />
-                        SVG (Infinite Zoom, Vector)
+                        <ArrowRightOnRectangleIcon className="mr-2 h-5 w-5" />
+                        Logout
                       </button>
                     )}
                   </Menu.Item>
-                </div>
-                <div className="px-1 py-1">
+                  <div className="h-px bg-skin-border my-1" />
                   <Menu.Item>
                     {({ active }) => (
                       <button
-                        onClick={handleDownloadJSON}
+                        onClick={handleDeleteAccount}
                         className={`${
-                          active
-                            ? 'bg-skin-border text-skin-text'
-                            : 'text-skin-text'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          active ? 'bg-red-100 dark:bg-red-900/30' : ''
+                        } group flex w-full items-center rounded-md px-3 py-2 text-sm text-red-600 dark:text-red-400`}
                       >
-                        <CodeBracketIcon className="mr-2 h-5 w-5" />
-                        JSON (Graph Data)
+                        <TrashIcon className="mr-2 h-5 w-5" />
+                        Delete Account
                       </button>
                     )}
                   </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={handleDownloadNodesCSV}
-                        className={`${
-                          active
-                            ? 'bg-skin-border text-skin-text'
-                            : 'text-skin-text'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <TableCellsIcon className="mr-2 h-5 w-5" />
-                        Nodes (CSV)
-                      </button>
-                    )}
-                  </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={handleDownloadEdgesCSV}
-                        className={`${
-                          active
-                            ? 'bg-skin-border text-skin-text'
-                            : 'text-skin-text'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <TableCellsIcon className="mr-2 h-5 w-5" />
-                        Edges (CSV)
-                      </button>
-                    )}
-                  </Menu.Item>
-                </div>
-              </Menu.Items>
+                </Menu.Items>
+              </AnimatePresence>
             </Menu>
+
             {!isMobile && <div className="hidden sm:block h-6 border-l border-skin-border mx-1"></div>}
             <div className={`flex items-center gap-1 bg-skin-bg ${isMobile ? 'p-2' : 'p-1'} rounded-full border border-skin-border pointer-events-auto`}>
               <ThemeToggleButton />
@@ -790,6 +747,34 @@ function App() {
         </div>
       </header>
 
+      {/* Modals */}
+      <ConfirmModal
+        open={showLogoutModal}
+        title="Log Out?"
+        description="Are you sure you want to log out?"
+        confirmText="Log Out"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Account?"
+        description="This action is irreversible and will permanently delete your account and all associated data. Are you sure you want to continue?"
+        confirmText="Yes, Delete My Account"
+        danger
+        onConfirm={confirmDeleteAccount}
+        onCancel={() => setShowDeleteModal(false)}
+      />
+      <ConfirmModal
+        open={showDeleteSuccess}
+        title="Account Deleted"
+        description="Your account has been successfully deleted."
+        confirmText="OK"
+        onConfirm={handleDeleteSuccessClose}
+        onCancel={handleDeleteSuccessClose}
+      />
+
+      {/* Main Content */}
       <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'}`}>
         <div className="relative h-full w-full">
           <GraphVisualization
@@ -827,11 +812,43 @@ function App() {
         </div>
       </main>
 
-      <footer className={`fixed bottom-0 left-0 ${isMobile ? 'p-2 text-xs' : 'p-4 text-xs'} text-skin-text-muted z-20`}>
-        {isMobile ? `Hi ${authUser?.name?.split(' ')[0] || 'Guest'}!` : `Welcome, ${authUser?.name || 'Guest'}!`}
-      </footer>
+      {/* Other components */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+            <ControlSidebar
+              isOpen={isSidebarOpen}
+              onClose={toggleSidebar}
+              onSubmit={handleTextSubmit}
+              isProcessing={isProcessing}
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              history={history}
+              loadFromHistory={loadFromHistory}
+              onDelete={handleDeleteFromHistory}
+              onClear={handleClearHistory}
+              styleOptions={styleOptions}
+              setStyleOptions={setStyleOptions}
+              resetStyles={resetStyles}
+              physicsOptions={physicsOptions}
+              setPhysicsOptions={setPhysicsOptions}
+              resetPhysics={resetPhysics}
+              user={authUser}
+              logout={logout}
+              currentDiagramType={currentDiagramType}
+              onDiagramTypeChange={handleDiagramTypeChange}
+              alwaysShowMediaInputs={true}
+            />
+        )}
+      </AnimatePresence>
 
-      {/* Info panels with simple CSS animations */}
+      {answer && (
+        <div className={`fixed ${isMobile ? 'bottom-4 left-4 right-4 top-auto transform-none' : 'top-1/2 transform -translate-y-1/2'} z-40 ${isMobile ? 'w-auto' : 'max-w-xs w-full sm:w-96'} animate-fade-in-panel transition-all duration-300 ${
+          isSidebarOpen && !isMobile ? 'left-[28rem]' : isMobile ? '' : 'left-4'
+        } ${isSidebarOpen && isMobile ? 'hidden' : ''}`}>
+          <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
+        </div>
+      )}
+
       <AnimatePresence>
         {selectedNode && (
           <NodeInfoPanel
@@ -851,7 +868,6 @@ function App() {
           />
         )}
       </AnimatePresence>
-      
     </div>
   )
 }
