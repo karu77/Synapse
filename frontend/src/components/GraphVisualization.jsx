@@ -312,6 +312,34 @@ const GraphVisualization = forwardRef(
       return { nodes, edges };
     }, [data, diagramType, theme]);
 
+    // Optimized node updates to prevent flickering
+    useEffect(() => {
+      if (networkInstance.current && data?.nodes) {
+        const network = networkInstance.current;
+        const currentNodes = network.body.data.nodes.get();
+        
+        // Only update nodes that have actually changed
+        data.nodes.forEach(node => {
+          const currentNode = currentNodes.find(n => n.id === node.id);
+          const newStyle = getNodeStyle(node, diagramType, theme);
+          
+          // Check if the node style has changed
+          if (!currentNode || 
+              currentNode.shape !== newStyle.shape ||
+              currentNode.color !== newStyle.color ||
+              currentNode.size !== newStyle.size) {
+            
+            // Update only this specific node
+            network.body.data.nodes.update({
+              id: node.id,
+              ...node,
+              ...newStyle
+            });
+          }
+        });
+      }
+    }, [data?.nodes, diagramType, theme]);
+
     // Context Menu Right-Click Handler
     useEffect(() => {
         const handleContextMenuEvent = (event) => {
@@ -417,8 +445,17 @@ const GraphVisualization = forwardRef(
         }
 
       } else {
+        // Only update options if they've changed (physics, layout, etc.)
         networkInstance.current.setOptions(options);
-        networkInstance.current.setData(normalizedData);
+        
+        // Only update data if the structure has changed (nodes/edges added/removed)
+        const currentNodes = networkInstance.current.body.data.nodes.get();
+        const currentEdges = networkInstance.current.body.data.edges.get();
+        
+        if (currentNodes.length !== normalizedData.nodes.length || 
+            currentEdges.length !== normalizedData.edges.length) {
+          networkInstance.current.setData(normalizedData);
+        }
       }
 
       const handleResize = () => networkInstance.current?.fit();
@@ -431,7 +468,7 @@ const GraphVisualization = forwardRef(
           networkInstance.current = null;
         }
       };
-    }, [normalizedData, diagramType, flowchartDirection, onGraphReady, setSelectedNode, setSelectedEdge, setTooltip]);
+    }, [diagramType, flowchartDirection, onGraphReady, setSelectedNode, setSelectedEdge, setTooltip]);
 
     useImperativeHandle(ref, () => ({
       fit: () => networkInstance.current?.fit(),

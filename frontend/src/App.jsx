@@ -786,7 +786,21 @@ function App() {
         <div className="relative h-full w-full">
           <GraphVisualization
             ref={graphRef}
-            data={graphData}
+            data={{
+              ...graphData,
+              nodes: (graphData.nodes || []).map(node => {
+                if (currentDiagramType === 'knowledge-graph' && styleOptions.nodeShapes?.[node.type]) {
+                  return {
+                    ...node,
+                    style: {
+                      ...node.style,
+                      shape: styleOptions.nodeShapes[node.type]
+                    }
+                  };
+                }
+                return node;
+              })
+            }}
             setTooltip={setTooltip}
             setSelectedNode={setSelectedNode}
             setSelectedEdge={setSelectedEdge}
