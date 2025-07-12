@@ -5,6 +5,11 @@ import PasswordInput from '../components/PasswordInput'
 import ErrorDisplay from '../components/ErrorDisplay'
 import { ArrowRightIcon } from '@heroicons/react/24/outline'
 
+// Simple spinner component
+const Spinner = () => (
+  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+)
+
 const RegisterPage = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -160,8 +165,17 @@ const RegisterPage = () => {
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-skin-accent to-skin-accent-light text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity duration-300 disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
               >
-                <span>{isLoading ? 'Creating Account...' : 'Sign Up'}</span>
-                {!isLoading && <ArrowRightIcon className="h-5 w-5" />}
+                {isLoading ? (
+                  <>
+                    <Spinner />
+                    <span>Creating Account...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign Up</span>
+                    <ArrowRightIcon className="h-5 w-5" />
+                  </>
+                )}
               </button>
             </form>
           )}
