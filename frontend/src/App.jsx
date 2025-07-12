@@ -620,9 +620,9 @@ function App() {
   const isMobile = windowSize.width < 768
   const isTablet = windowSize.width >= 768 && windowSize.width < 1024
 
-  // Robustly open knowledge graph after data is set
+  // Robustly open all diagrams after data is set
   useEffect(() => {
-    if (currentDiagramType.startsWith('knowledge-graph') && graphRef.current && graphData.nodes && graphData.nodes.length > 0) {
+    if (graphRef.current && graphData.nodes && graphData.nodes.length > 0) {
       const network = graphRef.current.getNetwork?.();
       if (network) {
         // Explicitly set data to ensure network is up to date
@@ -638,9 +638,9 @@ function App() {
         }, 120);
       }
     }
-    // Only run when knowledge-graph is loaded
+    // Only run when graphData changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentDiagramType, graphData]);
+  }, [graphData, currentDiagramType]);
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-skin-bg text-skin-text font-sans flex flex-col">
