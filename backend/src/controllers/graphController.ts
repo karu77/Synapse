@@ -313,6 +313,8 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       if (actualType === 'flowchart') {
         return `You are to generate a detailed flowchart for the process described below.
 
+IMPORTANT: You MUST provide an "answer" field with a comprehensive analysis and overview of the flowchart process, explaining the overall workflow, key decision points, and the logical flow from start to finish.
+
 **Flowchart Requirements:**
 - The flowchart must start at the top (with a Start/End node) and end at the bottom (with a Start/End node).
 - Use the following shapes/types for nodes, based on their meaning:
@@ -341,34 +343,33 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
   - label: short description
   - type: one of the above types
   - level: REQUIRED integer indicating vertical order (0 = top, higher numbers = lower)
-  - (optional) description: longer explanation
+  - description: A truly comprehensive, in-depth, and exhaustive explanation. Cover all relevant background, context, applications, examples, significance, and technical or historical details. The explanation should be as long and detailed as necessary for a deep understanding, not just a summary.
+  - references: An array of at least 2 real, relevant URLs or objects with label and url, relevant to the node's topic (no placeholders)
+  - recommendations: An array of at least 2 related topics or next concepts to explore
 
 - For each edge, specify:
   - source: id of the source node
   - target: id of the target node
   - label: (optional) label for the edge (e.g., "Yes", "No" for decisions)
+  - description: a detailed explanation of the connection
 
 - CRITICAL: The flow should be vertical (top to bottom). ALWAYS include a 'level' property for each node to ensure proper vertical ordering.
 - **Critically analyze the process and use the most specific and appropriate shape for each step from the list provided. Avoid defaulting to the 'PROCESS' type for every step unless it is truly just a process step.**
 
-**Return ONLY a JSON object with arrays "nodes" and "edges". Do NOT include markdown, code blocks, or explanations.**
+**Return ONLY a JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays. Do NOT include markdown, code blocks, or explanations.**
 
 **Example:**
 {
-  "nodes": [
-    { "id": "start", "label": "Start", "type": "START_END", "level": 0 },
-    { "id": "input", "label": "Get User Input", "type": "INPUT_OUTPUT", "level": 1 },
-    { "id": "decision", "label": "Is Input Valid?", "type": "DECISION", "level": 2 },
-    { "id": "process", "label": "Process Data", "type": "PROCESS", "level": 3 },
-    { "id": "end", "label": "End", "type": "START_END", "level": 4 }
-  ],
-  "edges": [
-    { "source": "start", "target": "input" },
-    { "source": "input", "target": "decision" },
-    { "source": "decision", "target": "process", "label": "Yes" },
-    { "source": "decision", "target": "input", "label": "No" },
-    { "source": "process", "target": "end" }
-  ]
+  "answer": "A comprehensive analysis and overview of the flowchart process goes here. This should explain the overall workflow, key decision points, and the logical flow from start to finish.",
+  "graph": {
+    "entities": [
+      { "id": "start", "label": "Start", "type": "START_END", "level": 0, "description": "Detailed explanation...", "references": ["url1", {"label": "Resource", "url": "url2"}], "recommendations": ["Topic1", "Topic2"] },
+      { "id": "input", "label": "Get User Input", "type": "INPUT_OUTPUT", "level": 1, "description": "Detailed explanation...", "references": ["url1", {"label": "Resource", "url": "url2"}], "recommendations": ["Topic1", "Topic2"] }
+    ],
+    "relationships": [
+      { "source": "start", "target": "input", "label": "", "description": "Detailed explanation of the connection" }
+    ]
+  }
 }
 
 Process to visualize:
@@ -390,7 +391,11 @@ ${input}
         : '';
       
       const diagramSpecificPrompt = {
-        'knowledge-graph': `Generate a comprehensive knowledge graph with detailed entities and meaningful relationships. For each entity, include:
+        'knowledge-graph': `Generate a comprehensive knowledge graph with detailed entities and meaningful relationships. 
+
+IMPORTANT: You MUST provide an "answer" field with a comprehensive analysis and overview of the knowledge graph, explaining the key entities, their relationships, and the overall structure of the information network.
+
+For each entity, include:
 - type: One of PERSON, GROUP, ROLE, ORG, COMPANY, GOVERNMENT, NONPROFIT, LOCATION, CITY, COUNTRY, REGION, EVENT, MEETING, CONFERENCE, MILESTONE, CONCEPT, IDEA, PRINCIPLE, THEORY, OBJECT, PRODUCT, DOCUMENT, TOOL, DATE, PERIOD, METRIC, GOAL, PROBLEM, or SOLUTION
 - label: A clear, descriptive name
 - description: A truly comprehensive, in-depth, and exhaustive explanation. Cover all relevant background, context, applications, examples, significance, and technical or historical details. The explanation should be as long and detailed as necessary for a deep understanding, not just a summary.
@@ -407,7 +412,11 @@ For relationships, include:
 WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.`,
 
         'mindmap': getMindmapPrompt(mindmapSubtype),
-        'flowchart': `Create a detailed flowchart with clear nodes and logical flows. For each node, include:
+        'flowchart': `Create a detailed flowchart with clear nodes and logical flows. 
+
+IMPORTANT: You MUST provide an "answer" field with a comprehensive analysis and overview of the flowchart process, explaining the overall workflow, key decision points, and the logical flow from start to finish.
+
+For each node, include:
 - id: unique string
 - label: short description
 - type: one of the allowed types
@@ -476,6 +485,7 @@ WARNING: If you do not include detailed explanations, references, and recommenda
             }
           },
           text: {
+            answer: "A comprehensive analysis and overview of the knowledge graph goes here. This should explain the key entities, their relationships, and the overall structure of the information network. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
             graph: {
               entities: [
                 {"id": "e1", "label": "Example Entity", "type": "CONCEPT", "sentiment": "neutral", "description": "Example Entity is a foundational concept in computer science and information theory. It originated in the early 20th century as researchers sought to formalize the representation of abstract ideas and their relationships. Over the decades, Example Entity has been applied in various domains, including artificial intelligence, data modeling, and semantic web technologies. Its applications range from structuring knowledge bases to enabling advanced search and reasoning in large datasets. The significance of Example Entity lies in its ability to bridge the gap between human understanding and machine processing, making it a cornerstone of modern knowledge representation. For instance, in the context of ontologies, Example Entity serves as a building block for defining classes, properties, and relationships, facilitating interoperability across systems. The evolution of Example Entity continues as new paradigms in machine learning and data science emerge, further expanding its relevance and utility.", "importance": 4, "properties": {"Key": "Data", "Status": "Complete"}, "references": ["https://en.wikipedia.org/wiki/Entity", {"label": "Stanford Encyclopedia of Philosophy: Entity", "url": "https://plato.stanford.edu/entries/entity/"}], "recommendations": ["Ontology", "Knowledge Representation"]}
@@ -500,6 +510,7 @@ WARNING: If you do not include detailed explanations, references, and recommenda
             }
           },
           text: {
+            answer: "A comprehensive analysis and overview of the flowchart process goes here. This should explain the overall workflow, key decision points, and the logical flow from start to finish. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
             graph: {
               entities: [
                 {"id": "start", "label": "Start Program", "type": "START_END", "sentiment": "neutral", "description": "The Start Program node is responsible for initializing the application environment. This includes loading essential libraries, setting up configuration parameters, and performing system checks. In complex systems, this step may also involve security verifications and resource allocation. The thoroughness of this initialization phase determines the stability and performance of the program. For example, in mission-critical applications, rigorous startup procedures are implemented to prevent failures. The Start Program node's effectiveness is often measured by its ability to handle exceptions and recover from errors gracefully. Its design reflects a balance between efficiency and robustness, tailored to the specific requirements of the application domain.", "level": 0, "references": ["https://en.wikipedia.org/wiki/Start", {"label": "Software Initialization", "url": "https://www.ibm.com/docs/en/zos/2.3.0?topic=initialization-software"}], "recommendations": ["Initialization", "Configuration"]}
@@ -539,6 +550,7 @@ WARNING: If you do not include detailed explanations, references, and recommenda
           }
         },
         text: {
+          answer: "A comprehensive analysis and overview of the mindmap structure goes here. This should explain the central topic, main branches, and how the ideas are organized hierarchically. IMPORTANT: All double quotes and special characters inside this string must be properly JSON-escaped (e.g., \\\" for a quote, \\n for a newline).",
           graph: {
             entities: [
               {"id": "center", "label": "Central Topic", "type": "MAIN_TOPIC", "sentiment": "neutral", "description": "The main topic", "level": 0},
@@ -608,6 +620,7 @@ WARNING: If you do not include detailed explanations, references, and recommenda
     const rawResponse = result.response.text()
     console.log('Raw AI response length:', rawResponse.length)
     console.log('Raw AI response preview:', rawResponse.substring(0, 500) + '...')
+    console.log('Full raw AI response:', rawResponse)
     
     const aiResponse = extractJson(rawResponse)
     if (!aiResponse) {
@@ -640,14 +653,29 @@ WARNING: If you do not include detailed explanations, references, and recommenda
     
     console.log('Raw AI response type:', typeof aiResponse);
     console.log('AI response keys:', Object.keys(aiResponse));
+    console.log('AI response structure:', {
+      hasAnswer: 'answer' in aiResponse,
+      hasGraph: 'graph' in aiResponse,
+      hasNodes: 'nodes' in aiResponse,
+      hasEdges: 'edges' in aiResponse,
+      hasEntities: 'entities' in aiResponse,
+      hasRelationships: 'relationships' in aiResponse,
+      hasMindmap: 'mindmap' in aiResponse
+    });
     
     let graphData = null;
     let answer = '';
     
-    // Check for direct nodes/edges format first
+    // Check for direct nodes/edges format first (used by flowcharts)
     if (Array.isArray(aiResponse.nodes) && Array.isArray(aiResponse.edges)) {
       console.log('Detected direct nodes/edges format');
       graphData = aiResponse;
+      // For flowcharts, generate a fallback answer since they don't include one
+      if (diagramType === 'flowchart' && (!answer || !answer.trim())) {
+        const nodeCount = aiResponse.nodes.length;
+        const edgeCount = aiResponse.edges.length;
+        answer = `Generated flowchart with ${nodeCount} nodes and ${edgeCount} connections. This diagram visualizes the process flow from start to finish, showing the logical sequence of steps and decision points.`;
+      }
     } 
     // Check for graph wrapper format
     else if (aiResponse.graph && typeof aiResponse.graph === 'object') {
@@ -678,10 +706,22 @@ WARNING: If you do not include detailed explanations, references, and recommenda
         nodes: aiResponse.entities,
         edges: aiResponse.relationships
       };
+      // Try to extract answer from the response if it exists
+      answer = aiResponse.answer || '';
     }
     
     console.log('Extracted graphData:', graphData ? 'found' : 'not found');
     console.log('Extracted answer:', answer || 'empty');
+    
+    // If no answer was extracted, generate a fallback answer based on the diagram type
+    if (!answer || !answer.trim()) {
+      console.log('No answer found in AI response, generating fallback answer');
+      const diagramTypeName = diagramType.startsWith('mindmap-') ? 'mindmap' : diagramType;
+      const nodeCount = graphData?.nodes?.length || 0;
+      const edgeCount = graphData?.edges?.length || 0;
+      
+      answer = `Generated ${diagramTypeName} with ${nodeCount} nodes and ${edgeCount} connections. This diagram visualizes the relationships and structure of the provided content.`;
+    }
 
     // If we still don't have graph data but have an answer, try to extract graph from answer text
     if (!graphData && answer) {
@@ -808,6 +848,15 @@ WARNING: If you do not include detailed explanations, references, and recommenda
     })
     await historyItem.save()
 
+    console.log('Sending response to frontend:', {
+      hasAnswer: !!answer,
+      answerLength: answer?.length || 0,
+      answerPreview: answer?.substring(0, 100) + '...',
+      graphDataNodes: graphDataForFrontend.nodes?.length || 0,
+      graphDataEdges: graphDataForFrontend.edges?.length || 0,
+      diagramType: graphDataForFrontend.diagramType
+    });
+
     res.json({ answer, graphData: graphDataForFrontend })
   } catch (error: any) {
     console.error('Error in graph generation:', error)
@@ -817,22 +866,32 @@ WARNING: If you do not include detailed explanations, references, and recommenda
 
 // Helper function to get mind map prompts for different structures
 const getMindmapPrompt = (mindmapSubtype: string): string => {
+  const baseAnswerRequirement = `IMPORTANT: You MUST provide an "answer" field with a comprehensive analysis and overview of the mindmap structure, explaining the central topic, main branches, and how the ideas are organized hierarchically.`
+
   const prompts: Record<string, string> = {
-    traditional: `Create a traditional mind map with a strict hierarchical structure, designed to branch from left to right.
+    traditional: `${baseAnswerRequirement}
+
+Create a traditional mind map with a strict hierarchical structure, designed to branch from left to right.
 - The structure MUST be a tree, starting with a single MAIN_TOPIC node.
 - All other nodes must be descendants of this MAIN_TOPIC node.
 - For EACH node, you must include:
   - id: a unique identifier string.
   - label: a short, clear title for the node.
   - type: one of MAIN_TOPIC, TOPIC, SUBTOPIC, or CONCEPT.
-  - description: a one-sentence explanation of the node's content.
+  - description: A comprehensive explanation covering background, context, applications, examples, and significance. Provide enough detail for understanding but keep it concise.
   - level: the correct hierarchy level (MAIN_TOPIC is 0, TOPICs are 1, etc.).
   - importance: a number from 1 (least) to 5 (most) indicating its significance.
+  - references: An array of at least 2 real, relevant URLs or objects with label and url, relevant to the node's topic (no placeholders)
+  - recommendations: An array of at least 2 related topics or next concepts to explore
 - The layout should be wide, not deep. Prefer adding more branches over deeply nested chains.
 
-The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object. Do not create circular relationships. The graph must be a directed acyclic graph.`,
+WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.
 
-    radial: `Create a radial mind map with a simple star-like structure.
+The final output must be a single, raw JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays. Do not create circular relationships. The graph must be a directed acyclic graph.`,
+
+    radial: `${baseAnswerRequirement}
+
+Create a radial mind map with a simple star-like structure.
 - CRITICAL: The graph MUST have exactly ONE central node of type 'MAIN_TOPIC'. All other nodes are secondary.
 - All secondary nodes MUST have the type 'CHILD_TOPIC'.
 - EVERY 'CHILD_TOPIC' node MUST connect directly to the central 'MAIN_TOPIC' node.
@@ -841,47 +900,69 @@ The final output must be a single, raw JSON object containing "entities" and "re
   - id: a unique identifier string.
   - label: a short, clear title for the node.
   - type: 'MAIN_TOPIC' or 'CHILD_TOPIC'.
-  - description: a one-sentence explanation of the node's content.
+  - description: A comprehensive explanation covering background, context, applications, examples, and significance. Provide enough detail for understanding but keep it concise.
   - importance: a number from 1 (most important) to 5 (least important).
+  - references: An array of at least 2 real, relevant URLs or objects with label and url, relevant to the node's topic (no placeholders)
+  - recommendations: An array of at least 2 related topics or next concepts to explore
 - CRITICAL: Do NOT include a 'level' property in the nodes. The layout is purely physics-based and non-hierarchical.
 
-The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object.`,
+WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.
 
-    organizational: `Create an organizational-style mind map with a top-down hierarchical structure.
+The final output must be a single, raw JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays.`,
+
+    organizational: `${baseAnswerRequirement}
+
+Create an organizational-style mind map with a top-down hierarchical structure.
 - For EACH node, you must include:
   - id: a unique identifier string.
   - label: a short, clear title for the node.
   - type: one of MAIN_TOPIC, TOPIC, SUBTOPIC, CONCEPT, ROLE, FUNCTION, GOAL, or METRIC.
-  - description: a one-sentence explanation of the node's content.
+  - description: A comprehensive explanation covering background, context, applications, examples, and significance. Provide enough detail for understanding but keep it concise.
   - level: the correct hierarchy level.
   - importance: a number from 1 (least) to 5 (most) indicating its significance.
+  - references: An array of at least 2 real, relevant URLs or objects with label and url, relevant to the node's topic (no placeholders)
+  - recommendations: An array of at least 2 related topics or next concepts to explore
 - The structure should flow top-down with clear reporting lines.
 
-The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object.`,
+WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.
 
-    'concept-map': `Create a concept map with interconnected relationships, focusing on how ideas connect.
+The final output must be a single, raw JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays.`,
+
+    'concept-map': `${baseAnswerRequirement}
+
+Create a concept map with interconnected relationships, focusing on how ideas connect.
 - For EACH node, you must include:
   - id: a unique identifier string.
   - label: a short, clear title for the node.
   - type: one of MAIN_TOPIC, TOPIC, SUBTOPIC, CONCEPT, PRINCIPLE, THEORY, EXAMPLE, or CONNECTION.
-  - description: a one-sentence explanation of the node's content.
+  - description: A comprehensive explanation covering background, context, applications, examples, and significance. Provide enough detail for understanding but keep it concise.
   - level: the correct hierarchy level.
   - importance: a number from 1 (least) to 5 (most) indicating its significance.
+  - references: An array of at least 2 real, relevant URLs or objects with label and url, relevant to the node's topic (no placeholders)
+  - recommendations: An array of at least 2 related topics or next concepts to explore
 - Focus on showing how concepts relate to and influence each other.
 
-The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object.`,
+WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.
 
-    timeline: `Create a timeline-based mind map with a chronological structure from left to right.
+The final output must be a single, raw JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays.`,
+
+    timeline: `${baseAnswerRequirement}
+
+Create a timeline-based mind map with a chronological structure from left to right.
 - For EACH node, you must include:
   - id: a unique identifier string.
   - label: a short, clear title for the node.
   - type: one of MAIN_TOPIC, TOPIC, SUBTOPIC, CONCEPT, DATE, EVENT, MILESTONE, or PERIOD.
-  - description: a one-sentence explanation of the node's content.
+  - description: A comprehensive explanation covering background, context, applications, examples, and significance. Provide enough detail for understanding but keep it concise.
   - level: the correct hierarchy level.
   - importance: a number from 1 (least) to 5 (most) indicating its significance.
+  - references: An array of at least 2 real, relevant URLs or objects with label and url, relevant to the node's topic (no placeholders)
+  - recommendations: An array of at least 2 related topics or next concepts to explore
 - The structure should show progression and development over time.
 
-The final output must be a single, raw JSON object containing "entities" and "relationships" arrays, wrapped in a "graph" object.`,
+WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.
+
+The final output must be a single, raw JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays.`,
   }
   
   return prompts[mindmapSubtype] || prompts.traditional

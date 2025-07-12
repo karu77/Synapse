@@ -137,6 +137,10 @@ export const generateGraph = async (text, question, imageFile, audioFile, imageU
 
       // Handle successful responses
       if (response.status < 400) {
+        // Always ensure an answer is present for all diagram types
+        if (!response.data.answer || typeof response.data.answer !== 'string' || !response.data.answer.trim()) {
+          response.data.answer = 'No AI overview available for this diagram.';
+        }
         console.log('Graph generation successful:', response.data);
         return response.data;
       }
