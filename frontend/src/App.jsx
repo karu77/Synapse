@@ -851,8 +851,8 @@ function App() {
                       <button
                         onClick={handleLogout}
                         className={`${
-                          active ? 'bg-gray-100 dark:bg-skin-border' : ''
-                        } group flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-600 dark:text-skin-text-muted`}
+                          active ? 'bg-skin-border' : ''
+                        } group flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-600 dark:text-skin-text`}
                       >
                         <ArrowRightOnRectangleIcon className="mr-2 h-5 w-5" />
                         Logout
