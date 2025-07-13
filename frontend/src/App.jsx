@@ -17,6 +17,7 @@ import EdgeInfoPanel from './components/EdgeInfoPanel'
 import AnswerPanel from './components/AnswerPanel'
 import WelcomeScreen from './components/WelcomeScreen'
 import PresetExamples from './components/PresetExamples'
+import TutorialModal from './components/TutorialModal'
 import {
   ArrowDownTrayIcon,
   ArrowRightOnRectangleIcon,
@@ -36,6 +37,8 @@ import { Fragment } from 'react'
 import Tooltip from './components/Tooltip'
 import ConfirmModal from './components/ConfirmModal';
 import AiInfoPanel from './components/AiInfoPanel';
+import Joyride from 'react-joyride';
+import { updateTutorialSeen } from './services/api';
 
 const defaultPhysicsOptions = {
   gravitationalConstant: -40000,
@@ -126,7 +129,13 @@ function App() {
   const graphRef = useRef(null)
   const containerRef = useRef(null)
   const onGraphReadyRef = useRef(null)
-  const { user: authUser, logout } = useAuth()
+  const { user: authUser, logout, markTutorialSeen } = useAuth()
+  // Tutorial modal state
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const [runTutorial, setRunTutorial] = useState(false);
+  const [joyrideKey, setJoyrideKey] = useState(0);
+
+  console.log('App render, user:', user);
 
   // Preset examples handlers
   const handleLoadExample = (exampleData, diagramType) => {
@@ -682,6 +691,69 @@ function App() {
     }
   }
 
+  useEffect(() => {
+    // Show tutorial modal for new users
+    if (authUser && !authUser.hasSeenTutorial) {
+      setShowTutorialModal(true);
+    }
+  }, [authUser]);
+
+  const handleStartTutorial = () => {
+    setShowTutorialModal(false);
+    setRunTutorial(true);
+  };
+  
+  const handleSkipTutorial = async () => {
+    setShowTutorialModal(false);
+    setRunTutorial(false);
+    try {
+      await markTutorialSeen();
+    } catch {}
+  };
+
+  // Remove the debug step from Joyride steps
+  const tutorialSteps = [
+    {
+      target: '.sidebar-joyride',
+      content: 'This is your sidebar. Use it to access controls and history!',
+    },
+    {
+      target: '.graph-area-joyride',
+      content: 'Here is where your diagrams will appear.',
+    },
+    {
+      target: '.history-panel-joyride',
+      content: 'Access your previous diagrams here.',
+    },
+    {
+      target: '.graph-name-joyride',
+      content: 'You can name your graph here. Click to edit!',
+    },
+  ];
+
+  const handleJoyrideCallback = async (data) => {
+    if (['finished', 'skipped'].includes(data.status)) {
+      setRunTutorial(false);
+      try {
+        await markTutorialSeen();
+        // Optionally update user context/state here if needed
+      } catch {}
+    }
+  };
+
+  // Minimal Joyride test: always run, single step
+  // Render only the tutorial modal if it's open
+  if (showTutorialModal) {
+    return (
+      <TutorialModal
+        isOpen={showTutorialModal}
+        onClose={() => setShowTutorialModal(false)}
+        onStartTutorial={handleStartTutorial}
+        onSkip={handleSkipTutorial}
+      />
+    );
+  }
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-skin-bg text-skin-text font-sans flex flex-col">
       <Tooltip {...tooltip} />
@@ -955,8 +1027,24 @@ function App() {
       {/* Main Content */}
       <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'} ${selectedNode ? 'filter blur-sm pointer-events-none select-none' : ''}`}>
         <div className="relative h-full w-full">
+          <Joyride
+            key={joyrideKey}
+            steps={tutorialSteps}
+            run={runTutorial}
+            continuous
+            showSkipButton
+            callback={handleJoyrideCallback}
+            styles={{ options: { zIndex: 10000 } }}
+          />
+          {/* Tutorial Modal */}
+          <TutorialModal
+            isOpen={showTutorialModal}
+            onClose={() => setShowTutorialModal(false)}
+            onStartTutorial={handleStartTutorial}
+            onSkip={handleSkipTutorial}
+          />
           {(graphData.nodes && graphData.nodes.length > 0) && (
-            <div style={{ position: 'fixed', top: 16, left: 24, zIndex: 40, display: 'flex', alignItems: 'center', gap: 8, maxWidth: 400 }}>
+            <div className="graph-name-joyride" style={{ position: 'fixed', top: 16, left: 24, zIndex: 40, display: 'flex', alignItems: 'center', gap: 8, maxWidth: 400 }}>
               {isEditingName ? (
                 <input
                   type="text"
@@ -1071,29 +1159,31 @@ function App() {
         <>
           <AnimatePresence>
             {isSidebarOpen && (
-                <ControlSidebar
-                  isOpen={isSidebarOpen}
-                  onClose={toggleSidebar}
-                  onSubmit={handleTextSubmit}
-                  isProcessing={isProcessing}
-                  selectedNode={selectedNode}
-                  selectedEdge={selectedEdge}
-                  history={history}
-                  loadFromHistory={loadFromHistory}
-                  onDelete={handleDeleteFromHistory}
-                  onClear={handleClearHistory}
-                  styleOptions={styleOptions}
-                  setStyleOptions={setStyleOptions}
-                  resetStyles={resetStyles}
-                  physicsOptions={physicsOptions}
-                  setPhysicsOptions={setPhysicsOptions}
-                  resetPhysics={resetPhysics}
-                  user={authUser}
-                  logout={logout}
-                  currentDiagramType={currentDiagramType}
-                  onDiagramTypeChange={handleDiagramTypeChange}
-                  alwaysShowMediaInputs={true}
-                />
+                <div className="sidebar-joyride">
+                  <ControlSidebar
+                    isOpen={isSidebarOpen}
+                    onClose={toggleSidebar}
+                    onSubmit={handleTextSubmit}
+                    isProcessing={isProcessing}
+                    selectedNode={selectedNode}
+                    selectedEdge={selectedEdge}
+                    history={history}
+                    loadFromHistory={loadFromHistory}
+                    onDelete={handleDeleteFromHistory}
+                    onClear={handleClearHistory}
+                    styleOptions={styleOptions}
+                    setStyleOptions={setStyleOptions}
+                    resetStyles={resetStyles}
+                    physicsOptions={physicsOptions}
+                    setPhysicsOptions={setPhysicsOptions}
+                    resetPhysics={resetPhysics}
+                    user={authUser}
+                    logout={logout}
+                    currentDiagramType={currentDiagramType}
+                    onDiagramTypeChange={handleDiagramTypeChange}
+                    alwaysShowMediaInputs={true}
+                  />
+                </div>
             )}
           </AnimatePresence>
 

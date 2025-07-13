@@ -15,7 +15,6 @@ const RegisterPage = () => {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState({})
-  const [registrationSuccess, setRegistrationSuccess] = useState(false)
   const { register } = useAuth()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
@@ -74,7 +73,7 @@ const RegisterPage = () => {
     setIsLoading(true)
     try {
       await register(email, password)
-      setRegistrationSuccess(true)
+      navigate('/app') // Auto-login and redirect to app
     } catch (err) {
       setErrors({ form: err.message })
     } finally {
@@ -103,91 +102,78 @@ const RegisterPage = () => {
         </div>
 
         <div className="auth-form-panel">
-          {registrationSuccess ? (
-            <div className="text-center py-8">
-              <p className="text-skin-text text-lg mb-4">
-                Registration successful! Please check your email inbox (and spam folder) for a verification link.
-              </p>
-              <Link to="/login" className="font-semibold text-skin-accent hover:underline">
-                Proceed to Login
-              </Link>
+          <form onSubmit={handleSubmit} noValidate>
+            {errors.form && <ErrorDisplay error={{ message: errors.form }} />}
+            
+            <div className="mb-4">
+              <label htmlFor="email" className="block text-sm font-medium text-skin-text-muted mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => handleBlur('email')}
+                placeholder="you@example.com"
+                className={`w-full px-4 py-2 bg-skin-bg/80 border rounded-lg focus:outline-none focus:ring-2 transition text-black dark:text-white ${
+                  errors.email
+                    ? 'border-red-500 focus:ring-red-500/50'
+                    : 'border-skin-border focus:border-skin-accent focus:ring-skin-accent/50'
+                }`}
+                required
+              />
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} noValidate>
-              {errors.form && <ErrorDisplay error={{ message: errors.form }} />}
-              
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-skin-text-muted mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onBlur={() => handleBlur('email')}
-                  placeholder="you@example.com"
-                  className={`w-full px-4 py-2 bg-skin-bg/80 border rounded-lg focus:outline-none focus:ring-2 transition text-black dark:text-white ${
-                    errors.email
-                      ? 'border-red-500 focus:ring-red-500/50'
-                      : 'border-skin-border focus:border-skin-accent focus:ring-skin-accent/50'
-                  }`}
-                  required
+            
+            <div className="mb-4">
+                <PasswordInput
+                  id="password"
+                  label="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => handleBlur('password')}
+                  error={errors.password}
                 />
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-              </div>
-              
-              <div className="mb-4">
-                  <PasswordInput
-                    id="password"
-                    label="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onBlur={() => handleBlur('password')}
-                    error={errors.password}
-                  />
-              </div>
+            </div>
 
-              <div className="mb-6">
-                  <PasswordInput
-                    id="confirmPassword"
-                    label="Confirm Password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    onBlur={() => handleBlur('confirmPassword')}
-                    error={errors.confirmPassword}
-                  />
-              </div>
+            <div className="mb-6">
+                <PasswordInput
+                  id="confirmPassword"
+                  label="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onBlur={() => handleBlur('confirmPassword')}
+                  error={errors.confirmPassword}
+                />
+            </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-skin-accent to-skin-accent-light text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity duration-300 disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <Spinner />
-                    <span>Creating Account...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign Up</span>
-                    <ArrowRightIcon className="h-5 w-5" />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-skin-accent to-skin-accent-light text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity duration-300 disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Spinner />
+                  <span>Creating Account...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign Up</span>
+                  <ArrowRightIcon className="h-5 w-5" />
+                </>
+              )}
+            </button>
+          </form>
 
-          {!registrationSuccess && (
-            <p className="text-center text-sm text-skin-text-muted mt-6">
-              Already have an account?{' '}
-              <Link to="/login" className="font-semibold text-skin-accent hover:underline">
-                Sign In
-              </Link>
-            </p>
-          )}
+          <p className="text-center text-sm text-skin-text-muted mt-6">
+            Already have an account?{' '}
+            <Link to="/login" className="font-semibold text-skin-accent hover:underline">
+              Sign In
+            </Link>
+          </p>
         </div>
       </div>
     </div>

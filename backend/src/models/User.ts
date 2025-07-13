@@ -7,6 +7,7 @@ export interface IUser extends Document {
   email: string
   password: string
   matchPassword(enteredPassword: string): Promise<boolean>
+  hasSeenTutorial: boolean
 }
 
 // Interface for the User model (for static methods, if any)
@@ -22,6 +23,10 @@ const userSchema = new mongoose.Schema<IUser>(
     password: {
       type: String,
       required: true,
+    },
+    hasSeenTutorial: {
+      type: Boolean,
+      default: false,
     },
   },
   {

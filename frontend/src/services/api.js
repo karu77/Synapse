@@ -288,4 +288,13 @@ export const updateHistoryName = async (id, name) => {
   }
 }
 
+export const updateTutorialSeen = async () => {
+  try {
+    await api.patch('/users/tutorial')
+  } catch (error) {
+    console.error('Error updating tutorial status:', error)
+    throw error.response?.data?.message || 'Failed to update tutorial status.'
+  }
+}
+
 export default api

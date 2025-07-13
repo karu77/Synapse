@@ -16,6 +16,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.4",
     "@sendgrid/mail": "^8.1.5",
-    "mongodb": "^6.17.0"
+    "mongodb": "^6.17.0",
+    "react-joyride": "^2.9.3"
   }
 }

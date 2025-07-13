@@ -41,6 +41,7 @@ const registerUser = async (req: Request, res: Response) => {
         message: 'User registered successfully.',
         email: user.email,
         token: generateToken(user._id.toString()),
+        hasSeenTutorial: user.hasSeenTutorial,
       })
     } else {
       res.status(400).json({ message: 'Invalid user data' })
@@ -65,6 +66,7 @@ const authUser = async (req: Request, res: Response) => {
       _id: user._id,
       email: user.email,
       token: generateToken(user._id.toString()),
+      hasSeenTutorial: user.hasSeenTutorial,
     })
   } else {
     res.status(401).json({ message: 'Invalid email or password' })
@@ -103,6 +105,19 @@ const resetPassword = async (req: Request, res: Response) => {
   res.json({ message: 'Password has been reset successfully.' })
 }
 
+// @desc    Mark tutorial as seen
+// @route   PATCH /api/users/tutorial
+// @access  Private
+const markTutorialSeen = async (req: Request, res: Response) => {
+  const user = await User.findById(req.user._id)
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' })
+  }
+  user.hasSeenTutorial = true
+  await user.save()
+  res.json({ message: 'Tutorial marked as seen', hasSeenTutorial: true })
+}
+
 // @desc    Clear all users (DEV ONLY)
 // @route   DELETE /api/users/clear-all
 // @access  Private/Admin
@@ -122,4 +137,4 @@ const clearAllUsers = async (req: Request, res: Response) => {
   }
 };
 
-export { registerUser, authUser, deleteUser, resetPassword, clearAllUsers } 
+export { registerUser, authUser, deleteUser, resetPassword, markTutorialSeen, clearAllUsers } 

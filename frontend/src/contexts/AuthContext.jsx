@@ -1,21 +1,22 @@
 import { createContext, useState, useEffect, useContext } from 'react'
 import api from '../services/api'
+import { updateTutorialSeen } from '../services/api';
 
 const AuthContext = createContext()
 
 export const AuthProvider = ({ children }) => {
+  console.log('AuthProvider rendered');
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for user info in local storage on initial load
     try {
       const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+      console.log('AuthContext useEffect, userInfo from localStorage:', userInfo)
       if (userInfo) {
         setUser(userInfo)
       }
     } catch {
-      // If parsing fails, remove the invalid item
       localStorage.removeItem('userInfo')
     } finally {
       setLoading(false)
@@ -59,8 +60,10 @@ export const AuthProvider = ({ children }) => {
   const register = async (email, password) => {
     try {
       const { data } = await api.post('/users', { email, password })
+      console.log('Register response:', data)
       localStorage.setItem('userInfo', JSON.stringify(data))
       setUser(data)
+      console.log('User after register setUser:', data)
       return data
     } catch (error) {
       console.error('Registration error:', error)
@@ -98,8 +101,17 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
   }
 
+  const markTutorialSeen = async () => {
+    if (user && user.hasSeenTutorial === false) {
+      await updateTutorialSeen();
+      const updatedUser = { ...user, hasSeenTutorial: true };
+      setUser(updatedUser);
+      localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, markTutorialSeen }}>
       {!loading && children}
     </AuthContext.Provider>
   )

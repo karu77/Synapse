@@ -15,6 +15,7 @@
     "axios": "^1.9.0",
     "firebase": "^11.10.0",
     "framer-motion": "^12.18.1",
+    "lucide-react": "^0.525.0",
     "prop-types": "^15.8.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
