@@ -346,9 +346,13 @@ function App() {
         
         const historyData = await getHistory()
         setHistory(historyData)
+        // PATCH: Log diagramType for each item
         console.log('✅ History fetched successfully:', historyData.length, 'items')
+        historyData.forEach((item, idx) => {
+          console.log(`History[${idx}] diagramType:`, item.inputs?.diagramType, item.graphData?.diagramType)
+        })
       } catch (error) {
-        console.error('❌ Failed to fetch history:', error)
+        console.error('Failed to fetch history:', error)
         console.log('🔍 Error details:', {
           status: error.response?.status,
           message: error.message,
@@ -480,27 +484,32 @@ function App() {
     setSelectedEdge(null)
     
     // Ensure the diagram type is set before the graph data
-    const diagramType = historyItem.graphData.diagramType || historyItem.inputs.diagramType || 'knowledge-graph'
+    let diagramType = historyItem.graphData.diagramType || historyItem.inputs.diagramType || 'knowledge-graph'
     
     // For mindmaps, construct the full type with subtype if available
     let fullDiagramType = diagramType
     if (diagramType === 'mindmap' && historyItem.graphData.mindmapSubtype) {
       fullDiagramType = `${diagramType}-${historyItem.graphData.mindmapSubtype}`
     }
-    
+
+    // --- PATCH: Robustly handle knowledge-graph history ---
+    if (!diagramType || diagramType === 'knowledge-graph' || fullDiagramType === 'knowledge-graph') {
+      diagramType = 'knowledge-graph';
+      fullDiagramType = 'knowledge-graph';
+    }
     setCurrentDiagramType(fullDiagramType)
     
     let graphData = historyItem.graphData
+    // Defensive: ensure nodes/edges are arrays
+    const nodes = Array.isArray(graphData.nodes) ? graphData.nodes : []
+    const edges = Array.isArray(graphData.edges) ? graphData.edges : []
     const isHierarchical = (diagramType === 'flowchart') || (diagramType === 'mindmap' && fullDiagramType !== 'mindmap-radial')
 
-    // For hierarchical diagrams, ensure all nodes have proper level properties
-    if (isHierarchical && graphData.nodes) {
+    if (isHierarchical && nodes.length > 0) {
       graphData = {
         ...graphData,
-        nodes: graphData.nodes.map(node => {
+        nodes: nodes.map(node => {
           let nodeLevel = node.level
-
-          // If level is missing, try to infer it
           if (nodeLevel === undefined || nodeLevel === null) {
             if (diagramType === 'mindmap') {
               if (node.type === 'TOPIC' && (node.label?.toLowerCase().includes('central') || node.id === 'center')) {
@@ -520,21 +529,25 @@ function App() {
               }
             }
           }
-          
           return { ...node, level: nodeLevel }
         }),
-        diagramType: diagramType
+        edges,
+        diagramType: fullDiagramType
       }
-    } else if (graphData.nodes) {
-      // For non-hierarchical graphs (knowledge-graph, mindmap-radial), remove level properties to avoid conflicts
+    } else if (nodes.length > 0) {
+      // For non-hierarchical graphs (knowledge-graph, mindmap-radial), remove level properties
       graphData = {
         ...graphData,
-        nodes: graphData.nodes.map(node => {
+        nodes: nodes.map(node => {
           const { level, ...nodeWithoutLevel } = node
           return nodeWithoutLevel
         }),
-        diagramType: diagramType
+        edges,
+        diagramType: fullDiagramType
       }
+    } else {
+      // Defensive fallback for empty or malformed data
+      graphData = { nodes: [], edges: [], diagramType: fullDiagramType }
     }
 
     setGraphData(graphData)

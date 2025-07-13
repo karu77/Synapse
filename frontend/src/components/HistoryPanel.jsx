@@ -2,7 +2,10 @@ import { TrashIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 
 const HistoryPanel = ({ history = [], onSelect, onDelete, onClear }) => {
-  const [filter, setFilter] = useState('all')
+  // PATCH: Always use lowercase for filter value
+  const [filter, setFilterRaw] = useState('all')
+  const setFilter = (val) => setFilterRaw((val || '').toLowerCase())
+  
   // Ensure history is always an array and handle empty state
   const safeHistory = Array.isArray(history) ? history : []
 
@@ -27,7 +30,8 @@ const HistoryPanel = ({ history = [], onSelect, onDelete, onClear }) => {
   }
 
   const getBaseDiagramType = (typeString) => {
-    if (!typeString) return 'knowledge-graph'
+    if (!typeString || typeof typeString !== 'string' || !typeString.trim()) return 'knowledge-graph'
+    if (typeString.startsWith('knowledge-graph')) return 'knowledge-graph'
     return typeString.split('-')[0]
   }
 
@@ -55,17 +59,23 @@ const HistoryPanel = ({ history = [], onSelect, onDelete, onClear }) => {
     }
   }
 
+  // PATCH: Log the filter value
+  console.log('Current filter value:', filter)
+
+  // PATCH: Robust filter for knowledge-graph
   const filteredHistory = safeHistory.filter(item => {
     if (filter === 'all') return true;
-    const itemType = item.inputs?.diagramType || item.graphData?.diagramType || 'knowledge-graph';
+    let itemType = item.inputs?.diagramType || item.graphData?.diagramType || 'knowledge-graph';
+    if (!itemType || typeof itemType !== 'string' || !itemType.trim()) itemType = 'knowledge-graph';
     return getBaseDiagramType(itemType) === filter;
   });
+  console.log('Filtered history for', filter, filteredHistory);
 
   const FilterButton = ({ type, label, icon }) => (
     <button
       onClick={() => setFilter(type)}
       className={`flex-1 flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
-        filter === type
+        filter === type.toLowerCase()
           ? 'bg-skin-accent text-white shadow-sm'
           : 'bg-skin-bg text-skin-text-muted hover:bg-skin-border'
       }`}
