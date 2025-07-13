@@ -7,6 +7,10 @@ const historySchema = new mongoose.Schema(
       required: true,
       ref: 'User',
     },
+    name: {
+      type: String,
+      required: false,
+    },
     graphData: {
       nodes: { type: Array, required: true },
       edges: { type: Array, required: true },

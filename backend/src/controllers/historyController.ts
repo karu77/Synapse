@@ -36,4 +36,20 @@ const deleteHistoryItem = async (req: Request, res: Response) => {
   }
 }
 
-export { getHistory, deleteHistoryItem, clearHistory } 
+// @desc    Update the name of a history item
+// @route   PATCH /api/history/:id/name
+// @access  Private
+const updateHistoryName = async (req: Request, res: Response) => {
+  const historyItem = await History.findById(req.params.id)
+  if (!historyItem) {
+    return res.status(404).json({ message: 'History item not found' })
+  }
+  if (historyItem.user.toString() !== req.user._id.toString()) {
+    return res.status(401).json({ message: 'Not authorized' })
+  }
+  historyItem.name = req.body.name || ''
+  await historyItem.save()
+  res.json({ message: 'Name updated', name: historyItem.name })
+}
+
+export { getHistory, deleteHistoryItem, clearHistory, updateHistoryName } 

@@ -10,6 +10,9 @@ const HistoryPanel = ({ history = [], onSelect, onDelete, onClear }) => {
   const safeHistory = Array.isArray(history) ? history : []
 
   const getHistoryItemLabel = (item) => {
+    if (item.name && item.name.trim()) {
+      return item.name
+    }
     const { textInput, question, imageFileName, audioFileName, answer } = item.inputs || {}
     if (question) {
       const label = answer

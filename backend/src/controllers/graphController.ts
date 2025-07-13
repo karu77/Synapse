@@ -243,7 +243,7 @@ async function downloadFileFromUrl(url: string): Promise<{ buffer: Buffer, mimeT
 
 export const generateGraphAndSave = async (req: Request, res: Response) => {
   try {
-    const { textInput, question, imageUrl, audioUrl, diagramType = 'knowledge-graph' } = req.body
+    const { textInput, question, imageUrl, audioUrl, diagramType = 'knowledge-graph', name } = req.body
     const files = req.files as { [fieldname: string]: Express.Multer.File[] }
 
     let audioPart: Part | null = null
@@ -879,6 +879,7 @@ WARNING: If you do not include detailed explanations, references, and recommenda
 
     const historyItem = new History({
       user: req.user._id,
+      name: name || '',
       graphData: graphDataForFrontend,
       inputs: {
         textInput: textInput || '',

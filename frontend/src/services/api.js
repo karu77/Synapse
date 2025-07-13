@@ -94,12 +94,13 @@ api.interceptors.response.use(
  * @param {string} diagramType The type of diagram to generate.
  * @returns {Promise<import('../types/index').GraphData>} The graph data.
  */
-export const generateGraph = async (text, question, imageFile, audioFile, documentFile, imageUrl, audioUrl, diagramType = 'knowledge-graph') => {
+export const generateGraph = async (text, question, imageFile, audioFile, documentFile, imageUrl, audioUrl, diagramType = 'knowledge-graph', name = '') => {
   try {
     const formData = new FormData()
     formData.append('textInput', text)
     formData.append('question', question)
     formData.append('diagramType', diagramType)
+    formData.append('name', name)
     
     // Log the request data for debugging
     console.log('Sending request with:', {
@@ -274,6 +275,16 @@ export const resetPassword = async (email, newPassword) => {
   } catch (error) {
     console.error('Error resetting password:', error)
     throw error.response?.data?.message || 'Failed to reset password.'
+  }
+}
+
+export const updateHistoryName = async (id, name) => {
+  try {
+    const { data } = await api.patch(`/history/${id}/name`, { name })
+    return data
+  } catch (error) {
+    console.error('Error updating history name:', error)
+    throw error.response?.data?.message || 'Failed to update history name.'
   }
 }
 

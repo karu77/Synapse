@@ -8,6 +8,7 @@ import {
   clearAllHistory,
   checkTokenStatus,
   deleteAccount,
+  updateHistoryName,
 } from './services/api'
 import ThemeToggleButton from './components/ThemeToggleButton'
 import ControlSidebar from './components/ControlSidebar'
@@ -119,6 +120,9 @@ function App() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiReferences, setAiReferences] = useState([]);
   const [showPresetExamples, setShowPresetExamples] = useState(false);
+  const [graphName, setGraphName] = useState('Untitled Graph')
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [currentHistoryId, setCurrentHistoryId] = useState(null)
   const graphRef = useRef(null)
   const containerRef = useRef(null)
   const onGraphReadyRef = useRef(null)
@@ -395,7 +399,8 @@ function App() {
         documentFile,
         imageUrl,
         audioUrl,
-        diagramType
+        diagramType,
+        graphName // pass the name
       )
       setAnswer(answer)
       // Aggregate all unique references from all nodes
@@ -414,6 +419,10 @@ function App() {
       })
       setGraphKey((prevKey) => prevKey + 1)
       await fetchHistory()
+      // After fetching, set the currentHistoryId to the latest item
+      if (history && history.length > 0) {
+        setCurrentHistoryId(history[0]._id)
+      }
     } catch (error) {
       console.error('Submission error:', error)
       alert(error.message || 'An unexpected error occurred.')
@@ -478,7 +487,10 @@ function App() {
     }
   }, [])
 
+  // When loading from history, set the graph name and ID
   const loadFromHistory = (historyItem) => {
+    setGraphName(historyItem.name || 'Untitled Graph')
+    setCurrentHistoryId(historyItem._id || null)
     console.log('Loading from history:', historyItem)
     setSelectedNode(null)
     setSelectedEdge(null)
@@ -655,6 +667,20 @@ function App() {
     // Only run when graphData changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphData, currentDiagramType]);
+
+  // Editable name UI (top left, Google Docs style)
+  // When editing ends, update the backend if we have an ID
+  const handleNameEditEnd = async () => {
+    setIsEditingName(false)
+    if (currentHistoryId && graphName.trim()) {
+      try {
+        await updateHistoryName(currentHistoryId, graphName)
+        await fetchHistory()
+      } catch (e) {
+        // Optionally show error
+      }
+    }
+  }
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-skin-bg text-skin-text font-sans flex flex-col">
@@ -929,6 +955,31 @@ function App() {
       {/* Main Content */}
       <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'} ${selectedNode ? 'filter blur-sm pointer-events-none select-none' : ''}`}>
         <div className="relative h-full w-full">
+          {(graphData.nodes && graphData.nodes.length > 0) && (
+            <div style={{ position: 'fixed', top: 16, left: 24, zIndex: 40, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {isEditingName ? (
+                <input
+                  type="text"
+                  value={graphName}
+                  autoFocus
+                  onChange={e => setGraphName(e.target.value)}
+                  onBlur={handleNameEditEnd}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleNameEditEnd()
+                  }}
+                  style={{ fontSize: 22, fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', minWidth: 120 }}
+                />
+              ) : (
+                <span
+                  style={{ fontSize: 22, fontWeight: 600, cursor: 'pointer', minWidth: 120 }}
+                  title="Click to rename graph"
+                  onClick={() => setIsEditingName(true)}
+                >
+                  {graphName}
+                </span>
+              )}
+            </div>
+          )}
           <GraphVisualization
             ref={graphRef}
             data={{
