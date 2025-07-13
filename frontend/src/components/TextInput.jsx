@@ -55,6 +55,7 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
   const [code, setCode] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [audioFile, setAudioFile] = useState(null)
+  const [documentFile, setDocumentFile] = useState(null)
   const [imageUrl, setImageUrl] = useState('')
   const [audioUrl, setAudioUrl] = useState('')
   const [diagramType, setDiagramType] = useState(currentDiagramType || 'knowledge-graph')
@@ -84,6 +85,36 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
       setError(null)
     } else {
       setAudioFile(null)
+    }
+  }
+
+  const handleDocumentFileChange = (file) => {
+    if (file) {
+      // Check file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+        'text/plain',
+        'text/markdown',
+        'text/csv'
+      ]
+      
+      if (!allowedTypes.includes(file.type)) {
+        setError('Please select a valid document file (PDF, Word, or text file).')
+        return
+      }
+      
+      // Check file size (20MB limit for documents)
+      if (file.size > 20 * 1024 * 1024) {
+        setError('Document file size should not exceed 20MB.')
+        return
+      }
+      
+      setDocumentFile(file)
+      setError(null)
+    } else {
+      setDocumentFile(null)
     }
   }
 
@@ -125,6 +156,7 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
     !!code?.trim() ||
     !!imageFile ||
     !!audioFile ||
+    !!documentFile ||
     (typeof imageUrl === 'string' && imageUrl.trim().length > 0) ||
     (typeof audioUrl === 'string' && audioUrl.trim().length > 0)
 
@@ -149,7 +181,7 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
       }
     }
     
-    await onSubmit(textToSend, questionToSend, imageFile, audioFile, imageUrl, audioUrl, effectiveDiagramType)
+    await onSubmit(textToSend, questionToSend, imageFile, audioFile, documentFile, imageUrl, audioUrl, effectiveDiagramType)
   }
 
   const getDiagramDescription = (type) => {
@@ -419,6 +451,20 @@ const TextInput = ({ onSubmit, isProcessing, onDiagramTypeChange, currentDiagram
           <div className="text-xs text-skin-text-muted mt-1">
             Only direct links to audio/video files are supported. YouTube and other streaming/video platform URLs will not work.
           </div>
+        </div>
+      </div>
+
+      {/* Document Upload Section */}
+      <div className={isProcessing ? 'file-input-disabled' : ''}>
+        <FileInput
+          id="document-upload"
+          label="Document File (PDF, Word, Text)"
+          accept=".pdf,.doc,.docx,.txt,.md,.csv"
+          onFileChange={handleDocumentFileChange}
+          disabled={isProcessing}
+        />
+        <div className="text-xs text-skin-text-muted mt-1">
+          Upload PDF, Word documents, or text files to extract content and generate graphs. Max 20MB.
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import History from '../models/History'
 import { GoogleGenerativeAI, Part } from '@google/generative-ai'
 import axios from 'axios'
 import path from 'path'
+import { DocumentExtractor, ExtractedDocument } from '../services/documentExtractor'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -247,8 +248,10 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
 
     let audioPart: Part | null = null
     let imagePart: Part | null = null
+    let extractedDocument: ExtractedDocument | null = null
     const hasImage = (files.imageFile && files.imageFile.length > 0) || imageUrl
     const hasAudio = (files.audioFile && files.audioFile.length > 0) || audioUrl
+    const hasDocument = files.documentFile && files.documentFile.length > 0
 
     // Handle image file or image URL
     if (files.imageFile && files.imageFile.length > 0) {
@@ -286,7 +289,30 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
       }
     }
 
-    if (!textInput && !question && !hasImage && !audioPart) {
+    // Handle document file extraction
+    if (hasDocument) {
+      try {
+        console.log('Extracting text from document:', files.documentFile[0].originalname)
+        extractedDocument = await DocumentExtractor.extractText(files.documentFile[0])
+        
+        // Preprocess the extracted text
+        extractedDocument.text = DocumentExtractor.preprocessText(extractedDocument.text)
+        
+        console.log('Document extraction successful:', {
+          title: extractedDocument.title,
+          wordCount: extractedDocument.metadata?.wordCount,
+          textLength: extractedDocument.text.length
+        })
+      } catch (err) {
+        console.error('Document extraction failed:', err)
+        return res.status(400).json({ 
+          error: 'Failed to extract text from document. Please ensure the file is a valid PDF, Word document, or text file.',
+          details: { receivedFormat: files.documentFile[0].mimetype }
+        })
+      }
+    }
+
+    if (!textInput && !question && !hasImage && !audioPart && !hasDocument) {
       return res.status(400).json({ error: 'At least one input is required.' })
     }
 
@@ -450,7 +476,24 @@ WARNING: If you do not include detailed explanations, references, and recommenda
     const safeTextInput = textInput || '';
     const safeHasImage = !!hasImage;
     const safeHasAudio = !!audioPart;
-    const userInput = safeQuestion || safeTextInput || '';
+    
+    // Combine text input with extracted document content
+    let userInput = safeQuestion || safeTextInput || '';
+    
+    if (extractedDocument) {
+      const documentSummary = DocumentExtractor.generateDocumentSummary(extractedDocument)
+      const documentContent = extractedDocument.text
+      
+      // If there's already text input, combine it with document content
+      if (userInput) {
+        userInput = `${userInput}\n\nDocument Content:\n${documentContent}`
+      } else {
+        userInput = documentContent
+      }
+      
+      // Add document context to the prompt
+      userInput = `Document Context:\n${documentSummary}\n\nContent to Analyze:\n${userInput}`
+    }
 
     // Generate appropriate prompt based on diagram type
     textPrompt = generatePromptForDiagramType(

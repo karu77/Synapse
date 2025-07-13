@@ -374,7 +374,7 @@ function App() {
   }, [authUser, fetchHistory])
 
   // When you set the answer, also set aiReferences if available from backend (for now fallback to empty array)
-  const handleTextSubmit = async (text, question, imageFile, audioFile, imageUrl, audioUrl, diagramType) => {
+  const handleTextSubmit = async (text, question, imageFile, audioFile, documentFile, imageUrl, audioUrl, diagramType) => {
     setIsProcessing(true)
     setSelectedNode(null)
     setSelectedEdge(null)
@@ -388,6 +388,7 @@ function App() {
         question,
         imageFile,
         audioFile,
+        documentFile,
         imageUrl,
         audioUrl,
         diagramType

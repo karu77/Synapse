@@ -14,6 +14,7 @@ router.post(
   upload.fields([
     { name: 'imageFile', maxCount: 1 },
     { name: 'audioFile', maxCount: 1 },
+    { name: 'documentFile', maxCount: 1 },
   ]),
   generateGraphAndSave
 )

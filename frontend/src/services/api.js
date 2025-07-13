@@ -88,12 +88,13 @@ api.interceptors.response.use(
  * @param {string} question A question to be answered.
  * @param {File | null} imageFile Optional image file.
  * @param {File | null} audioFile Optional audio/video file.
+ * @param {File | null} documentFile Optional document file (PDF, Word, etc.).
  * @param {string} imageUrl Optional image URL.
  * @param {string} audioUrl Optional audio/video URL.
  * @param {string} diagramType The type of diagram to generate.
  * @returns {Promise<import('../types/index').GraphData>} The graph data.
  */
-export const generateGraph = async (text, question, imageFile, audioFile, imageUrl, audioUrl, diagramType = 'knowledge-graph') => {
+export const generateGraph = async (text, question, imageFile, audioFile, documentFile, imageUrl, audioUrl, diagramType = 'knowledge-graph') => {
   try {
     const formData = new FormData()
     formData.append('textInput', text)
@@ -107,6 +108,7 @@ export const generateGraph = async (text, question, imageFile, audioFile, imageU
       diagramType,
       hasImageFile: !!(imageFile && typeof imageFile !== 'string'),
       hasAudioFile: !!(audioFile && typeof audioFile !== 'string'),
+      hasDocumentFile: !!(documentFile && typeof documentFile !== 'string'),
       hasImageUrl: !!(imageUrl || (imageFile && typeof imageFile === 'string')),
       hasAudioUrl: !!(audioUrl || (audioFile && typeof audioFile === 'string'))
     });
@@ -117,6 +119,9 @@ export const generateGraph = async (text, question, imageFile, audioFile, imageU
     }
     if (audioFile && typeof audioFile !== 'string') {
       formData.append('audioFile', audioFile)
+    }
+    if (documentFile && typeof documentFile !== 'string') {
+      formData.append('documentFile', documentFile)
     }
     if (typeof imageFile === 'string') {
       formData.append('imageUrl', imageFile)
