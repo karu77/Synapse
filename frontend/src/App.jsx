@@ -956,7 +956,7 @@ function App() {
       <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'} ${selectedNode ? 'filter blur-sm pointer-events-none select-none' : ''}`}>
         <div className="relative h-full w-full">
           {(graphData.nodes && graphData.nodes.length > 0) && (
-            <div style={{ position: 'fixed', top: 16, left: 24, zIndex: 40, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ position: 'fixed', top: 16, left: 24, zIndex: 40, display: 'flex', alignItems: 'center', gap: 8, maxWidth: 400 }}>
               {isEditingName ? (
                 <input
                   type="text"
@@ -967,12 +967,23 @@ function App() {
                   onKeyDown={e => {
                     if (e.key === 'Enter') handleNameEditEnd()
                   }}
-                  style={{ fontSize: 22, fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', minWidth: 120 }}
+                  style={{ fontSize: 22, fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', minWidth: 120, maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                 />
               ) : (
                 <span
-                  style={{ fontSize: 22, fontWeight: 600, cursor: 'pointer', minWidth: 120 }}
-                  title="Click to rename graph"
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    minWidth: 120,
+                    maxWidth: 400,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-block',
+                    verticalAlign: 'bottom',
+                  }}
+                  title={graphName}
                   onClick={() => setIsEditingName(true)}
                 >
                   {graphName}

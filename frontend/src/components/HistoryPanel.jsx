@@ -123,7 +123,17 @@ const HistoryPanel = ({ history = [], onSelect, onDelete, onClear }) => {
                     {getDiagramTypeIcon(diagramType)}
                   </div>
                   <div className="flex-grow min-w-0">
-                    <div className="text-sm font-medium text-skin-text truncate">
+                    <div
+                      className="text-sm font-medium text-skin-text truncate"
+                      style={{
+                        maxWidth: 200,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        display: 'inline-block',
+                      }}
+                      title={getHistoryItemLabel(item)}
+                    >
                       {getHistoryItemLabel(item)}
                     </div>
                     <div className="text-xs text-skin-text-muted">
