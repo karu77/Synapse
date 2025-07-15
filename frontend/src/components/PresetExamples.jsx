@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { PlayIcon, EyeIcon } from '@heroicons/react/24/outline';
 
-const PresetExamples = ({ onLoadExample, onPreviewExample }) => {
+const PresetExamples = ({ onLoadExample, onPreviewExample, isMobile = false, isSmallPhone = false, isMediumPhone = false }) => {
   const examples = {
     'knowledge-graph': [
       {
@@ -153,51 +153,51 @@ const PresetExamples = ({ onLoadExample, onPreviewExample }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-${isMobile ? (isSmallPhone ? '2' : '4') : '6'}`}>
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-skin-text mb-2">Preset Examples</h3>
-        <p className="text-sm text-skin-text-muted">See what different diagram types look like</p>
+        <h3 className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-base') : 'text-lg'} font-semibold text-skin-text mb-1`}>Preset Examples</h3>
+        <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-sm'} text-skin-text-muted`}>See what different diagram types look like</p>
       </div>
       
       {Object.entries(examples).map(([diagramType, typeExamples]) => (
-        <div key={diagramType} className="space-y-3">
+        <div key={diagramType} className={`space-y-${isMobile ? (isSmallPhone ? '1' : '2') : '3'}`}>
           <div className="flex items-center gap-2">
-            <span className="text-xl">{getDiagramTypeIcon(diagramType)}</span>
-            <h4 className="font-semibold text-skin-text">{getDiagramTypeName(diagramType)} Examples</h4>
+            <span className={`${isMobile ? (isSmallPhone ? 'text-sm' : 'text-lg') : 'text-xl'}`}>{getDiagramTypeIcon(diagramType)}</span>
+            <h4 className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : ''} font-semibold text-skin-text`}>{getDiagramTypeName(diagramType)} Examples</h4>
           </div>
           
-          <div className="grid gap-3">
+          <div className={`grid gap-${isMobile ? (isSmallPhone ? '1' : '2') : '3'}`}>
             {typeExamples.map((example) => (
               <motion.div
                 key={example.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-skin-bg-accent rounded-lg border border-skin-border p-4 hover:border-skin-accent/50 transition-colors"
+                className={`bg-skin-bg-accent rounded-lg border border-skin-border ${isMobile ? (isSmallPhone ? 'p-1.5' : 'p-3') : 'p-4'} hover:border-skin-accent/50 transition-colors`}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h5 className="font-semibold text-skin-text">{example.title}</h5>
-                    <p className="text-sm text-skin-text-muted">{example.description}</p>
+                <div className="flex justify-between items-start mb-1">
+                  <div className="flex-1 min-w-0">
+                    <h5 className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : ''} font-semibold text-skin-text truncate`}>{example.title}</h5>
+                    <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-sm'} text-skin-text-muted line-clamp-1`}>{example.description}</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className={`flex gap-${isMobile ? (isSmallPhone ? '0.5' : '1') : '2'} ml-1`}>
                     <button
                       onClick={() => onPreviewExample(example.sample, example.diagramType)}
-                      className="p-2 text-skin-text-muted hover:text-skin-text hover:bg-skin-border rounded-lg transition-colors"
+                      className={`${isMobile ? (isSmallPhone ? 'p-1' : 'p-2') : 'p-2'} text-skin-text-muted hover:text-skin-text hover:bg-skin-border rounded-lg transition-colors`}
                       title="Preview"
                     >
-                      <EyeIcon className="h-4 w-4" />
+                      <EyeIcon className={`${isMobile ? (isSmallPhone ? 'h-3 w-3' : 'h-4 w-4') : 'h-4 w-4'}`} />
                     </button>
                     <button
                       onClick={() => onLoadExample(example.sample, example.diagramType)}
-                      className="p-2 text-skin-accent hover:bg-skin-accent/10 rounded-lg transition-colors"
+                      className={`${isMobile ? (isSmallPhone ? 'p-1' : 'p-2') : 'p-2'} text-skin-accent hover:bg-skin-accent/10 rounded-lg transition-colors`}
                       title="Load Example"
                     >
-                      <PlayIcon className="h-4 w-4" />
+                      <PlayIcon className={`${isMobile ? (isSmallPhone ? 'h-3 w-3' : 'h-4 w-4') : 'h-4 w-4'}`} />
                     </button>
                   </div>
                 </div>
                 
-                <div className="text-xs text-skin-text-muted">
+                <div className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-xs'} text-skin-text-muted`}>
                   {example.sample.nodes.length} nodes • {example.sample.edges.length} connections
                 </div>
               </motion.div>

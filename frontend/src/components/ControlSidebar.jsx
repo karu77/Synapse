@@ -74,12 +74,12 @@ const overlayVariants = {
   },
 }
 
-const Section = ({ icon, title, children }) => (
+const Section = ({ icon, title, children, isMobile }) => (
   <motion.section
     variants={itemVariants}
-    className="mt-6 pt-6 border-t border-gray-200 dark:border-skin-border first:mt-0 first:pt-0 first:border-t-0"
+    className={`${isMobile ? 'mt-4 pt-4' : 'mt-6 pt-6'} border-t border-gray-200 dark:border-skin-border first:mt-0 first:pt-0 first:border-t-0`}
   >
-    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-skin-text mb-4">
+    <h3 className={`flex items-center gap-2 ${isMobile ? 'text-base' : 'text-lg'} font-semibold text-gray-800 dark:text-skin-text ${isMobile ? 'mb-3' : 'mb-4'}`}>
       {icon}
       {title}
     </h3>
@@ -175,20 +175,20 @@ const ControlSidebar = ({
           <h2 className={`${isMobile ? 'text-lg' : 'text-xl sm:text-2xl'} font-bold text-skin-text`}>Controls</h2>
           <button
             onClick={onClose}
-                className="p-2 rounded-full text-gray-500 dark:text-skin-text-muted hover:bg-gray-200 dark:hover:bg-skin-border hover:text-gray-700 dark:hover:text-skin-text transition-all duration-200 hover:scale-110 pointer-events-auto"
+                className={`${isMobile ? 'p-3' : 'p-2'} rounded-full text-gray-500 dark:text-skin-text-muted hover:bg-gray-200 dark:hover:bg-skin-border hover:text-gray-700 dark:hover:text-skin-text transition-all duration-200 hover:scale-110 pointer-events-auto`}
           >
-            <XMarkIcon className="h-6 w-6" />
+            <XMarkIcon className={`${isMobile ? 'h-6 w-6' : 'h-6 w-6'}`} />
           </button>
             </motion.div>
 
         {/* Content Body */}
             <div className={`overflow-y-auto flex-grow ${isMobile ? 'p-4' : 'p-4 sm:p-6'} scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 dark:scrollbar-thumb-skin-border bg-white dark:bg-transparent`}>
-          <Section icon={<SparklesIcon className="h-6 w-6" />} title="Generate">
+          <Section icon={<SparklesIcon className="h-6 w-6" />} title="Generate" isMobile={isMobile}>
                 <TextInput onSubmit={onSubmit} isProcessing={isProcessing} alwaysShowMediaInputs={true} onDiagramTypeChange={onDiagramTypeChange} currentDiagramType={currentDiagramType} />
           </Section>
           
           {(selectedNode || selectedEdge) && (
-            <Section icon={<CursorArrowRaysIcon className="h-6 w-6" />} title="Selection Details">
+            <Section icon={<CursorArrowRaysIcon className="h-6 w-6" />} title="Selection Details" isMobile={isMobile}>
               <div className="p-3 rounded-lg bg-skin-border/40">
                 {selectedNode && (
                   <div className="space-y-1">
@@ -206,33 +206,43 @@ const ControlSidebar = ({
             </Section>
           )}
 
-          <Section icon={<ClockIcon className="h-6 w-6" />} title="History">
+          <Section icon={<ClockIcon className="h-6 w-6" />} title="History" isMobile={isMobile}>
             <HistoryPanel
               history={history}
               onSelect={loadFromHistory}
               onDelete={onDelete}
               onClear={onClear}
+              isMobile={isMobile}
+              isSmallPhone={window.innerWidth < 375}
+              isMediumPhone={window.innerWidth >= 375 && window.innerWidth < 425}
             />
           </Section>
 
           <Section
             icon={<AdjustmentsHorizontalIcon className="h-6 w-6" />}
             title="Graph Styles"
+            isMobile={isMobile}
           >
             <StyleCustomizationPanel
               options={styleOptions}
               onUpdate={setStyleOptions}
               onReset={resetStyles}
-                  diagramType={currentDiagramType}
+              diagramType={currentDiagramType}
+              isMobile={isMobile}
+              isSmallPhone={window.innerWidth < 375}
+              isMediumPhone={window.innerWidth >= 375 && window.innerWidth < 425}
             />
           </Section>
 
               {currentDiagramType === 'knowledge-graph' && (
-          <Section icon={<Cog6ToothIcon className="h-6 w-6" />} title="Physics Engine">
+          <Section icon={<Cog6ToothIcon className="h-6 w-6" />} title="Physics Engine" isMobile={isMobile}>
             <CustomizationPanel
               options={physicsOptions}
               onUpdate={setPhysicsOptions}
               onReset={resetPhysics}
+              isMobile={isMobile}
+              isSmallPhone={window.innerWidth < 375}
+              isMediumPhone={window.innerWidth >= 375 && window.innerWidth < 425}
             />
           </Section>
               )}
@@ -243,8 +253,8 @@ const ControlSidebar = ({
               variants={itemVariants}
               className={`${isMobile ? 'p-4' : 'p-4 sm:p-6'} border-t-2 border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800/60`}
             >
-          <div className="flex justify-between items-center mb-4">
-                <span className="text-sm text-gray-600 dark:text-skin-text-muted truncate">
+          <div className="flex justify-between items-center">
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-skin-text-muted truncate`}>
               Welcome, {user?.name || 'Guest'}
             </span>
           </div>

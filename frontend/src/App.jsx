@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import GraphVisualization from './components/GraphVisualization'
+import './App.css'
 import {
   generateGraph,
   getHistory,
@@ -32,7 +33,7 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from './contexts/AuthContext'
-import { Menu } from '@headlessui/react'
+import { useTheme } from './contexts/ThemeContext'
 import { Fragment } from 'react'
 import Tooltip from './components/Tooltip'
 import ConfirmModal from './components/ConfirmModal';
@@ -123,6 +124,7 @@ function App() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiReferences, setAiReferences] = useState([]);
   const [showPresetExamples, setShowPresetExamples] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
   const [graphName, setGraphName] = useState('Untitled Graph')
   const [isEditingName, setIsEditingName] = useState(false)
   const [currentHistoryId, setCurrentHistoryId] = useState(null)
@@ -130,12 +132,14 @@ function App() {
   const containerRef = useRef(null)
   const onGraphReadyRef = useRef(null)
   const { user: authUser, logout, markTutorialSeen } = useAuth()
+  const { theme } = useTheme()
   // Tutorial modal state
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [runTutorial, setRunTutorial] = useState(false);
   const [joyrideKey, setJoyrideKey] = useState(0);
 
   console.log('App render, user:', user);
+  console.log('Current theme:', theme);
 
   // Preset examples handlers
   const handleLoadExample = (exampleData, diagramType) => {
@@ -654,6 +658,9 @@ function App() {
   // Responsive breakpoints
   const isMobile = windowSize.width < 768
   const isTablet = windowSize.width >= 768 && windowSize.width < 1024
+  const isSmallPhone = windowSize.width < 375
+  const isMediumPhone = windowSize.width >= 375 && windowSize.width < 425
+  const isLargePhone = windowSize.width >= 425 && windowSize.width < 768
 
   // Robustly open all diagrams after data is set
   useEffect(() => {
@@ -755,7 +762,7 @@ function App() {
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-skin-bg text-skin-text font-sans flex flex-col">
+    <div className={`h-screen w-screen overflow-hidden bg-skin-bg text-skin-text font-sans flex flex-col ${isMobile ? (isSmallPhone ? 'small-phone' : isMediumPhone ? 'medium-phone' : 'large-phone') : ''}`}>
       <Tooltip {...tooltip} />
 
       {/* Keyboard Shortcuts Help */}
@@ -771,26 +778,26 @@ function App() {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-skin-bg-accent rounded-2xl p-6 max-w-md w-full border border-skin-border shadow-2xl"
+            className={`bg-skin-bg-accent rounded-2xl ${isMobile ? (isSmallPhone ? 'p-3' : 'p-4') : 'p-6'} ${isMobile ? (isSmallPhone ? 'max-w-xs' : 'max-w-sm') : 'max-w-md'} w-full border border-skin-border shadow-2xl`}
             onClick={e => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold mb-4 text-skin-text">Keyboard Shortcuts</h3>
-            <div className="space-y-2 text-sm">
+            <h3 className={`${isMobile ? (isSmallPhone ? 'text-sm' : 'text-base') : 'text-lg'} font-bold mb-4 text-skin-text`}>Keyboard Shortcuts</h3>
+            <div className={`space-y-2 ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-sm'}`}>
               <div className="flex justify-between">
                 <span className="text-skin-text-muted">Open Controls</span>
-                <kbd className="px-2 py-1 bg-skin-border rounded text-xs">Ctrl+K</kbd>
+                <kbd className={`px-2 py-1 bg-skin-border rounded ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-xs'}`}>Ctrl+K</kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-skin-text-muted">Fit to View</span>
-                <kbd className="px-2 py-1 bg-skin-border rounded text-xs">Ctrl+F</kbd>
+                <kbd className={`px-2 py-1 bg-skin-border rounded ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-xs'}`}>Ctrl+F</kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-skin-text-muted">Search</span>
-                <kbd className="px-2 py-1 bg-skin-border rounded text-xs">Ctrl+/</kbd>
+                <kbd className={`px-2 py-1 bg-skin-border rounded ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-xs'}`}>Ctrl+/</kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-skin-text-muted">Close/Escape</span>
-                <kbd className="px-2 py-1 bg-skin-border rounded text-xs">Esc</kbd>
+                <kbd className={`px-2 py-1 bg-skin-border rounded ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-xs'}`}>Esc</kbd>
               </div>
             </div>
           </motion.div>
@@ -803,22 +810,22 @@ function App() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[50] bg-black/30 backdrop-blur-sm flex items-start justify-center pt-20"
+          className={`fixed inset-0 z-[50] bg-black/30 backdrop-blur-sm flex items-start justify-center ${isMobile ? 'pt-16' : 'pt-20'}`}
           onClick={() => setIsSearching(false)}
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0, y: -20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: -20 }}
-            className="bg-skin-bg-accent rounded-2xl p-4 max-w-lg w-full mx-4 border border-skin-border shadow-2xl"
+            className={`bg-skin-bg-accent rounded-2xl ${isMobile ? (isSmallPhone ? 'p-2 mx-2' : 'p-3 mx-3') : 'p-4 mx-4'} ${isMobile ? (isSmallPhone ? 'max-w-xs' : 'max-w-sm') : 'max-w-lg'} w-full border border-skin-border shadow-2xl`}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-3">
-              <MagnifyingGlassIcon className="h-5 w-5 text-skin-text-muted" />
+              <MagnifyingGlassIcon className={`${isMobile ? (isSmallPhone ? 'h-3.5 w-3.5' : 'h-4 w-4') : 'h-5 w-5'} text-skin-text-muted`} />
               <input
                 type="text"
-                placeholder="Search nodes, types, or descriptions..."
-                className="flex-1 bg-transparent text-skin-text placeholder-skin-text-muted outline-none"
+                placeholder={isMobile ? (isSmallPhone ? "Search..." : "Search...") : "Search nodes, types, or descriptions..."}
+                className={`flex-1 bg-transparent text-skin-text placeholder-skin-text-muted outline-none ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : ''}`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -833,7 +840,7 @@ function App() {
             
             {/* Search Results Preview */}
             {searchQuery.trim() && (
-              <div className="max-h-48 overflow-y-auto">
+              <div className={`${isMobile ? (isSmallPhone ? 'max-h-24' : 'max-h-32') : 'max-h-48'} overflow-y-auto`}>
                 {(() => {
                   const nodes = graphData.nodes || [];
                   const matchingNodes = nodes.filter(node => {
@@ -843,7 +850,7 @@ function App() {
                   
                   if (matchingNodes.length === 0) {
                     return (
-                      <div className="text-sm text-skin-text-muted text-center py-4">
+                      <div className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-sm'} text-skin-text-muted text-center py-4`}>
                         No matching nodes found
                       </div>
                     );
@@ -851,25 +858,25 @@ function App() {
                   
                   return (
                     <div className="space-y-2">
-                      <div className="text-xs text-skin-text-muted font-medium">
+                      <div className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-xs'} text-skin-text-muted font-medium`}>
                         Found {matchingNodes.length} matching node{matchingNodes.length > 1 ? 's' : ''}
                       </div>
-                      {matchingNodes.slice(0, 5).map((node, index) => (
+                      {matchingNodes.slice(0, isMobile ? (isSmallPhone ? 2 : 3) : 5).map((node, index) => (
                         <button
                           key={node.id}
-                          className="w-full text-left p-2 rounded-lg hover:bg-skin-border transition-colors text-sm"
+                          className={`w-full text-left ${isMobile ? (isSmallPhone ? 'p-1.5' : 'p-2') : 'p-2'} rounded-lg hover:bg-skin-border transition-colors ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-sm'}`}
                           onClick={() => {
                             handleSearch(node.label);
                             setIsSearching(false);
                           }}
                         >
-                          <div className="font-medium text-skin-text">{node.label}</div>
-                          <div className="text-xs text-skin-text-muted">{node.type}</div>
+                          <div className={`font-medium text-skin-text ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : ''}`}>{node.label}</div>
+                          <div className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-xs'} text-skin-text-muted`}>{node.type}</div>
                         </button>
                       ))}
-                      {matchingNodes.length > 5 && (
-                        <div className="text-xs text-skin-text-muted text-center py-2">
-                          ... and {matchingNodes.length - 5} more
+                      {matchingNodes.length > (isMobile ? (isSmallPhone ? 2 : 3) : 5) && (
+                        <div className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-xs') : 'text-xs'} text-skin-text-muted text-center py-2`}>
+                          ... and {matchingNodes.length - (isMobile ? (isSmallPhone ? 2 : 3) : 5)} more
                         </div>
                       )}
                     </div>
@@ -882,28 +889,38 @@ function App() {
       )}
       
       {/* Header */}
-      <header className={`fixed top-0 left-0 right-0 z-30 ${isMobile ? 'p-2' : 'p-4'} pointer-events-none`}>
+      <header className={`fixed top-0 left-0 right-0 z-30 ${isMobile ? (isSmallPhone ? 'p-0.5' : 'p-2') : 'p-4'} pointer-events-none`}>
         <div
-          className={`max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full ${isMobile ? 'p-1' : 'p-2 pl-4'} border border-skin-border shadow-xl pointer-events-auto`}
+          className={`max-w-screen-2xl mx-auto flex justify-between items-center bg-skin-bg-accent/80 backdrop-blur-md rounded-full ${isMobile ? (isSmallPhone ? 'p-1' : 'p-2') : 'p-2 pl-4'} border border-skin-border shadow-xl pointer-events-auto overflow-hidden ${isMobile ? 'mobile-header' : ''}`}
         >
-          <div className="flex items-center gap-3 pointer-events-auto">
+          <div className="flex items-center gap-2 pointer-events-auto">
             <button
               onClick={toggleSidebar}
-              className={`${isMobile ? 'p-3' : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto ${
+              className={`${isMobile ? (isSmallPhone ? 'p-1.5' : 'p-2.5') : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto ${
                 (!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing
                   ? 'animate-pulse-glow'
                   : ''
               }`}
               aria-label="Toggle controls sidebar"
             >
-              <Bars3Icon className={`${isMobile ? 'h-7 w-7' : 'h-6 w-6'}`} />
+              <Bars3Icon className={`${isMobile ? (isSmallPhone ? 'h-4 w-4' : 'h-6 w-6') : 'h-6 w-6'}`} />
             </button>
             <h1
-              className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold bg-gradient-to-r from-skin-text to-skin-accent bg-clip-text text-transparent ${
+              className={`${isMobile ? (isSmallPhone ? 'text-sm' : 'text-lg') : 'text-xl'} font-bold bg-gradient-to-r from-skin-text to-skin-accent bg-clip-text text-transparent ${
                 isMobile ? 'block' : 'hidden sm:block'
               }`}
             >
-              Synapse
+              {isMobile && graphData.nodes && graphData.nodes.length > 0 ? (
+                <span 
+                  className={`truncate ${isSmallPhone ? 'max-w-20' : isMediumPhone ? 'max-w-28' : 'max-w-32'} cursor-pointer`}
+                  title={graphName}
+                  onClick={() => setIsEditingName(true)}
+                >
+                  {graphName}
+                </span>
+              ) : (
+                'Synapse'
+              )}
             </h1>
             {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && (
               <div className="hidden md:flex items-center gap-2 text-sm text-skin-text-muted animate-fade-in-panel">
@@ -912,22 +929,22 @@ function App() {
               </div>
             )}
           </div>
-          <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'} pointer-events-auto`}>
+          <div className={`flex items-center ${isMobile ? (isSmallPhone ? 'gap-0' : 'gap-1') : 'gap-2'} pointer-events-auto`}>
             <button
               onClick={() => setShowPresetExamples(true)}
-              className={`${isMobile ? 'p-3' : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto`}
+              className={`${isMobile ? (isSmallPhone ? 'p-1' : 'p-2') : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 pointer-events-auto`}
               aria-label="Show preset examples"
             >
-              <CodeBracketIcon className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} />
+              <CodeBracketIcon className={`${isMobile ? (isSmallPhone ? 'h-3 w-3' : 'h-4 w-4') : 'h-5 w-5'}`} />
             </button>
 
             <button
               onClick={() => setIsSearching(true)}
               disabled={!graphData?.nodes?.length}
-              className={`${isMobile ? 'p-3' : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto`}
+              className={`${isMobile ? (isSmallPhone ? 'p-1' : 'p-2') : 'p-2'} rounded-full text-skin-text hover:bg-skin-border transition-colors hover:scale-110 focus:scale-110 active:scale-95 duration-150 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto`}
               aria-label="Search graph"
             >
-              <MagnifyingGlassIcon className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} />
+              <MagnifyingGlassIcon className={`${isMobile ? (isSmallPhone ? 'h-3 w-3' : 'h-4 w-4') : 'h-5 w-5'}`} />
             </button>
 
             {!isMobile && (
@@ -941,56 +958,16 @@ function App() {
             )}
 
             {/* User Menu */}
-            <Menu as="div" className="relative inline-block text-left pointer-events-auto">
-              <Menu.Button className="flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium text-skin-text hover:bg-skin-border transition">
-                <UserCircleIcon className="h-6 w-6" />
-              </Menu.Button>
-              <AnimatePresence>
-                <Menu.Items
-                  as={motion.div}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 mt-2 w-48 origin-top-right bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg focus:outline-none z-50 p-1"
-                >
-                  <div className="px-3 py-2">
-                    <p className="text-sm font-semibold truncate">Signed in as</p>
-                    <p className="text-sm text-skin-text-muted truncate">{authUser.email}</p>
-                  </div>
-                  <div className="h-px bg-skin-border my-1" />
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={handleLogout}
-                        className={`${
-                          active ? 'bg-skin-border' : ''
-                        } group flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-600 dark:text-skin-text`}
-                      >
-                        <ArrowRightOnRectangleIcon className="mr-2 h-5 w-5" />
-                        Logout
-                      </button>
-                    )}
-                  </Menu.Item>
-                  <div className="h-px bg-skin-border my-1" />
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={handleDeleteAccount}
-                        className={`${
-                          active ? 'bg-red-100 dark:bg-red-900/30' : ''
-                        } group flex w-full items-center rounded-md px-3 py-2 text-sm text-red-600 dark:text-red-400`}
-                      >
-                        <TrashIcon className="mr-2 h-5 w-5" />
-                        Delete Account
-                      </button>
-                    )}
-                  </Menu.Item>
-                </Menu.Items>
-              </AnimatePresence>
-            </Menu>
+            <button
+              onClick={() => setShowUserModal(true)}
+              className={`flex items-center gap-2 ${isMobile ? (isSmallPhone ? 'px-0.5 py-0.5' : 'px-1.5 py-1.5') : 'px-2 py-2'} rounded-full text-sm font-medium text-skin-text hover:bg-skin-border transition`}
+              aria-label="User menu"
+            >
+              <UserCircleIcon className={`${isMobile ? (isSmallPhone ? 'h-3 w-3' : 'h-4 w-4') : 'h-6 w-6'}`} />
+            </button>
 
             {!isMobile && <div className="hidden sm:block h-6 border-l border-skin-border mx-1"></div>}
-            <div className={`flex items-center gap-1 bg-skin-bg ${isMobile ? 'p-2' : 'p-1'} rounded-full border border-skin-border pointer-events-auto`}>
+            <div className={`flex items-center gap-1 bg-skin-bg ${isMobile ? (isSmallPhone ? 'p-0' : 'p-1') : 'p-1'} rounded-full border border-skin-border pointer-events-auto`}>
               <ThemeToggleButton />
             </div>
           </div>
@@ -1025,7 +1002,7 @@ function App() {
       />
 
       {/* Main Content */}
-      <main className={`flex-grow ${isMobile ? 'pt-20 pb-8' : 'pt-24 pb-10'} ${selectedNode ? 'filter blur-sm pointer-events-none select-none' : ''}`}>
+      <main className={`flex-grow ${isMobile ? (isSmallPhone ? 'pt-12 pb-2' : 'pt-16 pb-4') : 'pt-24 pb-10'} ${selectedNode ? 'filter blur-sm pointer-events-none select-none' : ''}`}>
         <div className="relative h-full w-full">
           <Joyride
             key={joyrideKey}
@@ -1044,7 +1021,7 @@ function App() {
             onSkip={handleSkipTutorial}
           />
           {(graphData.nodes && graphData.nodes.length > 0) && (
-            <div className="graph-name-joyride" style={{ position: 'fixed', top: 16, left: 24, zIndex: 40, display: 'flex', alignItems: 'center', gap: 8, maxWidth: 400 }}>
+            <div className={`graph-name-joyride ${isMobile ? 'block' : ''}`} style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 16px' }}>
               {isEditingName ? (
                 <input
                   type="text"
@@ -1055,12 +1032,19 @@ function App() {
                   onKeyDown={e => {
                     if (e.key === 'Enter') handleNameEditEnd()
                   }}
-                  style={{ fontSize: 22, fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', minWidth: 120, maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  className="graph-name-input"
+                  data-theme={theme}
+                  style={{ 
+                    fontSize: isMobile ? 16 : 22,
+                    caretColor: '#f59e0b',
+                    color: theme === 'dark' ? '#ffffff' : '#1e293b',
+                    WebkitCaretColor: '#f59e0b'
+                  }}
                 />
               ) : (
                 <span
                   style={{
-                    fontSize: 22,
+                    fontSize: isMobile ? 16 : 22,
                     fontWeight: 600,
                     cursor: 'pointer',
                     minWidth: 120,
@@ -1070,6 +1054,7 @@ function App() {
                     whiteSpace: 'nowrap',
                     display: 'inline-block',
                     verticalAlign: 'bottom',
+                    textAlign: 'center',
                   }}
                   title={graphName}
                   onClick={() => setIsEditingName(true)}
@@ -1140,13 +1125,59 @@ function App() {
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.9, opacity: 0 }}
-                  className="bg-skin-bg-accent rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-skin-border shadow-2xl"
+                  className={`bg-skin-bg-accent rounded-2xl ${isMobile ? (isSmallPhone ? 'p-2' : 'p-4') : 'p-6'} ${isMobile ? (isSmallPhone ? 'max-w-[280px]' : 'max-w-sm') : 'max-w-4xl'} w-full ${isMobile ? (isSmallPhone ? 'max-h-[70vh]' : 'max-h-[80vh]') : 'max-h-[90vh]'} overflow-y-auto border border-skin-border shadow-2xl`}
                   onClick={e => e.stopPropagation()}
                 >
                   <PresetExamples
                     onLoadExample={handleLoadExample}
                     onPreviewExample={handlePreviewExample}
+                    isMobile={isMobile}
+                    isSmallPhone={isSmallPhone}
+                    isMediumPhone={isMediumPhone}
                   />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* User Menu Modal */}
+          <AnimatePresence>
+            {showUserModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+                onClick={() => setShowUserModal(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className={`bg-skin-bg-accent rounded-2xl ${isMobile ? (isSmallPhone ? 'p-3' : 'p-4') : 'p-6'} ${isMobile ? (isSmallPhone ? 'max-w-xs' : 'max-w-sm') : 'max-w-md'} w-full border border-skin-border shadow-2xl`}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <h3 className={`${isMobile ? (isSmallPhone ? 'text-sm' : 'text-base') : 'text-lg'} font-bold mb-4 text-skin-text`}>User Menu</h3>
+                  <div className="px-3 py-2">
+                    <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} font-semibold truncate`}>Signed in as</p>
+                    <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-skin-text-muted truncate`}>{authUser.email}</p>
+                  </div>
+                  <div className="h-px bg-skin-border my-1" />
+                  <button
+                    onClick={handleLogout}
+                    className={`w-full text-left px-3 py-2 ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-gray-600 dark:text-skin-text hover:bg-skin-border transition-colors menu-item-button`}
+                  >
+                    <ArrowRightOnRectangleIcon className={`mr-2 ${isMobile ? (isSmallPhone ? 'h-4 w-4' : 'h-5 w-5') : 'h-5 w-5'}`} />
+                    Logout
+                  </button>
+                  <div className="h-px bg-skin-border my-1" />
+                  <button
+                    onClick={handleDeleteAccount}
+                    className={`w-full text-left px-3 py-2 ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors menu-item-button`}
+                  >
+                    <TrashIcon className={`mr-2 ${isMobile ? (isSmallPhone ? 'h-4 w-4' : 'h-5 w-5') : 'h-5 w-5'}`} />
+                    Delete Account
+                  </button>
                 </motion.div>
               </motion.div>
             )}
@@ -1194,7 +1225,7 @@ function App() {
               onClick={() => setShowAiModal(true)}
               style={{ cursor: 'pointer' }}
             >
-              <AnswerPanel answer={answer} onClose={() => setAnswer('')} />
+              <AnswerPanel answer={answer} onClose={() => setAnswer('')} isMobile={isMobile} />
             </div>
           )}
 

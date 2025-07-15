@@ -1,42 +1,164 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* Graph name input styling only */
+
+/* Graph name input styling */
+input.graph-name-input {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #1e293b !important;
+  border: none !important;
+  border-bottom: 2px solid #f59e0b !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  padding: 4px 8px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  min-width: 120px !important;
+  max-width: 400px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+input.graph-name-input::placeholder {
+  color: #f8fafc !important;
+  opacity: 0.7 !important;
+  -webkit-text-fill-color: #f8fafc !important;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+input.graph-name-input:focus {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+  border-bottom: 2px solid #f59e0b !important;
+  caret-color: #f59e0b !important;
+  -webkit-caret-color: #f59e0b !important;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+input.graph-name-input:-webkit-autofill,
+input.graph-name-input:-webkit-autofill:hover,
+input.graph-name-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
 }
 
-.card {
-  padding: 2em;
+/* Additional overrides for all input states */
+input.graph-name-input:active,
+input.graph-name-input:hover,
+input.graph-name-input:visited {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+  border-bottom: 2px solid #f59e0b !important;
+ 
 }
 
-.read-the-docs {
-  color: #888;
+/* Dark mode specific overrides */
+.dark input.graph-name-input {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-bottom: 2px solid #f59e0b !important;
+  box-shadow: none !important;
+  caret-color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* More specific dark mode selector */
+html.dark input.graph-name-input {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-bottom: 2px solid #f59e0b !important;
+  box-shadow: none !important;
+  caret-color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Even more specific */
+body.dark input.graph-name-input {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-bottom: 2px solid #f59e0b !important;
+  box-shadow: none !important;
+  caret-color: #ffffff !important;
+  -webkit-caret-color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Direct input styling for dark mode */
+input.graph-name-input[data-theme="dark"] {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  caret-color: #ffffff !important;
+  -webkit-caret-color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+input.graph-name-input[data-theme="light"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #1e293b !important;
+  caret-color: #1e293b !important;
+  -webkit-caret-color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+}
+
+/* Force caret color with maximum specificity */
+input.graph-name-input {
+  caret-color: #f59e0b !important;
+  -webkit-caret-color: #f59e0b !important;
+}
+
+.dark input.graph-name-input,
+html.dark input.graph-name-input,
+body.dark input.graph-name-input {
+  caret-color: #f59e0b !important;
+  -webkit-caret-color: #f59e0b !important;
+}
+
+/* Data theme approach */
+input.graph-name-input[data-theme="dark"] {
+  caret-color: #f59e0b !important;
+  -webkit-caret-color: #f59e0b !important;
+}
+
+input.graph-name-input[data-theme="light"] {
+  caret-color: #f59e0b !important;
+  -webkit-caret-color: #f59e0b !important;
+}
+
+
+.dark input.graph-name-input:focus {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  border-bottom: 2px solid #f59e0b !important;
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+  caret-color: #f59e0b !important;
+  -webkit-caret-color: #f59e0b !important;
+}
+
+.dark input.graph-name-input:-webkit-autofill,
+.dark input.graph-name-input:-webkit-autofill:hover,
+.dark input.graph-name-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  background: transparent !important;
+  background-color: transparent !important;
 }
