@@ -950,7 +950,7 @@ function App() {
               <div className="hidden md:flex items-center gap-2 text-sm text-skin-text-muted animate-fade-in-panel">
                 <span>→</span>
                 <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-skin-text-muted truncate`}>
-              Welcome, {authUser?.name ? authUser.name.split(' ')[0] : 'Guest'}
+              Create diagrams here
             </span>
               </div>
             )}
@@ -1180,31 +1180,44 @@ function App() {
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.9, opacity: 0 }}
-                  className={`bg-skin-bg-accent rounded-2xl ${isMobile ? (isSmallPhone ? 'p-3' : 'p-4') : 'p-6'} ${isMobile ? (isSmallPhone ? 'max-w-xs' : 'max-w-sm') : 'max-w-md'} w-full border border-skin-border shadow-2xl`}
+                  className={`bg-skin-bg-accent rounded-2xl ${isMobile ? (isSmallPhone ? 'p-4' : 'p-5') : 'p-6'} ${isMobile ? (isSmallPhone ? 'max-w-xs' : 'max-w-sm') : 'max-w-md'} w-full border border-skin-border shadow-2xl backdrop-blur-xl`}
                   onClick={e => e.stopPropagation()}
                 >
-                  <h3 className={`${isMobile ? (isSmallPhone ? 'text-sm' : 'text-base') : 'text-lg'} font-bold mb-4 text-skin-text`}>User Menu</h3>
-                  <div className="px-3 py-2">
-                    <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} font-semibold truncate`}>Signed in as</p>
-                    <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-skin-text-muted truncate`}>{authUser.name}</p>
-                    <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-skin-text-muted truncate`}>{authUser.email}</p>
+                  {/* User Info Section */}
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                      <span className="text-white font-bold text-xl">
+                        {authUser.name ? authUser.name.charAt(0).toUpperCase() : 'U'}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className={`${isMobile ? (isSmallPhone ? 'text-sm' : 'text-base') : 'text-lg'} font-semibold text-skin-text`}>
+                        {authUser.name}
+                      </p>
+                      <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-skin-text-muted`}>
+                        {authUser.email}
+                      </p>
+                    </div>
                   </div>
-                  <div className="h-px bg-skin-border my-1" />
-                  <button
-                    onClick={handleLogout}
-                    className={`w-full text-left px-3 py-2 ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-gray-600 dark:text-skin-text hover:bg-skin-border transition-colors menu-item-button`}
-                  >
-                    <ArrowRightOnRectangleIcon className={`mr-2 ${isMobile ? (isSmallPhone ? 'h-4 w-4' : 'h-5 w-5') : 'h-5 w-5'}`} />
-                    Logout
-                  </button>
-                  <div className="h-px bg-skin-border my-1" />
-                  <button
-                    onClick={handleDeleteAccount}
-                    className={`w-full text-left px-3 py-2 ${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors menu-item-button`}
-                  >
-                    <TrashIcon className={`mr-2 ${isMobile ? (isSmallPhone ? 'h-4 w-4' : 'h-5 w-5') : 'h-5 w-5'}`} />
-                    Delete Account
-                  </button>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleLogout}
+                      className={`w-full flex items-center justify-center px-4 py-3 ${isMobile ? (isSmallPhone ? 'text-sm' : 'text-base') : 'text-base'} text-skin-text bg-skin-bg hover:bg-skin-border rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border border-skin-border/50`}
+                    >
+                      <ArrowRightOnRectangleIcon className={`mr-3 ${isMobile ? (isSmallPhone ? 'h-4 w-4' : 'h-5 w-5') : 'h-5 w-5'}`} />
+                      Sign Out
+                    </button>
+                    
+                    <button
+                      onClick={handleDeleteAccount}
+                      className={`w-full flex items-center justify-center px-4 py-3 ${isMobile ? (isSmallPhone ? 'text-sm' : 'text-base') : 'text-base'} text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border border-red-200 dark:border-red-800/50`}
+                    >
+                      <TrashIcon className={`mr-3 ${isMobile ? (isSmallPhone ? 'h-4 w-4' : 'h-5 w-5') : 'h-5 w-5'}`} />
+                      Delete Account
+                    </button>
+                  </div>
                 </motion.div>
               </motion.div>
             )}

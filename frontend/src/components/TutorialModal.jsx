@@ -68,70 +68,70 @@ const TutorialModal = ({ isOpen, onClose, onStartTutorial, onSkip }) => {
     <div className="fixed inset-0 z-50">
       {/* Blurred and darkened overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm" />
-      <div className="relative flex items-center justify-center h-full w-full p-2">
-        <div className="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl mx-auto">
+      <div className="relative flex items-center justify-center h-full w-full p-2 sm:p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl max-h-[95vh] overflow-hidden shadow-2xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-3">
-              <span className="text-3xl">🕸️</span>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <span className="text-2xl sm:text-3xl">🕸️</span>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                 Welcome to Synapse
               </h2>
             </div>
             <button
               onClick={handleSkip}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
             >
-              <X size={24} />
+              <X size={20} className="sm:w-6 sm:h-6" />
             </button>
           </div>
 
           {/* Content */}
-          <div className="p-4 overflow-y-auto max-h-[70vh]">
+          <div className="p-3 sm:p-4 overflow-y-auto max-h-[60vh] sm:max-h-[70vh]">
             <div className="text-center">
               {/* Step Icon */}
-              <div className="text-6xl mb-2">
+              <div className="text-4xl sm:text-5xl lg:text-6xl mb-2 sm:mb-3">
                 {step.icon}
               </div>
               {/* Step Title */}
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
                 {step.title}
               </h3>
               {/* Step Description */}
-              <p className="text-lg text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+              <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 leading-relaxed px-1">
                 {step.description}
               </p>
               {/* Step Content */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-4">
-                <p className="text-gray-700 dark:text-gray-200">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 mx-1">
+                <p className="text-xs sm:text-sm lg:text-base text-gray-700 dark:text-gray-200">
                   {step.content}
                 </p>
               </div>
               {/* GIF Section: Only for steps with a gif property */}
               {step.gif && (
-                <div className="flex items-center justify-center min-h-[500px] mb-2">
-                  <div className="relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl max-w-[90vw] max-h-[80vh] flex items-center justify-center w-full">
+                <div className="flex items-center justify-center w-full">
+                  <div className="relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-2xl w-full h-40 sm:h-48 md:h-56 lg:h-64 flex items-center justify-center overflow-hidden">
                     {!gifError ? (
                       <img
                         src={step.gif}
                         alt={step.gifAlt}
-                        className="w-full h-full max-w-[90vw] max-h-[80vh] rounded object-contain"
+                        className="w-full h-full rounded-md object-fill"
                         style={{ background: 'rgba(255,255,255,0.95)' }}
                         onError={() => setGifError(true)}
                       />
                     ) : (
-                      <div className="text-center w-full">
-                        <div className="text-4xl mb-4">🖼️</div>
-                        <p className="text-gray-600 dark:text-gray-300 font-medium">
+                      <div className="text-center w-full h-full flex flex-col items-center justify-center p-4">
+                        <div className="text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-4">🖼️</div>
+                        <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-300 font-medium">
                           {step.gifAlt}
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 sm:mt-2">
                           GIF could not be loaded
                         </p>
                       </div>
                     )}
                     {/* Semi-transparent overlay on top of GIF */}
-                    <div className="absolute inset-0 rounded bg-black bg-opacity-20 pointer-events-none" />
+                    <div className="absolute inset-0 rounded-md bg-black bg-opacity-20 pointer-events-none" />
                   </div>
                 </div>
               )}
@@ -139,13 +139,13 @@ const TutorialModal = ({ isOpen, onClose, onStartTutorial, onSkip }) => {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row items-center justify-between p-3 sm:p-4 lg:p-6 border-t border-gray-200 dark:border-gray-700 space-y-3 sm:space-y-0">
             {/* Progress */}
-            <div className="flex space-x-2">
+            <div className="flex space-x-1 sm:space-x-2">
               {steps.map((_, index) => (
                 <div
                   key={index}
-                  className={`w-2 h-2 rounded-full transition-colors ${
+                  className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-colors ${
                     index === currentStep
                       ? 'bg-blue-500'
                       : index < currentStep
@@ -157,16 +157,16 @@ const TutorialModal = ({ isOpen, onClose, onStartTutorial, onSkip }) => {
             </div>
 
             {/* Navigation */}
-            <div className="flex space-x-3">
+            <div className="flex space-x-2 sm:space-x-3 w-full sm:w-auto">
               <button
                 onClick={handleSkip}
-                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
+                className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
               >
                 Skip
               </button>
               <button
                 onClick={handleNext}
-                className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium"
+                className="flex-1 sm:flex-none px-4 sm:px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium text-xs sm:text-sm"
               >
                 {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
               </button>
