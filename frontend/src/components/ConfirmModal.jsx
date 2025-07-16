@@ -14,7 +14,7 @@ const ConfirmModal = ({ open, title, description, confirmText = 'Confirm', cance
           open={open}
           onClose={onCancel}
           as="div"
-          className="fixed z-50 inset-0 overflow-y-auto"
+          className="fixed z-[80] inset-0 overflow-y-auto"
         >
           <div className="flex items-center justify-center min-h-screen px-4 text-center">
             <motion.div

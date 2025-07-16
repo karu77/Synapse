@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 // Interface for the User document
 export interface IUser extends Document {
   _id: any
+  name: string
   email: string
   password: string
   matchPassword(enteredPassword: string): Promise<boolean>
@@ -15,6 +16,10 @@ export interface IUserModel extends Model<IUser> {}
 
 const userSchema = new mongoose.Schema<IUser>(
   {
+    name: {
+      type: String,
+      required: true,
+    },
     email: {
       type: String,
       required: true,

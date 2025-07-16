@@ -57,9 +57,9 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const register = async (email, password) => {
+  const register = async (name, email, password) => {
     try {
-      const { data } = await api.post('/users', { email, password })
+      const { data } = await api.post('/users', { name, email, password })
       console.log('Register response:', data)
       localStorage.setItem('userInfo', JSON.stringify(data))
       setUser(data)
@@ -77,6 +77,9 @@ export const AuthProvider = ({ children }) => {
           case 400:
             if (message && message.toLowerCase().includes('user already exists')) {
               throw new Error('An account with this email already exists. Please use a different email or try logging in.')
+            }
+            if (message && message.toLowerCase().includes('verify your email')) {
+              throw new Error('Please verify your email address before creating an account.')
             }
             throw new Error(message || 'Invalid registration data. Please check your information and try again.')
           case 409:
@@ -97,6 +100,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   const logout = () => {
+    console.log('Logout called - clearing user data')
     localStorage.removeItem('userInfo')
     setUser(null)
   }

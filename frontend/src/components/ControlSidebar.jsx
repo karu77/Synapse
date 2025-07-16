@@ -255,7 +255,7 @@ const ControlSidebar = ({
             >
           <div className="flex justify-between items-center">
                 <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-skin-text-muted truncate`}>
-              Welcome, {user?.name || 'Guest'}
+              Welcome, {user?.name ? user.name.split(' ')[0] : 'Guest'}
             </span>
           </div>
             </motion.div>

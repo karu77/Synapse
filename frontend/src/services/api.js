@@ -251,13 +251,53 @@ export const clearAllHistory = async () => {
 }
 
 /**
+ * Sends a verification email to the specified email address.
+ * @param {string} email The email address to send verification to.
+ * @returns {Promise<Object>} The response from the server.
+ */
+export const sendVerificationEmail = async (email) => {
+  try {
+    console.log('📧 Sending verification email to:', email)
+    const { data } = await api.post('/users/send-verification', { email })
+    console.log('📧 Verification email sent successfully')
+    return data
+  } catch (error) {
+    console.error('📧 Error sending verification email:', error)
+    throw error.response?.data?.message || 'Failed to send verification email.'
+  }
+}
+
+/**
+ * Verifies the OTP sent to the email address.
+ * @param {string} email The email address.
+ * @param {string} otp The OTP to verify.
+ * @returns {Promise<Object>} The response from the server.
+ */
+export const verifyEmailOTP = async (email, otp) => {
+  try {
+    console.log('🔐 Verifying OTP for:', email)
+    const { data } = await api.post('/users/verify-email', { email, otp })
+    console.log('🔐 Email verified successfully')
+    return data
+  } catch (error) {
+    console.error('🔐 Error verifying OTP:', error)
+    throw error.response?.data?.message || 'Failed to verify OTP.'
+  }
+}
+
+/**
  * Deletes the logged-in user's account and all associated data.
  */
 export const deleteAccount = async () => {
   try {
-    await api.delete('/users/profile')
+    console.log('🔐 Delete Account: Making request to /users/profile')
+    const response = await api.delete('/users/profile')
+    console.log('🔐 Delete Account: Success response:', response.data)
+    return response.data
   } catch (error) {
-    console.error('Error deleting account:', error)
+    console.error('🔐 Delete Account: Error:', error)
+    console.error('🔐 Delete Account: Error response:', error.response?.data)
+    console.error('🔐 Delete Account: Error status:', error.response?.status)
     throw error.response?.data?.error || 'Failed to delete account.'
   }
 }

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import GraphVisualization from './components/GraphVisualization'
 import './App.css'
@@ -133,6 +134,7 @@ function App() {
   const onGraphReadyRef = useRef(null)
   const { user: authUser, logout, markTutorialSeen } = useAuth()
   const { theme } = useTheme()
+  const navigate = useNavigate()
   // Tutorial modal state
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [runTutorial, setRunTutorial] = useState(false);
@@ -626,34 +628,56 @@ function App() {
 
   // User account action handlers
   const handleLogout = () => {
+    console.log('🔐 App: handleLogout called')
+    console.log('🔐 App: Setting showLogoutModal to true')
+    setShowUserModal(false); // Close the user menu modal first
     setShowLogoutModal(true);
   };
 
   const confirmLogout = () => {
+    console.log('🔐 App: confirmLogout called')
     logout();
+    navigate('/login'); // Navigate to login page after logout
     setShowLogoutModal(false);
   };
 
   const handleDeleteAccount = () => {
+    console.log('🔐 App: handleDeleteAccount called')
+    console.log('🔐 App: Setting showDeleteModal to true')
+    setShowUserModal(false); // Close the user menu modal first
     setShowDeleteModal(true);
   };
 
   const confirmDeleteAccount = async () => {
+    console.log('🔐 App: confirmDeleteAccount called')
     try {
       await deleteAccount();
+      console.log('🔐 App: deleteAccount successful')
       setShowDeleteModal(false);
       setShowDeleteSuccess(true);
     } catch (error) {
-      console.error('Failed to delete account:', error);
+      console.error('🔐 App: Failed to delete account:', error);
       // You might want to show an error message to the user here
       setShowDeleteModal(false);
     }
   };
 
   const handleDeleteSuccessClose = () => {
+    console.log('🔐 App: handleDeleteSuccessClose called')
     setShowDeleteSuccess(false);
     logout(); // Log out after user acknowledges deletion
+    navigate('/login'); // Navigate to login page after logout
   };
+
+  // Debug modal states
+  useEffect(() => {
+    console.log('🔐 App: Modal states changed:', {
+      showLogoutModal,
+      showDeleteModal,
+      showDeleteSuccess,
+      showUserModal
+    });
+  }, [showLogoutModal, showDeleteModal, showDeleteSuccess, showUserModal]);
 
   // Responsive breakpoints
   const isMobile = windowSize.width < 768
@@ -925,7 +949,9 @@ function App() {
             {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && (
               <div className="hidden md:flex items-center gap-2 text-sm text-skin-text-muted animate-fade-in-panel">
                 <span>→</span>
-                <span>Create diagrams here</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-skin-text-muted truncate`}>
+              Welcome, {authUser?.name ? authUser.name.split(' ')[0] : 'Guest'}
+            </span>
               </div>
             )}
           </div>
@@ -1160,6 +1186,7 @@ function App() {
                   <h3 className={`${isMobile ? (isSmallPhone ? 'text-sm' : 'text-base') : 'text-lg'} font-bold mb-4 text-skin-text`}>User Menu</h3>
                   <div className="px-3 py-2">
                     <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} font-semibold truncate`}>Signed in as</p>
+                    <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-skin-text-muted truncate`}>{authUser.name}</p>
                     <p className={`${isMobile ? (isSmallPhone ? 'text-xs' : 'text-sm') : 'text-sm'} text-skin-text-muted truncate`}>{authUser.email}</p>
                   </div>
                   <div className="h-px bg-skin-border my-1" />
