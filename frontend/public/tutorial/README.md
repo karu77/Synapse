@@ -11,6 +11,7 @@ Place your tutorial videos in this directory with the following names:
 3. **graph-generation.mp4** - Graph generation process demo
 4. **ai-interaction.mp4** - AI chat and node interaction demo
 5. **file-management.mp4** - File renaming and organization demo
+6. **download-export.mp4** - Download and export functionality demo
 
 ## Optional Files
 

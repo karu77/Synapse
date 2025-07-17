@@ -40,6 +40,14 @@ const steps = [
     content: "Keep your knowledge organized and easily accessible.",
     gif: "/tutorial/file-management.gif",
     gifAlt: "File Management GIF"
+  },
+  {
+    title: "Download & Share",
+    description: "Export your knowledge graphs in various formats and share them with your team or save for later use.",
+    icon: "📥",
+    content: "Download as PNG, PDF, or JSON to integrate with your existing workflows.",
+    gif: "/tutorial/download-export.gif",
+    gifAlt: "Download and Export GIF"
   }
 ];
 
