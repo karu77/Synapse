@@ -1252,7 +1252,11 @@ function App() {
                     logout={logout}
                     currentDiagramType={currentDiagramType}
                     onDiagramTypeChange={handleDiagramTypeChange}
-                    alwaysShowMediaInputs={true}
+                    onDownloadSVG={handleDownloadSVG}
+                    onDownloadJSON={handleDownloadJSON}
+                    onDownloadNodesCSV={handleDownloadNodesCSV}
+                    onDownloadEdgesCSV={handleDownloadEdgesCSV}
+                    hasGraphData={graphData?.nodes && graphData.nodes.length > 0}
                   />
                 </div>
             )}

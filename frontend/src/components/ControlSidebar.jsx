@@ -7,6 +7,9 @@ import {
   Cog6ToothIcon,
   CursorArrowRaysIcon,
   TrashIcon,
+  ArrowDownTrayIcon,
+  DocumentArrowDownIcon,
+  TableCellsIcon,
 } from '@heroicons/react/24/outline'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
@@ -108,6 +111,11 @@ const ControlSidebar = ({
   logout,
   currentDiagramType,
   onDiagramTypeChange,
+  onDownloadSVG,
+  onDownloadJSON,
+  onDownloadNodesCSV,
+  onDownloadEdgesCSV,
+  hasGraphData,
 }) => {
   const { logout: authLogout } = useAuth()
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -186,6 +194,43 @@ const ControlSidebar = ({
           <Section icon={<SparklesIcon className="h-6 w-6" />} title="Generate" isMobile={isMobile}>
                 <TextInput onSubmit={onSubmit} isProcessing={isProcessing} alwaysShowMediaInputs={true} onDiagramTypeChange={onDiagramTypeChange} currentDiagramType={currentDiagramType} />
           </Section>
+          
+          {hasGraphData && (
+            <Section icon={<ArrowDownTrayIcon className="h-6 w-6" />} title="Export" isMobile={isMobile}>
+              <div className="space-y-2">
+                <button
+                  onClick={onDownloadSVG}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4" />
+                  Download SVG
+                </button>
+                <button
+                  onClick={onDownloadJSON}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4" />
+                  Download JSON
+                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={onDownloadNodesCSV}
+                    className="flex items-center justify-center gap-1 px-2 py-2 text-xs bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                  >
+                    <TableCellsIcon className="h-3 w-3" />
+                    Nodes CSV
+                  </button>
+                  <button
+                    onClick={onDownloadEdgesCSV}
+                    className="flex items-center justify-center gap-1 px-2 py-2 text-xs bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                  >
+                    <TableCellsIcon className="h-3 w-3" />
+                    Edges CSV
+                  </button>
+                </div>
+              </div>
+            </Section>
+          )}
           
           {(selectedNode || selectedEdge) && (
             <Section icon={<CursorArrowRaysIcon className="h-6 w-6" />} title="Selection Details" isMobile={isMobile}>
