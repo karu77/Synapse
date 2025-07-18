@@ -11,6 +11,7 @@
     "build": "cd frontend && npm run build && cd ../backend && npm run build"
   },
   "devDependencies": {
+    "@types/nodemailer": "^6.4.17",
     "concurrently": "^8.2.2"
   },
   "dependencies": {
