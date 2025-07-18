@@ -19,6 +19,7 @@
     "prop-types": "^15.8.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-joyride": "^2.7.0",
     "react-router-dom": "^7.6.2",
     "react-simple-typewriter": "^5.0.1",
     "synapse": "file:..",
