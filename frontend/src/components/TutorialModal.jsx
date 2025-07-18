@@ -77,7 +77,7 @@ const TutorialModal = ({ isOpen, onClose, onStartTutorial, onSkip }) => {
       {/* Blurred and darkened overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm" />
       <div className="relative flex items-center justify-center h-full w-full p-4 sm:p-6 lg:p-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl max-h-[90vh] lg:max-h-[85vh] flex flex-col shadow-2xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl max-h-[90vh] lg:max-h-[85vh] flex flex-col shadow-2xl mx-auto overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-4 sm:p-5 lg:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
             <div className="flex items-center space-x-3 sm:space-x-4">
@@ -95,7 +95,7 @@ const TutorialModal = ({ isOpen, onClose, onStartTutorial, onSkip }) => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-4 sm:p-5 lg:p-6 min-h-0">
+          <div className="flex-1 p-4 sm:p-5 lg:p-6 min-h-0 overflow-y-auto">
             <div className="text-center max-w-4xl mx-auto h-full flex flex-col">
               {/* Step Icon */}
               <div className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl mb-2 sm:mb-3 lg:mb-4 flex-shrink-0">
@@ -106,25 +106,38 @@ const TutorialModal = ({ isOpen, onClose, onStartTutorial, onSkip }) => {
                 {step.title}
               </h3>
               {/* Step Description */}
-              <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 lg:mb-5 leading-relaxed px-2 sm:px-4 lg:px-8 flex-shrink-0">
+              <p
+                className="text-xs sm:text-sm lg:text-base xl:text-lg text-gray-600 dark:text-gray-300 mb-1 sm:mb-2 lg:mb-2 leading-relaxed px-2 sm:px-4 lg:px-8 flex-shrink-0"
+                style={{
+                  fontSize: 'clamp(12px, 1.1vw, 18px)',
+                  marginBottom: '8px',
+                  marginTop: '0',
+                }}
+              >
                 {step.description}
               </p>
               {/* Step Content */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 lg:p-5 mb-3 sm:mb-4 lg:mb-5 mx-2 sm:mx-4 lg:mx-8 flex-shrink-0">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 lg:p-4 mb-1 sm:mb-2 lg:mb-2 mx-2 sm:mx-4 lg:mx-8 flex-shrink-0 border border-blue-100 dark:border-blue-900 shadow-sm">
                 <p className="text-xs sm:text-sm lg:text-base xl:text-lg text-gray-700 dark:text-gray-200">
                   {step.content}
                 </p>
               </div>
               {/* GIF Section: Only for steps with a gif property */}
               {step.gif && (
-                <div className="flex items-center justify-center w-full flex-1 min-h-0">
-                  <div className="relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl w-full aspect-video flex items-center justify-center overflow-hidden">
+                <div className="flex items-center justify-center w-full flex-1 min-h-0 mt-0">
+                  <div className="relative bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[320px] aspect-video flex items-center justify-center overflow-hidden mt-0 animate-fade-in"
+                    style={{
+                      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                      margin: '0 auto',
+                      transition: 'box-shadow 0.3s',
+                    }}
+                  >
                     {!gifError ? (
                       <img
                         src={step.gif}
                         alt={step.gifAlt}
-                        className="w-full h-full rounded-lg object-contain"
-                        style={{ background: 'rgba(255,255,255,0.95)' }}
+                        className="w-full h-full rounded-xl object-contain animate-fade-in"
+                        style={{ background: 'rgba(255,255,255,0.95)', maxHeight: '320px', objectFit: 'contain' }}
                         onError={() => setGifError(true)}
                       />
                     ) : (
@@ -139,7 +152,7 @@ const TutorialModal = ({ isOpen, onClose, onStartTutorial, onSkip }) => {
                       </div>
                     )}
                     {/* Semi-transparent overlay on top of GIF */}
-                    <div className="absolute inset-0 rounded-lg bg-black bg-opacity-20 pointer-events-none" />
+                    <div className="absolute inset-0 rounded-xl bg-black bg-opacity-10 pointer-events-none" />
                   </div>
                 </div>
               )}

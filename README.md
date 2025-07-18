@@ -28,14 +28,19 @@ A powerful web application that generates interactive knowledge graphs, flowchar
 - **History Management**: Save and revisit previous graph generations
 - **Search & Filter**: Find specific nodes and relationships within graphs
 
+---
+
 ## Getting Started
 
 ### Prerequisites
 - Node.js (v16 or higher)
 - npm or yarn
 - Google Gemini API key
+- MongoDB Atlas or local MongoDB instance
 
-### Installation
+---
+
+## Local Development
 
 1. **Clone the repository**
    ```bash
@@ -45,34 +50,32 @@ A powerful web application that generates interactive knowledge graphs, flowchar
 
 2. **Install dependencies**
    ```bash
-   # Install root dependencies
    npm install
-   
-   # Install backend dependencies
-   cd backend
-   npm install
-   
-   # Install frontend dependencies
-   cd ../frontend
-   npm install
+   cd backend && npm install
+   cd ../frontend && npm install
    ```
 
 3. **Environment Setup**
-   
-   Create a `.env` file in the backend directory:
-   ```env
-   GEMINI_API_KEY=your_gemini_api_key_here
-   JWT_SECRET=your_jwt_secret_here
-   MONGODB_URI=your_mongodb_connection_string
-   NODE_ENV=development
-   FRONTEND_URL=http://localhost:5173
-   ```
+   - Create a `.env` file in the `backend` directory:
+     ```env
+     GEMINI_API_KEY=your_gemini_api_key_here
+     JWT_SECRET=your_jwt_secret_here
+     MONGO_URI=your_mongodb_connection_string
+     NODE_ENV=development
+     FRONTEND_URL=http://localhost:5173
+     # Email/SMTP settings for verification emails
+     SMTP_HOST=smtp.yourprovider.com
+     SMTP_PORT=587
+     SMTP_USER=your@email.com
+     SMTP_PASS=your_email_password_or_app_password
+     FROM_EMAIL=your@email.com
+     ```
+     - For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833?hl=en) if 2FA is enabled.
 
 4. **Start the development servers**
    ```bash
    # Start backend (from backend directory)
    npm run dev
-   
    # Start frontend (from frontend directory)
    npm run dev
    ```
@@ -80,6 +83,49 @@ A powerful web application that generates interactive knowledge graphs, flowchar
 5. **Access the application**
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:3002
+
+---
+
+## Deployment
+
+### Backend on Render
+1. Push your backend code to GitHub.
+2. Go to [Render.com](https://render.com/) and create a new Web Service.
+3. Set the root directory to `/backend` if needed.
+4. **Build Command:**
+   ```
+   npm install && npm run build
+   ```
+5. **Start Command:**
+   ```
+   npm run start
+   ```
+6. **Environment Variables:** Add all from your `.env` (see above).
+7. Deploy and note your Render backend URL (e.g., `https://your-backend.onrender.com`).
+
+### Frontend on Vercel
+1. Push your frontend code to GitHub.
+2. Go to [Vercel.com](https://vercel.com/) and create a new project.
+3. Set the root directory to `/frontend` if needed.
+4. **Build Command:**
+   ```
+   npm run build
+   ```
+5. **Output Directory:**
+   ```
+   dist
+   ```
+6. **Environment Variables:**
+   - `VITE_API_BASE_URL=https://your-backend.onrender.com`
+   - `VITE_API_URL=/api`
+7. Deploy and note your Vercel frontend URL (e.g., `https://your-frontend.vercel.app`).
+
+### Final Steps
+- Update your backend's `FRONTEND_URL` env variable on Render to your Vercel frontend URL.
+- Make sure CORS is enabled for your frontend domain in the backend.
+- Test registration, login, and all features.
+
+---
 
 ## Usage
 
@@ -100,12 +146,16 @@ A powerful web application that generates interactive knowledge graphs, flowchar
 - **Visual Styles**: Customize colors, shapes, and spacing for different node types
 - **Layout Options**: Choose from traditional, radial, organizational, and timeline layouts for mind maps
 
+---
+
 ## API Endpoints
 
 ### Authentication
 - `POST /api/users/register` - User registration
 - `POST /api/users/login` - User login
 - `POST /api/users/logout` - User logout
+- `POST /api/users/send-verification` - Send verification email
+- `POST /api/users/verify-email` - Verify email OTP
 
 ### Graph Generation
 - `POST /api/graph/generate` - Generate graphs from text, files, and documents
@@ -114,6 +164,8 @@ A powerful web application that generates interactive knowledge graphs, flowchar
 - `GET /api/history` - Get user's graph history
 - `DELETE /api/history/:id` - Delete specific history item
 - `DELETE /api/history` - Clear all history
+
+---
 
 ## File Format Support
 
@@ -131,6 +183,8 @@ A powerful web application that generates interactive knowledge graphs, flowchar
 - **JSON** - Raw graph data for further processing
 - **CSV** - Tabular data for analysis
 
+---
+
 ## Architecture
 
 ### Frontend
@@ -147,12 +201,15 @@ A powerful web application that generates interactive knowledge graphs, flowchar
 - **Google Gemini AI** for content analysis
 - **Multer** for file upload handling
 - **JWT** for authentication
+- **Nodemailer** for email verification
 
 ### Document Processing
 - **pdf-parse** for PDF text extraction
 - **mammoth** for Word document processing
 - **Smart chunking** for large document handling
 - **Metadata extraction** for enhanced context
+
+---
 
 ## Contributing
 
@@ -162,9 +219,13 @@ A powerful web application that generates interactive knowledge graphs, flowchar
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
 
 ## Support
 

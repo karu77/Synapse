@@ -144,7 +144,7 @@ const RegisterPage = () => {
 
   const renderStep1 = () => (
     <form onSubmit={handleSendVerificationEmail} noValidate>
-      {errors.form && <ErrorDisplay error={{ message: errors.form }} />}
+      {errors.form && <ErrorDisplay error={{ title: "Registration Error", message: errors.form }} />}
       
       <div className="mb-6">
         <label htmlFor="email" className="block text-sm font-medium text-skin-text-muted mb-2">
@@ -189,7 +189,7 @@ const RegisterPage = () => {
 
   const renderStep2 = () => (
     <form onSubmit={handleVerifyOTP} noValidate>
-      {errors.form && <ErrorDisplay error={{ message: errors.form }} />}
+      {errors.form && <ErrorDisplay error={{ title: "Verification Error", message: errors.form }} />}
       
       <div className="mb-6">
         <label htmlFor="otp" className="block text-sm font-medium text-skin-text-muted mb-2">
@@ -246,7 +246,7 @@ const RegisterPage = () => {
 
   const renderStep3 = () => (
     <form onSubmit={handleSubmit} noValidate>
-      {errors.form && <ErrorDisplay error={{ message: errors.form }} />}
+      {errors.form && <ErrorDisplay error={{ title: "Registration Error", message: errors.form }} />}
       
       <div className="mb-4">
         <label htmlFor="name" className="block text-sm font-medium text-skin-text-muted mb-2">
