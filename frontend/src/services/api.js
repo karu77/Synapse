@@ -3,11 +3,11 @@ import axios from 'axios';
 // Determine the base URL based on the environment
 const isDevelopment = import.meta.env.MODE === 'development';
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002';
-const apiPath = import.meta.env.VITE_API_URL || '/api';
+// const apiPath = import.meta.env.VITE_API_URL || '/api'; // This line is no longer needed
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: apiPath, // Use the full URL from VITE_API_URL
+  baseURL: apiBaseUrl, // Use the full URL from VITE_API_BASE_URL
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
