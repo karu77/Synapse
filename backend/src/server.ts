@@ -26,7 +26,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
 connectDB()
 
 const app = express()
-const port = 3002
+const port = process.env.PORT || 3002
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage()
