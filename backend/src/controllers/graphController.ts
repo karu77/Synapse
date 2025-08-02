@@ -126,9 +126,9 @@ const extractJson = (text: string): any => {
     return null
   }
 
-  try {
-    // Try to extract JSON from a code block (```json ... ```) or (``` ...)
-    let jsonString = text.trim()
+  // Enhanced JSON extraction with better error handling
+  const extractAndCleanJson = (inputText: string): string => {
+    let jsonString = inputText.trim()
     
     // First check for JSON code blocks
     const jsonCodeBlockMatch = jsonString.match(/```json\s*([\s\S]*?)\s*```/i)
@@ -149,15 +149,25 @@ const extractJson = (text: string): any => {
       }
     }
 
-    // Clean up the JSON string more thoroughly
-    const cleanJsonString = jsonString
+    // Enhanced cleaning with more comprehensive fixes
+    return jsonString
       .replace(/^[^{[]*([{\[])/, '$1')  // Remove any text before the first { or [
       .replace(/([}\]])[^}\]]*$/, '$1') // Remove any text after the last } or ]
       .replace(/[\u2018\u2019]/g, "'")  // Replace smart quotes with straight quotes
       .replace(/[\u201C\u201D]/g, '"')  // Replace smart double quotes
       .replace(/,\s*([}\]])/g, '$1')    // Remove trailing commas before } or ]
       .replace(/([{,]\s*)(\w+):/g, '$1"$2":') // Quote unquoted keys
+      .replace(/([{,]\s*)"([^"]+)":/g, '$1"$2":') // Ensure proper key quoting
+      .replace(/:\s*"([^"]*)"([^,}\]])/g, ':"$1"$2') // Fix unclosed quotes in values
+      .replace(/:\s*"([^"]*)$/g, ':"$1"') // Fix trailing unclosed quotes
+      .replace(/([^"])\s*"([^"]*)\s*"([^,}\]])/g, '$1"$2"$3') // Fix malformed quotes
+      .replace(/\n\s*/g, ' ') // Remove newlines and extra spaces
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim()
+  }
 
+  try {
+    const cleanJsonString = extractAndCleanJson(text)
     console.log('Attempting to parse cleaned JSON:', cleanJsonString.substring(0, 200) + '...')
     return JSON.parse(cleanJsonString)
   } catch (error) {
@@ -165,11 +175,11 @@ const extractJson = (text: string): any => {
     console.error('Original text length:', text.length)
     console.error('Problematic text (first 1000 chars):', text.substring(0, 1000))
     
-    // Try one more time with a more aggressive cleanup
+    // Try multiple fallback strategies
     try {
       let fallbackJson = text.trim()
       
-      // Look for the main JSON structure patterns
+      // Strategy 1: Look for the main JSON structure patterns
       const patterns = [
         /\{[\s\S]*"entities"[\s\S]*"relationships"[\s\S]*\}/,
         /\{[\s\S]*"nodes"[\s\S]*"edges"[\s\S]*\}/,
@@ -180,20 +190,45 @@ const extractJson = (text: string): any => {
       for (const pattern of patterns) {
         const match = fallbackJson.match(pattern)
         if (match) {
-          const cleanMatch = match[0]
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/,\s*([}\]])/g, '$1')
-            .replace(/([{,]\s*)(\w+):/g, '$1"$2":')
-          
+          const cleanMatch = extractAndCleanJson(match[0])
           console.log('Trying fallback pattern match...')
           return JSON.parse(cleanMatch)
         }
       }
       
+      // Strategy 2: Try to fix common JSON syntax errors
+      try {
+        const fixedJson = fallbackJson
+          .replace(/([^"])\s*"([^"]*)\s*"([^,}\]])/g, '$1"$2"$3') // Fix broken quotes
+          .replace(/:\s*"([^"]*)$/g, ':"$1"') // Fix trailing unclosed quotes
+          .replace(/([^"])\s*"([^"]*)\s*"([^,}\]])/g, '$1"$2"$3') // Fix malformed quotes again
+          .replace(/\n/g, '\\n') // Escape newlines in strings
+          .replace(/\r/g, '\\r') // Escape carriage returns
+          .replace(/\t/g, '\\t') // Escape tabs
+        
+        const cleanFixedJson = extractAndCleanJson(fixedJson)
+        console.log('Trying with syntax fixes...')
+        return JSON.parse(cleanFixedJson)
+      } catch (syntaxFixError) {
+        console.error('Syntax fix attempt failed:', syntaxFixError)
+      }
+      
+      // Strategy 3: Try to extract just the essential parts
+      try {
+        const essentialPattern = /\{[^}]*"answer"[^}]*"graph"[^}]*\}/s
+        const essentialMatch = fallbackJson.match(essentialPattern)
+        if (essentialMatch) {
+          const cleanEssential = extractAndCleanJson(essentialMatch[0])
+          console.log('Trying essential parts extraction...')
+          return JSON.parse(cleanEssential)
+        }
+      } catch (essentialError) {
+        console.error('Essential parts extraction failed:', essentialError)
+      }
+      
       return null
     } catch (fallbackError) {
-      console.error('Fallback parsing also failed:', fallbackError)
+      console.error('All fallback parsing attempts failed:', fallbackError)
       return null
     }
   }
@@ -298,6 +333,11 @@ export const generateGraphAndSave = async (req: Request, res: Response) => {
         // Preprocess the extracted text
         extractedDocument.text = DocumentExtractor.preprocessText(extractedDocument.text)
         
+        // Validate extracted document
+        if (!extractedDocument.text || extractedDocument.text.trim().length === 0) {
+          throw new Error('Document extraction resulted in empty content')
+        }
+        
         console.log('Document extraction successful:', {
           title: extractedDocument.title,
           wordCount: extractedDocument.metadata?.wordCount,
@@ -384,6 +424,14 @@ IMPORTANT: You MUST provide an "answer" field with a comprehensive analysis and 
 
 **Return ONLY a JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays. Do NOT include markdown, code blocks, or explanations.**
 
+CRITICAL JSON FORMATTING REQUIREMENTS:
+- Use ONLY straight double quotes (") for strings, NOT smart quotes or single quotes
+- Escape all special characters in strings (newlines as \\n, quotes as \\", etc.)
+- Ensure all strings are properly closed
+- Do NOT include trailing commas
+- Use proper JSON syntax with no extra characters or formatting
+- The response must be valid JSON that can be parsed by JSON.parse()**
+
 **Example with proper decision logic:**
 {
   "answer": "A comprehensive analysis and overview of the flowchart process goes here. This should explain the overall workflow, key decision points, and the logical flow from start to finish.",
@@ -444,7 +492,15 @@ For relationships, include:
 - description: How the entities are connected (detailed)
 - strength: A number from 0-1 indicating relationship strength
 
-WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.`,
+WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.
+
+CRITICAL JSON FORMATTING REQUIREMENTS:
+- Use ONLY straight double quotes (") for strings, NOT smart quotes or single quotes
+- Escape all special characters in strings (newlines as \\n, quotes as \\", etc.)
+- Ensure all strings are properly closed
+- Do NOT include trailing commas
+- Use proper JSON syntax with no extra characters or formatting
+- The response must be valid JSON that can be parsed by JSON.parse()`,
 
         'mindmap': getMindmapPrompt(mindmapSubtype),
         'flowchart': `Create a detailed flowchart with clear nodes and logical flows. 
@@ -466,7 +522,15 @@ For each edge, specify:
 - label: (optional) label for the edge (e.g., "Yes", "No" for decisions)
 - description: a detailed explanation of the connection
 
-WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.`,
+WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.
+
+CRITICAL JSON FORMATTING REQUIREMENTS:
+- Use ONLY straight double quotes (") for strings, NOT smart quotes or single quotes
+- Escape all special characters in strings (newlines as \\n, quotes as \\", etc.)
+- Ensure all strings are properly closed
+- Do NOT include trailing commas
+- Use proper JSON syntax with no extra characters or formatting
+- The response must be valid JSON that can be parsed by JSON.parse()`,
         'sequence': 'Generate a sequence diagram showing detailed interactions between components. ',
         'er-diagram': 'Generate a comprehensive entity-relationship diagram with detailed attributes and relationships. ',
         'timeline': 'Create a detailed timeline of events with dates, descriptions, and significance. ',
@@ -491,7 +555,17 @@ WARNING: If you do not include detailed explanations, references, and recommenda
     
     if (extractedDocument) {
       const documentSummary = DocumentExtractor.generateDocumentSummary(extractedDocument)
-      const documentContent = extractedDocument.text
+      
+      // Sanitize and process document content
+      let documentContent = DocumentExtractor.preprocessText(extractedDocument.text)
+      
+      // If document is too large, use only the first chunk
+      const maxDocumentLength = 8000 // Limit document content to prevent AI overload
+      if (documentContent.length > maxDocumentLength) {
+        const chunks = DocumentExtractor.splitIntoChunks(documentContent, maxDocumentLength)
+        documentContent = chunks[0] // Use first chunk for processing
+        console.log(`Document too large (${extractedDocument.text.length} chars), using first chunk (${documentContent.length} chars)`)
+      }
       
       // If there's already text input, combine it with document content
       if (userInput) {
@@ -940,7 +1014,15 @@ Create a traditional mind map with a strict hierarchical structure, designed to 
 
 WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.
 
-The final output must be a single, raw JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays. Do not create circular relationships. The graph must be a directed acyclic graph.`,
+The final output must be a single, raw JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays. Do not create circular relationships. The graph must be a directed acyclic graph.
+
+CRITICAL JSON FORMATTING REQUIREMENTS:
+- Use ONLY straight double quotes (") for strings, NOT smart quotes or single quotes
+- Escape all special characters in strings (newlines as \\n, quotes as \\", etc.)
+- Ensure all strings are properly closed
+- Do NOT include trailing commas
+- Use proper JSON syntax with no extra characters or formatting
+- The response must be valid JSON that can be parsed by JSON.parse()`,
 
     radial: `${baseAnswerRequirement}
 
@@ -961,7 +1043,15 @@ Create a radial mind map with a simple star-like structure.
 
 WARNING: If you do not include detailed explanations, references, and recommendations for every node, your response will be considered invalid.
 
-The final output must be a single, raw JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays.`,
+The final output must be a single, raw JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays.
+
+CRITICAL JSON FORMATTING REQUIREMENTS:
+- Use ONLY straight double quotes (") for strings, NOT smart quotes or single quotes
+- Escape all special characters in strings (newlines as \\n, quotes as \\", etc.)
+- Ensure all strings are properly closed
+- Do NOT include trailing commas
+- Use proper JSON syntax with no extra characters or formatting
+- The response must be valid JSON that can be parsed by JSON.parse()`,
 
     organizational: `${baseAnswerRequirement}
 
