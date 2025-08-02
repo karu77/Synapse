@@ -362,7 +362,7 @@ IMPORTANT: You MUST provide an "answer" field with a comprehensive analysis and 
   - DISPLAY: Display shape
   - OFF_PAGE: Off-page connector
 
-- **CRITICAL: Every DECISION node MUST have at least two outgoing edges, typically labeled 'Yes' and 'No'. These edges must represent the branching paths.**
+- **CRITICAL: Every DECISION node MUST have exactly two outgoing edges, labeled 'Yes' and 'No'. These edges must lead to DIFFERENT process nodes, and both paths should eventually converge to a common next step. DO NOT create loops where 'No' goes back to previous steps.**
 
 - For each node, specify:
   - id: unique string
@@ -384,16 +384,25 @@ IMPORTANT: You MUST provide an "answer" field with a comprehensive analysis and 
 
 **Return ONLY a JSON object with "answer" and "graph" fields. The graph should contain "entities" and "relationships" arrays. Do NOT include markdown, code blocks, or explanations.**
 
-**Example:**
+**Example with proper decision logic:**
 {
   "answer": "A comprehensive analysis and overview of the flowchart process goes here. This should explain the overall workflow, key decision points, and the logical flow from start to finish.",
   "graph": {
     "entities": [
       { "id": "start", "label": "Start", "type": "START_END", "level": 0, "description": "Detailed explanation...", "references": ["url1", {"label": "Resource", "url": "url2"}], "recommendations": ["Topic1", "Topic2"] },
-      { "id": "input", "label": "Get User Input", "type": "INPUT_OUTPUT", "level": 1, "description": "Detailed explanation...", "references": ["url1", {"label": "Resource", "url": "url2"}], "recommendations": ["Topic1", "Topic2"] }
+      { "id": "decision", "label": "Decision", "type": "DECISION", "level": 1, "description": "Detailed explanation...", "references": ["url1", {"label": "Resource", "url": "url2"}], "recommendations": ["Topic1", "Topic2"] },
+      { "id": "optionA", "label": "Option A", "type": "PROCESS", "level": 2, "description": "Detailed explanation...", "references": ["url1", {"label": "Resource", "url": "url2"}], "recommendations": ["Topic1", "Topic2"] },
+      { "id": "optionB", "label": "Option B", "type": "PROCESS", "level": 2, "description": "Detailed explanation...", "references": ["url1", {"label": "Resource", "url": "url2"}], "recommendations": ["Topic1", "Topic2"] },
+      { "id": "converge", "label": "Next Step", "type": "PROCESS", "level": 3, "description": "Detailed explanation...", "references": ["url1", {"label": "Resource", "url": "url2"}], "recommendations": ["Topic1", "Topic2"] },
+      { "id": "end", "label": "End", "type": "START_END", "level": 4, "description": "Detailed explanation...", "references": ["url1", {"label": "Resource", "url": "url2"}], "recommendations": ["Topic1", "Topic2"] }
     ],
     "relationships": [
-      { "source": "start", "target": "input", "label": "", "description": "Detailed explanation of the connection" }
+      { "source": "start", "target": "decision", "label": "", "description": "Detailed explanation of the connection" },
+      { "source": "decision", "target": "optionA", "label": "Yes", "description": "Detailed explanation of the connection" },
+      { "source": "decision", "target": "optionB", "label": "No", "description": "Detailed explanation of the connection" },
+      { "source": "optionA", "target": "converge", "label": "", "description": "Detailed explanation of the connection" },
+      { "source": "optionB", "target": "converge", "label": "", "description": "Detailed explanation of the connection" },
+      { "source": "converge", "target": "end", "label": "", "description": "Detailed explanation of the connection" }
     ]
   }
 }

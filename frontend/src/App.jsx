@@ -247,6 +247,15 @@ function App() {
     console.log('Selected edge changed:', selectedEdge)
   }, [selectedEdge])
 
+  // Debug state changes
+  useEffect(() => {
+    console.log('selectedNode changed:', selectedNode);
+  }, [selectedNode]);
+  
+  useEffect(() => {
+    console.log('selectedEdge changed:', selectedEdge);
+  }, [selectedEdge]);
+
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
@@ -405,6 +414,38 @@ function App() {
     setIsSidebarOpen(false)
     
     setCurrentDiagramType(diagramType)
+    
+    // Generate a descriptive name based on content
+    const generateGraphName = (text, question, diagramType) => {
+      const content = question || text || '';
+      if (!content.trim()) return 'Untitled Graph';
+      
+      // Extract first meaningful phrase (up to 50 characters)
+      const words = content.trim().split(/\s+/);
+      let name = '';
+      
+      for (let i = 0; i < words.length; i++) {
+        const testName = name + (name ? ' ' : '') + words[i];
+        if (testName.length > 50) break;
+        name = testName;
+      }
+      
+      // Add diagram type if it's not already in the name
+      const diagramTypeName = diagramType === 'knowledge-graph' ? 'Knowledge Graph' :
+                             diagramType === 'flowchart' ? 'Flowchart' :
+                             diagramType.startsWith('mindmap') ? 'Mind Map' :
+                             diagramType.charAt(0).toUpperCase() + diagramType.slice(1);
+      
+      if (!name.toLowerCase().includes(diagramTypeName.toLowerCase())) {
+        name = `${name} - ${diagramTypeName}`;
+      }
+      
+      return name || 'Untitled Graph';
+    };
+    
+    const descriptiveName = generateGraphName(text, question, diagramType);
+    setGraphName(descriptiveName);
+    
     try {
       const { answer, graphData } = await generateGraph(
         text,
@@ -415,7 +456,7 @@ function App() {
         imageUrl,
         audioUrl,
         diagramType,
-        graphName // pass the name
+        descriptiveName // pass the generated name
       )
       setAnswer(answer)
       // Aggregate all unique references from all nodes
@@ -1028,7 +1069,7 @@ function App() {
       />
 
       {/* Main Content */}
-      <main className={`flex-grow ${isMobile ? (isSmallPhone ? 'pt-12 pb-2' : 'pt-16 pb-4') : 'pt-24 pb-10'} ${selectedNode ? 'filter blur-sm pointer-events-none select-none' : ''}`}>
+      <main className={`flex-grow ${isMobile ? (isSmallPhone ? 'pt-12 pb-2' : 'pt-16 pb-4') : 'pt-24 pb-10'}`}>
         <div className="relative h-full w-full">
           <Joyride
             key={joyrideKey}
@@ -1225,76 +1266,72 @@ function App() {
         </div>
       </main>
 
-      {/* Other components, hidden when node modal is open */}
-      {!selectedNode && (
-        <>
-          <AnimatePresence>
-            {isSidebarOpen && (
-                <div className="sidebar-joyride">
-                  <ControlSidebar
-                    isOpen={isSidebarOpen}
-                    onClose={toggleSidebar}
-                    onSubmit={handleTextSubmit}
-                    isProcessing={isProcessing}
-                    selectedNode={selectedNode}
-                    selectedEdge={selectedEdge}
-                    history={history}
-                    loadFromHistory={loadFromHistory}
-                    onDelete={handleDeleteFromHistory}
-                    onClear={handleClearHistory}
-                    styleOptions={styleOptions}
-                    setStyleOptions={setStyleOptions}
-                    resetStyles={resetStyles}
-                    physicsOptions={physicsOptions}
-                    setPhysicsOptions={setPhysicsOptions}
-                    resetPhysics={resetPhysics}
-                    user={authUser}
-                    logout={logout}
-                    currentDiagramType={currentDiagramType}
-                    onDiagramTypeChange={handleDiagramTypeChange}
-                    onDownloadSVG={handleDownloadSVG}
-                    onDownloadJSON={handleDownloadJSON}
-                    onDownloadNodesCSV={handleDownloadNodesCSV}
-                    onDownloadEdgesCSV={handleDownloadEdgesCSV}
-                    hasGraphData={graphData?.nodes && graphData.nodes.length > 0}
-                  />
-                </div>
-            )}
-          </AnimatePresence>
-
-          {answer && !showAiModal && (
-            <div className={`fixed ${isMobile ? 'bottom-4 left-4 right-4 top-auto transform-none' : 'top-1/2 transform -translate-y-1/2'} z-40 ${isMobile ? 'w-auto' : 'max-w-xs w-full sm:w-96'} animate-fade-in-panel transition-all duration-300 ${
-              isSidebarOpen && !isMobile ? 'left-[28rem]' : isMobile ? '' : 'left-4'
-            } ${isSidebarOpen && isMobile ? 'hidden' : ''}`}
-              onClick={() => setShowAiModal(true)}
-              style={{ cursor: 'pointer' }}
-            >
-              <AnswerPanel answer={answer} onClose={() => setAnswer('')} isMobile={isMobile} />
+      {/* Other components */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+            <div className="sidebar-joyride">
+              <ControlSidebar
+                isOpen={isSidebarOpen}
+                onClose={toggleSidebar}
+                onSubmit={handleTextSubmit}
+                isProcessing={isProcessing}
+                selectedNode={selectedNode}
+                selectedEdge={selectedEdge}
+                history={history}
+                loadFromHistory={loadFromHistory}
+                onDelete={handleDeleteFromHistory}
+                onClear={handleClearHistory}
+                styleOptions={styleOptions}
+                setStyleOptions={setStyleOptions}
+                resetStyles={resetStyles}
+                physicsOptions={physicsOptions}
+                setPhysicsOptions={setPhysicsOptions}
+                resetPhysics={resetPhysics}
+                user={authUser}
+                logout={logout}
+                currentDiagramType={currentDiagramType}
+                onDiagramTypeChange={handleDiagramTypeChange}
+                onDownloadSVG={handleDownloadSVG}
+                onDownloadJSON={handleDownloadJSON}
+                onDownloadNodesCSV={handleDownloadNodesCSV}
+                onDownloadEdgesCSV={handleDownloadEdgesCSV}
+                hasGraphData={graphData?.nodes && graphData.nodes.length > 0}
+              />
             </div>
-          )}
+        )}
+      </AnimatePresence>
 
-          <AnimatePresence>
-            {showAiModal && (
-              <AiInfoPanel
-                answer={answer}
-                references={aiReferences}
-                onClose={() => setShowAiModal(false)}
-              />
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {selectedEdge && (
-              <EdgeInfoPanel
-                key={selectedEdge.id}
-                edge={selectedEdge}
-                nodes={graphData.nodes}
-                onClose={() => setSelectedEdge(null)}
-              />
-            )}
-          </AnimatePresence>
-        </>
+      {answer && !showAiModal && (
+        <div className={`fixed ${isMobile ? 'bottom-4 left-4 right-4 top-auto transform-none' : 'top-1/2 transform -translate-y-1/2'} z-40 ${isMobile ? 'w-auto' : 'max-w-xs w-full sm:w-96'} animate-fade-in-panel transition-all duration-300 ${
+          isSidebarOpen && !isMobile ? 'left-[28rem]' : isMobile ? '' : 'left-4'
+        } ${isSidebarOpen && isMobile ? 'hidden' : ''}`}
+          onClick={() => setShowAiModal(true)}
+          style={{ cursor: 'pointer' }}
+        >
+          <AnswerPanel answer={answer} onClose={() => setAnswer('')} isMobile={isMobile} />
+        </div>
       )}
+
+      <AnimatePresence>
+        {showAiModal && (
+          <AiInfoPanel
+            answer={answer}
+            references={aiReferences}
+            onClose={() => setShowAiModal(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedEdge && (
+          <EdgeInfoPanel
+            key={selectedEdge.id}
+            edge={selectedEdge}
+            nodes={graphData.nodes}
+            onClose={() => setSelectedEdge(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Node modal, only when selectedNode is set */}
       <AnimatePresence>

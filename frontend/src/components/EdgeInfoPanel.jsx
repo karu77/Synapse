@@ -16,9 +16,11 @@ const panelVariants = {
   },
 }
 
-const EdgeInfoPanel = ({ edge, nodes, onClose }) => {
+const EdgeInfoPanel = ({ edge, nodes = [], onClose }) => {
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const isMobile = windowSize.width < 768;
+
+  console.log('EdgeInfoPanel rendered with edge:', edge);
 
   // Handle window resize
   useEffect(() => {
@@ -81,7 +83,16 @@ const EdgeInfoPanel = ({ edge, nodes, onClose }) => {
       exit="exit"
       className={`fixed ${isMobile ? 'top-20 left-4 right-4' : 'top-24 right-4'} z-40 ${isMobile ? 'w-auto' : 'w-80'} max-w-[calc(100vw-2rem)]`}
     >
-      <div className={`${isMobile ? 'p-4' : 'p-5'} bg-skin-bg-accent/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-skin-border`}>
+      <div className={`${isMobile ? 'p-4' : 'p-5'} relative overflow-hidden rounded-2xl shadow-2xl transform hover:scale-[1.02] transition-all duration-300`}>
+        {/* Ultra-translucent glass background - same for both themes */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/3 backdrop-blur-sm"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/8 via-transparent to-white/5"></div>
+        
+        {/* Subtle border - same for both themes */}
+        <div className="absolute inset-0 rounded-2xl border border-white/20"></div>
+        
+        {/* Content container */}
+        <div className="relative z-10">
         {/* Header */}
         <div className="flex justify-between items-start mb-4 gap-4">
           <div className="flex items-center gap-3">
@@ -128,6 +139,7 @@ const EdgeInfoPanel = ({ edge, nodes, onClose }) => {
             {edge.description && renderProperty(InformationCircleIcon, "Details", edge.description)}
             {renderProperty(HashtagIcon, "ID", edge.id, 'font-mono text-xs')}
           </div>
+        </div>
         </div>
       </div>
     </motion.div>

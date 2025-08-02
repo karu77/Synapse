@@ -42,32 +42,32 @@ const getNodeShape = (node, diagramType) => {
         return { shape: 'box' };
     }
   } else if (diagramType?.startsWith('mindmap')) {
-    // Differentiate mindmap node shapes based on type
+    // Use rectangular shapes for all mindmap nodes
     switch (node.type) {
       case 'MAIN_TOPIC':
-        return { shape: 'box', shapeProperties: { borderRadius: 10 } }; // Larger, rounded box for central
+        return { shape: 'box', shapeProperties: { borderRadius: 8 } }; // Central topic - slightly rounded rectangle
       case 'TOPIC':
-        return { shape: 'ellipse' }; // Oval for main branches
+        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // Main branches - rectangular
       case 'SUBTOPIC':
-        return { shape: 'circle' }; // Circle for sub-branches
+        return { shape: 'box', shapeProperties: { borderRadius: 4 } }; // Sub-branches - rectangular
       case 'CONCEPT':
-        return { shape: 'diamond' }; // Diamond for concepts in concept maps
+        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // Concepts - rectangular
       case 'DATE':
       case 'EVENT':
       case 'MILESTONE':
       case 'PERIOD':
-        return { shape: 'box', shapeProperties: { borderRadius: 4 } }; // Small box for timeline items
+        return { shape: 'box', shapeProperties: { borderRadius: 4 } }; // Timeline items - rectangular
       case 'CHILD_TOPIC':
-        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // Default for radial child topics
+        return { shape: 'box', shapeProperties: { borderRadius: 4 } }; // Child topics - rectangular
       case 'PERSON':
       case 'ORG':
       case 'LOCATION':
       case 'PRODUCT':
       case 'ROLE':
       case 'FUNCTION':
-        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // Default box for organizational/other specific types
+        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // All other types - rectangular
       default:
-        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // Fallback mindmap shape
+        return { shape: 'box', shapeProperties: { borderRadius: 6 } }; // Fallback - rectangular
     }
   }
   return { shape: 'dot' };
@@ -309,6 +309,13 @@ const GraphVisualization = forwardRef(
       const nodes = new DataSet(data.nodes.map(n => ({ ...n, ...getNodeStyle(n, diagramType, theme) })));
       const edges = new DataSet(data.edges.map(e => ({ ...e, from: e.source, to: e.target, ...getEdgeStyle(e, diagramType, theme) })));
 
+      console.log('Normalized data created:', { 
+        nodeCount: nodes.length, 
+        edgeCount: edges.length,
+        sampleNode: nodes.get()[0],
+        sampleEdge: edges.get()[0]
+      });
+
       return { nodes, edges };
     }, [data, diagramType, theme]);
 
@@ -414,13 +421,31 @@ const GraphVisualization = forwardRef(
         networkInstance.current = new Network(containerRef.current, normalizedData, options);
 
         networkInstance.current.on('click', ({ nodes, edges }) => {
+          console.log('Network click detected:', { nodes, edges });
           if (nodes.length > 0) {
-            setSelectedNode(normalizedData.nodes.get(nodes[0]));
-            setSelectedEdge(null);
+            const nodeData = normalizedData.nodes.get(nodes[0]);
+            console.log('Setting selectedNode:', nodeData);
+            if (nodeData) {
+              setSelectedNode(nodeData);
+              setSelectedEdge(null);
+            } else {
+              console.log('Node data is null, clearing selections');
+              setSelectedNode(null);
+              setSelectedEdge(null);
+            }
           } else if (edges.length > 0) {
-            setSelectedEdge(normalizedData.edges.get(edges[0]));
-            setSelectedNode(null);
+            const edgeData = normalizedData.edges.get(edges[0]);
+            console.log('Setting selectedEdge:', edgeData);
+            if (edgeData) {
+              setSelectedEdge(edgeData);
+              setSelectedNode(null);
+            } else {
+              console.log('Edge data is null, clearing selections');
+              setSelectedNode(null);
+              setSelectedEdge(null);
+            }
           } else {
+            console.log('Clearing selections');
             setSelectedNode(null);
             setSelectedEdge(null);
           }
@@ -429,9 +454,11 @@ const GraphVisualization = forwardRef(
         networkInstance.current.on('hoverNode', ({ node, pointer }) => {
           if (pointer) {
             const nodeData = normalizedData.nodes.get(node);
-            const content = `<b>${nodeData.label}</b>`;
-            setTooltip({ visible: true, content, x: pointer.DOM.x, y: pointer.DOM.y });
-            containerRef.current.style.cursor = 'pointer';
+            if (nodeData && nodeData.label) {
+              const content = `<b>${nodeData.label}</b>`;
+              setTooltip({ visible: true, content, x: pointer.DOM.x, y: pointer.DOM.y });
+              containerRef.current.style.cursor = 'pointer';
+            }
           }
         });
 
