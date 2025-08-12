@@ -1148,6 +1148,7 @@ function App() {
             onBackgroundContextMenu={handleBackgroundContextMenu}
             flowchartDirection={flowchartDirection}
             isProcessing={isProcessing}
+            showHoverTooltip={true}
           />
           {tooltip.visible && (
             <Tooltip

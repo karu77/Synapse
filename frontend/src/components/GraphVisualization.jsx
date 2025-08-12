@@ -291,7 +291,7 @@ const getPhysicsOptions = (type) => {
 
 const GraphVisualization = forwardRef(
   (
-    { data, setTooltip, setSelectedNode, setSelectedEdge, onGraphReady, diagramType = 'knowledge-graph', onNodeContextMenu, onEdgeContextMenu, onBackgroundContextMenu, flowchartDirection = 'TB', isProcessing },
+    { data, setTooltip, setSelectedNode, setSelectedEdge, onGraphReady, diagramType = 'knowledge-graph', onNodeContextMenu, onEdgeContextMenu, onBackgroundContextMenu, flowchartDirection = 'TB', isProcessing, showHoverTooltip = false },
     ref
   ) => {
     const containerRef = useRef(null);
@@ -455,6 +455,9 @@ const GraphVisualization = forwardRef(
         });
 
         networkInstance.current.on('hoverNode', ({ node, pointer }) => {
+          if (!showHoverTooltip) {
+            return;
+          }
           if (pointer) {
             const nodeData = normalizedData.nodes.get(node);
             if (nodeData && nodeData.label) {
@@ -502,7 +505,7 @@ const GraphVisualization = forwardRef(
           networkInstance.current = null;
         }
       };
-    }, [diagramType, flowchartDirection, onGraphReady, setSelectedNode, setSelectedEdge, setTooltip]);
+    }, [diagramType, flowchartDirection, onGraphReady, setSelectedNode, setSelectedEdge, setTooltip, showHoverTooltip]);
 
     useImperativeHandle(ref, () => ({
       fit: () => networkInstance.current?.fit(),
