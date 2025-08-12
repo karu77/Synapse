@@ -38,7 +38,7 @@ import { useTheme } from './contexts/ThemeContext'
 import { Fragment } from 'react'
 import Tooltip from './components/Tooltip'
 import ConfirmModal from './components/ConfirmModal';
-import AiInfoPanel from './components/AiInfoPanel';
+// import AiInfoPanel from './components/AiInfoPanel';
 import Joyride from 'react-joyride';
 import { updateTutorialSeen } from './services/api';
 
@@ -975,17 +975,7 @@ function App() {
                 isMobile ? 'block' : 'hidden sm:block'
               }`}
             >
-              {isMobile && graphData.nodes && graphData.nodes.length > 0 ? (
-                <span 
-                  className={`truncate ${isSmallPhone ? 'max-w-20' : isMediumPhone ? 'max-w-28' : 'max-w-32'} cursor-pointer`}
-                  title={graphName}
-                  onClick={() => setIsEditingName(true)}
-                >
-                  {graphName}
-                </span>
-              ) : (
-                'Synapse'
-              )}
+              {'Synapse'}
             </h1>
             {(!graphData?.nodes || graphData.nodes.length === 0) && !isProcessing && (
               <div className="hidden md:flex items-center gap-2 text-sm text-skin-text-muted animate-fade-in-panel">
@@ -1301,26 +1291,16 @@ function App() {
         )}
       </AnimatePresence>
 
-      {answer && !showAiModal && (
+      {answer && (
         <div className={`fixed ${isMobile ? 'bottom-4 left-4 right-4 top-auto transform-none' : 'top-1/2 transform -translate-y-1/2'} z-40 ${isMobile ? 'w-auto' : 'max-w-xs w-full sm:w-96'} animate-fade-in-panel transition-all duration-300 ${
           isSidebarOpen && !isMobile ? 'left-[28rem]' : isMobile ? '' : 'left-4'
         } ${isSidebarOpen && isMobile ? 'hidden' : ''}`}
-          onClick={() => setShowAiModal(true)}
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'default' }}
         >
           <AnswerPanel answer={answer} onClose={() => setAnswer('')} isMobile={isMobile} />
         </div>
       )}
 
-      <AnimatePresence>
-        {showAiModal && (
-          <AiInfoPanel
-            answer={answer}
-            references={aiReferences}
-            onClose={() => setShowAiModal(false)}
-          />
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {selectedEdge && (

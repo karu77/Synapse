@@ -456,7 +456,11 @@ const GraphVisualization = forwardRef(
             const nodeData = normalizedData.nodes.get(node);
             if (nodeData && nodeData.label) {
               const content = `<b>${nodeData.label}</b>`;
-              setTooltip({ visible: true, content, x: pointer.DOM.x, y: pointer.DOM.y });
+              // Convert canvas-relative DOM coords to viewport coords for the fixed-position tooltip
+              const rect = containerRef.current.getBoundingClientRect();
+              const absX = rect.left + pointer.DOM.x;
+              const absY = rect.top + pointer.DOM.y;
+              setTooltip({ visible: true, content, x: absX, y: absY });
               containerRef.current.style.cursor = 'pointer';
             }
           }
@@ -500,6 +504,45 @@ const GraphVisualization = forwardRef(
     useImperativeHandle(ref, () => ({
       fit: () => networkInstance.current?.fit(),
       getNetwork: () => networkInstance.current,
+      // Focus on a specific node, selecting it and centering with animation
+      focus: (nodeId, options = {}) => {
+        const network = networkInstance.current;
+        if (!network || !nodeId) return;
+
+        try {
+          // Ensure the node exists before focusing
+          const positions = network.getPositions([nodeId]);
+          if (!positions || !positions[nodeId]) return;
+
+          // Select the node to provide visual feedback
+          network.selectNodes([nodeId]);
+
+          // Compose sensible defaults while respecting caller options
+          const defaultOptions = {
+            scale: 1.5,
+            animation: {
+              duration: 800,
+              easingFunction: 'easeInOutQuad',
+            },
+          };
+
+          // If caller passed animation: true/false, keep it; otherwise merge object
+          const composedOptions = {
+            ...defaultOptions,
+            ...options,
+            animation:
+              typeof options.animation === 'boolean'
+                ? options.animation
+                : { ...defaultOptions.animation, ...(options.animation || {}) },
+          };
+
+          network.focus(nodeId, composedOptions);
+        } catch (err) {
+          // Fail-safe: don't throw errors to app level
+          // eslint-disable-next-line no-console
+          console.error('GraphVisualization: focus failed', err);
+        }
+      },
       downloadJSON: () => {
         if (!data || (!data.nodes && !data.edges)) {
           console.error('No graph data available for download');
