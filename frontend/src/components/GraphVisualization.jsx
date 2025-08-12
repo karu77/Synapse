@@ -422,8 +422,11 @@ const GraphVisualization = forwardRef(
 
         networkInstance.current.on('click', ({ nodes, edges }) => {
           console.log('Network click detected:', { nodes, edges });
+          const data = networkInstance.current?.body?.data;
+          if (!data) return;
+
           if (nodes.length > 0) {
-            const nodeData = normalizedData.nodes.get(nodes[0]);
+            const nodeData = data.nodes.get(nodes[0]);
             console.log('Setting selectedNode:', nodeData);
             if (nodeData) {
               setSelectedNode(nodeData);
@@ -434,7 +437,7 @@ const GraphVisualization = forwardRef(
               setSelectedEdge(null);
             }
           } else if (edges.length > 0) {
-            const edgeData = normalizedData.edges.get(edges[0]);
+            const edgeData = data.edges.get(edges[0]);
             console.log('Setting selectedEdge:', edgeData);
             if (edgeData) {
               setSelectedEdge(edgeData);
